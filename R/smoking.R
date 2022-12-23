@@ -2,26 +2,35 @@ library(tidyverse)
 library(Synth)
 
 load('smoking.rda')
+df <- as.data.frame(smoking)
 
-fac <- factor(smoking$state)
-smoking$state_no <- as.numeric(fac)
+treated.states <- 'California'
+control.states <-  c('Rhode Island', 'Tennessee', 'Indiana', 'Nevada', 'Louisiana',
+              'Oklahoma', 'New Hampshire', 'North Dakota', 'Arkansas',
+              'Virginia', 'Illinois', 'South Dakota', 'Utah', 'Georgia',
+              'Mississippi', 'Colorado', 'Minnesota', 'Texas', 'Kentucky',
+              'Maine', 'North Carolina', 'Montana', 'Vermont', 'Iowa',
+              'Connecticut', 'Kansas', 'Delaware', 'Wisconsin', 'Idaho',
+              'New Mexico', 'West Virginia', 'Pennsylvania', 'South Carolina',
+              'Ohio', 'Nebraska')
+ignore.states <- c('Alaska', 'Arizona', 'California', 'District of Columbia',
+            'Florida', 'Hawaii', 'Maryland', 'Massachusetts', 'Michigan',
+            'New Jersey', 'New York', 'Oregon', 'Washington')
 
-non.controls <- c('Alaska', 'Arizona', 'California', 'District of Columbia',
-                  'Florida', 'Hawaii', 'Maryland', 'Massachusetts', 'Michigan',
-                  'New Jersey', 'New York', 'Oregon', 'Washington')
-control.states <- smoking %>%
-  dplyr::filter(!state %in% non.controls)  %>%
-  select(state) %>%
-  unique()
+fac <- factor(df$state)
+df$state_no <- as.numeric(fac)
+df <- df %>% dplyr::filter(state == treated | state %in% control)
 
-message(smoking)
-message(mode(smoking[,'state_no']))
 dataprep(
-  foo = smoking,
-  predictors = c('cigsale', 'lnincome', 'beer', 'age15to24', 'retprice'),
+  foo = df,
+  predictors = c('lnincome', 'beer', 'age15to24', 'retprice'),
+  predictors.op = 'mean',
+  dependent = 'cigsale',
   unit.variable = 'state_no',
   time.variable = 'year',
-  treatment.identifier = 'California',
-  controls.identifier - controls.states,
-  unit.names.variable = 'state'
+  treatment.identifier = which(levels(fac) == 'California'),
+  controls.identifier = control.states,
+  unit.names.variable = 'state',
+  time.predictors.prior = c(1984:1989),
+  time.optimize.ssr = c(1984:1990)
 )
