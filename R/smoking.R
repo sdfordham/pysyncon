@@ -1,4 +1,3 @@
-library(dplyr)
 library(Synth)
 
 load('smoking.rda')
@@ -34,7 +33,7 @@ dataprep.out <- dataprep(
   dependent = 'cigsale',
   unit.variable = 'state.no',
   time.variable = 'year',
-  treatment.identifier = which(levels(fac) == 'California'),
+  treatment.identifier = which(levels(fac) == treated.states),
   controls.identifier = control.states,
   unit.names.variable = 'state',
   time.predictors.prior = c(1970:1988),
@@ -50,4 +49,5 @@ path.plot(
   tr.intake = 1988
 )
 
-print(setNames(control.states, synth.out$solution.w))
+state.weights <- setNames(control.states, synth.out$solution.w)
+print(state.weights)
