@@ -49,5 +49,8 @@ path.plot(
   tr.intake = 1988
 )
 
-state.weights <- setNames(control.states, synth.out$solution.w)
+state.weights <- setNames(
+  control.states,
+  round(synth.out$solution.w, digits = 2)
+)
 print(state.weights)
