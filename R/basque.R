@@ -33,7 +33,8 @@ dataprep.out <- dataprep(
   treatment.identifier = 17,
   controls.identifier = control.regions,
   time.optimize.ssr = 1960:1969,
-  time.plot = 1955:1997)
+  time.plot = 1955:1997
+)
 
 synth.out <- synth(
   data.prep.obj = dataprep.out,

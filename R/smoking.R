@@ -1,7 +1,6 @@
 library(Synth)
 
 load('smoking.rda')
-df <- as.data.frame(smoking)
 
 treated.states <- 'California'
 control.states <-  c('Alabama', 'Arkansas', 'Colorado', 'Connecticut',
@@ -14,21 +13,21 @@ control.states <-  c('Alabama', 'Arkansas', 'Colorado', 'Connecticut',
                      'South Dakota', 'Tennessee', 'Texas', 'Utah', 'Vermont',
                      'Virginia', 'West Virginia', 'Wisconsin', 'Wyoming')
 
-fac <- factor(df$state)
-df$state.no <- as.numeric(fac)
+fac <- factor(smoking$state)
+smoking$state.no <- as.numeric(fac)
 
 dataprep.out <- dataprep(
-  foo = df,
+  foo = smoking,
   predictors = c('lnincome', 'beer', 'age15to24', 'retprice'),
   predictors.op = 'mean',
   special.predictors = list(
-    list(which(names(df) == 'lnincome'), 1980:1988, 'mean'),
-    list(which(names(df) == 'retprice'), 1980:1988, 'mean'),
-    list(which(names(df) == 'age15to24'), 1980:1988, 'mean'),
-    list(which(names(df) == 'beer'), 1984:1988, 'mean'),
-    list(which(names(df) == 'cigsale'), 1975, 'mean'),
-    list(which(names(df) == 'cigsale'), 1980, 'mean'),
-    list(which(names(df) == 'cigsale'), 1988, 'mean')
+    list(which(names(smoking) == 'lnincome'), 1980:1988, 'mean'),
+    list(which(names(smoking) == 'retprice'), 1980:1988, 'mean'),
+    list(which(names(smoking) == 'age15to24'), 1980:1988, 'mean'),
+    list(which(names(smoking) == 'beer'), 1984:1988, 'mean'),
+    list(which(names(smoking) == 'cigsale'), 1975, 'mean'),
+    list(which(names(smoking) == 'cigsale'), 1980, 'mean'),
+    list(which(names(smoking) == 'cigsale'), 1988, 'mean')
   ),
   dependent = 'cigsale',
   unit.variable = 'state.no',

@@ -1,16 +1,15 @@
 require(Synth)
 
-load('west-germany.rda')
-df <- as.data.frame(germany)
+load('germany.rda')
 
 treated.countries <- 'West Germany'
 control.countries <- c('USA', 'UK', 'Austria', 'Belgium', 'Denmark', 'France',
                        'Italy', 'Netherlands', 'Norway', 'Switzerland', 'Japan',
                        'Greece', 'Portugal', 'Spain', 'Australia', 'New Zealand'
-                       )
+                      )
 
 training.dataprep.out <- dataprep(
-  foo = df,
+  foo = germany,
   predictors = c('gdp', 'trade', 'infrate'),
   special.predictors = list(
     list('industry', 1971:1980, 'mean'),
@@ -36,7 +35,7 @@ training.synth.out <- synth(
 )
 
 dataprep.out <- dataprep(
-  foo = df,
+  foo = germany,
   predictors = c('gdp', 'trade', 'infrate'),
   predictors.op = 'mean',
   special.predictors = list(
@@ -67,6 +66,7 @@ path.plot(
 )
 
 state.weights <- setNames(
-  control.countries, round(synth.out$solution.w, digits = 2)
+  control.countries,
+  round(synth.out$solution.w, digits = 2)
 )
 print(state.weights)
