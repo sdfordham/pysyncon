@@ -29,10 +29,10 @@ training.dataprep.out <- dataprep(
 )
 
 training.synth.out <- synth(
-  data.prep.obj=training.dataprep.out,
-  Margin.ipop=.005,
-  Sigf.ipop=7,
-  Bound.ipop=6
+  data.prep.obj = training.dataprep.out,
+  Margin.ipop = 0.005,
+  Sigf.ipop = 7,
+  Bound.ipop = 6
 )
 
 dataprep.out <- dataprep(
@@ -57,7 +57,7 @@ dataprep.out <- dataprep(
 
 synth.out <- synth(
   dataprep.out,
-  custom.v=as.numeric(training.synth.out$solution.v)
+  custom.v = as.numeric(training.synth.out$solution.v)
 )
 
 path.plot(
@@ -66,5 +66,7 @@ path.plot(
   tr.intake = 1990
 )
 
-state.weights <- setNames(control.countries, round(synth.out$solution.w, digits=2))
+state.weights <- setNames(
+  control.countries, round(synth.out$solution.w, digits = 2)
+)
 print(state.weights)
