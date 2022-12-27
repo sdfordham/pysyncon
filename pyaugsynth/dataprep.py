@@ -16,7 +16,7 @@ def dataprep(foo: pd.DataFrame,
              time_plot: Iterable[Union[int, str]]):
 
     X0_nonspecial = foo[
-        foo[time_variable].isin(time_optimize_ssr)
+        foo[time_variable].isin(time_predictors_prior)
     ].groupby(unit_variable)[predictors].agg(predictors_op).T
     X1_nonspecial = X0_nonspecial[treatment_identifier]
     X0_nonspecial = X0_nonspecial[list(controls_identifier)]
@@ -68,3 +68,4 @@ def dataprep(foo: pd.DataFrame,
     Z0, Z1 = Z[list(controls_identifier)], Z[treatment_identifier]
 
     return X0, X1, Z0, Z1
+    
