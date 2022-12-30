@@ -1,2 +1,2 @@
-from .dataprep import dataprep
+from .dataprep import Dataprep
 from .synth import Synth
