@@ -144,9 +144,7 @@ class Synth:
         )
 
         if treatment_time:
-            ymin = min(min(ts_treated), min(ts_synthetic))
-            ymax = max(max(ts_treated), max(ts_synthetic))
-            plt.vlines(x=treatment_time, ymin=ymin, ymax=ymax, linestyle="dashed")
+            plt.axvline(x=treatment_time, ymin=0.05, ymax=0.95, linestyle="dashed")
         plt.legend()
         plt.grid(grid)
         plt.show()
@@ -174,8 +172,6 @@ class Synth:
             y=0, xmin=min(ts_gap.index), xmax=max(ts_gap.index), linestyle="dashed"
         )
         if treatment_time:
-            ymin = min(min(ts_gap), min(ts_gap))
-            ymax = max(max(ts_gap), max(ts_gap))
-            plt.vlines(x=treatment_time, ymin=ymin, ymax=ymax, linestyle="dashed")
+            plt.axvline(x=treatment_time, ymin=0.05, ymax=0.95, linestyle="dashed")
         plt.grid(grid)
         plt.show()
