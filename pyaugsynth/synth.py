@@ -175,3 +175,12 @@ class Synth:
             plt.axvline(x=treatment_time, ymin=0.05, ymax=0.95, linestyle="dashed")
         plt.grid(grid)
         plt.show()
+
+    def weights(self, threshold: float = 0.0, round: int = 3) -> pd.Series:
+        if self.dataprep is None:
+            raise ValueError("dataprep must be set for weight summary.")
+        if self.W is None:
+            raise ValueError("Fit data first.")
+        weights_ser = pd.Series(self.W, index=self.dataprep.controls_identifier).round(round)
+        weights_ser.name = 'weights'
+        return weights_ser[weights_ser >= threshold]
