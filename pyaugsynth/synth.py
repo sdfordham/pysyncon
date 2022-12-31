@@ -34,7 +34,7 @@ class Synth:
         else:
             if X0 is None or X1 is None or Z0 is None or Z1 is None:
                 raise ValueError(
-                    "dataprep must be set or (X0, X1, Z0, X1) must all be set."
+                    "dataprep must be set or (X0, X1, Z0, Z1) must all be set."
                 )
 
         X = pd.concat([X0, X1], axis=1)
@@ -181,6 +181,22 @@ class Synth:
             raise ValueError("dataprep must be set for weight summary.")
         if self.W is None:
             raise ValueError("Fit data first.")
-        weights_ser = pd.Series(self.W, index=self.dataprep.controls_identifier).round(round)
-        weights_ser.name = 'weights'
+        weights_ser = pd.Series(self.W, index=self.dataprep.controls_identifier).round(
+            round
+        )
+        weights_ser.name = "weights"
         return weights_ser[weights_ser >= threshold]
+
+    def summary(self, round: int = 3) -> pd.DataFrame:
+        if self.dataprep is None:
+            raise ValueError("dataprep must be set for summary.")
+        if self.W is None:
+            raise ValueError("Fit data first.")
+        X0, X1 = self.dataprep.compute_X0_X1()
+
+        V = pd.Series(np.diag(self.V), index=X1.index, name="V")
+        treated = X1.rename("treated")
+        synthetic = (X0 * self.W).sum(axis=1).rename("synthetic")
+        sample_mean = X0.mean(axis=1).rename("sample mean")
+
+        return pd.concat([V, treated, synthetic, sample_mean], axis=1).round(round)
