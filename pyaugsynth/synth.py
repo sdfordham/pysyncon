@@ -9,11 +9,11 @@ from .dataprep import Dataprep
 
 class Synth:
     def __init__(self) -> None:
-        self.dataprep = None
-        self.W = None
-        self.loss_W = None
-        self.V = None
-        self.loss_V = None
+        self.dataprep: Optional[Dataprep] = None
+        self.W: Optional[np.ndarray] = None
+        self.loss_W: Optional[float] = None
+        self.V: Optional[np.ndarray] = None
+        self.loss_V: Optional[float] = None
 
     def fit(
         self,
@@ -92,7 +92,7 @@ class Synth:
         Z1: np.ndarray,
         qp_method: Literal["SLSQP"] = "SLSQP",
         qp_options: dict = {"maxiter": 1000},
-    ):
+    ) -> tuple[np.ndarray, float, float]:
         _, n_c = X0.shape
 
         P = X0.T @ V @ X0
@@ -115,7 +115,7 @@ class Synth:
         )
         W, loss_W = res["x"], res["fun"]
         loss_V = (Z1 - Z0 @ W).T @ (Z1 - Z0 @ W) / len(Z0)
-        return W, loss_W, loss_V
+        return W, loss_W.item(), loss_V.item()
 
     def path_plot(self, treatment_time: Optional[int] = None, grid: bool = True):
         if self.dataprep is None:
