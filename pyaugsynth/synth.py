@@ -47,8 +47,9 @@ class Synth:
         Z1_arr = Z1.to_numpy()
 
         if custom_V is not None:
+            V_mat = np.diag(custom_V)
             W, loss_W, loss_V = self.optimize_W(
-                V=custom_V, X0=X0_arr, X1=X1_arr, Z0=Z0_arr, Z1=Z1_arr
+                V_mat=V_mat, X0=X0_arr, X1=X1_arr, Z0=Z0_arr, Z1=Z1_arr
             )
             self.W, self.loss_W, self.V, self.loss_V = W, loss_W, custom_V, loss_V
             return
@@ -70,22 +71,22 @@ class Synth:
             raise ValueError("Unknown option for `optim_initial`.")
 
         def fun(x):
-            V = np.diag(np.abs(x)) / np.sum(np.abs(x))
+            V_mat = np.diag(np.abs(x)) / np.sum(np.abs(x))
             _, _, loss_V = self.optimize_W(
-                V=V, X0=X0_arr, X1=X1_arr, Z0=Z0_arr, Z1=Z1_arr
+                V_mat=V_mat, X0=X0_arr, X1=X1_arr, Z0=Z0_arr, Z1=Z1_arr
             )
             return loss_V
 
         res = minimize(fun=fun, x0=x0, method=optim_method, options=optim_options)
-        V = np.diag(np.abs(res["x"])) / np.sum(np.abs(res["x"]))
+        V_mat = np.diag(np.abs(res["x"])) / np.sum(np.abs(res["x"]))
         W, loss_W, loss_V = self.optimize_W(
-            V=V, X0=X0_arr, X1=X1_arr, Z0=Z0_arr, Z1=Z1_arr
+            V_mat=V_mat, X0=X0_arr, X1=X1_arr, Z0=Z0_arr, Z1=Z1_arr
         )
-        self.W, self.loss_W, self.V, self.loss_V = W, loss_W, V, loss_V
+        self.W, self.loss_W, self.V, self.loss_V = W, loss_W, V_mat.diagonal(), loss_V
 
     @staticmethod
     def optimize_W(
-        V: np.ndarray,
+        V_mat: np.ndarray,
         X0: np.ndarray,
         X1: np.ndarray,
         Z0: np.ndarray,
@@ -95,8 +96,8 @@ class Synth:
     ) -> tuple[np.ndarray, float, float]:
         _, n_c = X0.shape
 
-        P = X0.T @ V @ X0
-        q = -1.0 * X1.T @ V @ X0
+        P = X0.T @ V_mat @ X0
+        q = -1.0 * X1.T @ V_mat @ X0
 
         def fun(x):
             return q.T @ x + 0.5 * x.T @ P @ x
@@ -186,9 +187,9 @@ class Synth:
             raise ValueError("dataprep must be set for weight summary.")
         if self.W is None:
             raise ValueError("No weight matrix available: fit data first.")
-        weights_ser = pd.Series(self.W, index=list(self.dataprep.controls_identifier)).round(
-            round
-        )
+        weights_ser = pd.Series(
+            self.W, index=list(self.dataprep.controls_identifier)
+        ).round(round)
         weights_ser.name = "weights"
         return weights_ser[weights_ser >= threshold]
 
@@ -196,12 +197,12 @@ class Synth:
         if self.dataprep is None:
             raise ValueError("dataprep must be set for summary.")
         if self.W is None:
-            raise ValueError("No weight matrix available: fit data first")
+            raise ValueError("No weight matrix available: fit data first.")
         if self.V is None:
-            raise ValueError("No V matrix available: fit data first")
+            raise ValueError("No V matrix available: fit data first.")
         X0, X1 = self.dataprep.compute_X0_X1()
 
-        V = pd.Series(self.V.diagonal(), index=X1.index, name="V")
+        V = pd.Series(self.V, index=X1.index, name="V")
         treated = X1.rename("treated")
         synthetic = (X0 * self.W).sum(axis=1).rename("synthetic")
         sample_mean = X0.mean(axis=1).rename("sample mean")
