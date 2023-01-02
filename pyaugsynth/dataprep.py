@@ -1,33 +1,83 @@
 import pandas as pd
 from typing import Iterable, Union, Literal
 
+from .my_types import TimeRange_t, PredictorsOp_t, SpecialPredictor_t
 
 class Dataprep:
     def __init__(
         self,
         foo: pd.DataFrame,
-        predictors: Iterable[str],
-        predictors_op: Literal["mean", "std", "median"],
-        time_predictors_prior: Union[list, tuple, range],
-        special_predictors: Iterable,
-        dependent: str,
-        unit_variable: str,
-        time_variable: str,
+        predictors: Iterable[Union[int, str]],
+        predictors_op: PredictorsOp_t,
+        time_predictors_prior: TimeRange_t,
+        special_predictors: Iterable[SpecialPredictor_t],
+        dependent: Union[int, str],
+        unit_variable: Union[int, str],
+        time_variable: Union[int, str],
         treatment_identifier: Union[int, str],
         controls_identifier: Iterable[Union[int, str]],
-        time_optimize_ssr: Iterable[Union[int, str]],
+        time_optimize_ssr: TimeRange_t,
     ) -> None:
+        if not isinstance(foo, pd.DataFrame):
+            raise TypeError("foo must be pandas.DataFrame.")
         self.foo: pd.DataFrame = foo
-        self.predictors: Iterable[str] = predictors
-        self.predictors_op: Literal["mean", "std", "median"] = predictors_op
-        self.time_predictors_prior = time_predictors_prior
-        self.special_predictors = special_predictors
-        self.dependent = dependent
-        self.unit_variable = unit_variable
-        self.time_variable = time_variable
-        self.treatment_identifier = treatment_identifier
-        self.controls_identifier = controls_identifier
-        self.time_optimize_ssr = time_optimize_ssr
+
+        if not isinstance(predictors, Iterable):
+            raise TypeError("predictors must be an iterable (list, tuple etc.)")
+        for p in predictors:
+            if p not in foo.columns:
+                raise ValueError(f"predictor {p} not in foo columns.")
+        self.predictors: Iterable = predictors
+
+        if predictors_op not in ("mean", "std", "median"):
+                raise ValueError("predictors_op must be one of mean, std, median.")
+        self.predictors_op: PredictorsOp_t = predictors_op
+
+        if not isinstance(time_predictors_prior, (list, tuple, range)):
+            raise TypeError("time_predictors_prior must be of type list, tuple or range.")
+        self.time_predictors_prior: TimeRange_t = time_predictors_prior
+
+        if not isinstance(special_predictors, Iterable):
+            raise TypeError("special_predictors must be an iterable (list, tuple etc.)")
+        for el in special_predictors:
+            if not isinstance(el, tuple) or len(el) != 3:
+                raise ValueError("Elements of special_predictors should be tuples of length 3.")
+            pred, rng, op = el
+            if pred not in foo.columns:
+                raise ValueError(f"{pred} in special_predictors not in foo columns.")
+            if not isinstance(rng, (list, tuple, range)):
+                raise TypeError(f"{rng} in special_predictors must be of type list, tuple or range.")
+            if op not in ("mean", "std", "median"):
+                raise ValueError(f"{op} in special_predictors must be one of mean, std, median.")
+        self.special_predictors: Iterable[SpecialPredictor_t] = special_predictors
+
+        if dependent not in foo.columns:
+            raise ValueError(f"dependent {dependent} not in foo columns.")
+        self.dependent: Union[int, str] = dependent
+
+        if unit_variable not in foo.columns:
+            raise ValueError(f"unit_variable {unit_variable} not in foo columns.")
+        self.unit_variable: Union[int, str] = unit_variable
+
+        if time_variable not in foo.columns:
+            raise ValueError(f"time_variable {time_variable} not in foo columns.") 
+        self.time_variable: Union[int, str] = time_variable
+
+        uniq_ident = foo[unit_variable].unique()
+        if treatment_identifier not in uniq_ident:
+            raise ValueError(f"treatment_identifier {treatment_identifier} not found in foo[\"{unit_variable}\"]")
+        self.treatment_identifier: Union[int, str] = treatment_identifier
+
+        if not isinstance(controls_identifier, Iterable):
+            raise TypeError("controls_identifier must be an iterable (list, tuple etc.)")
+        for ci in controls_identifier:
+            if ci not in uniq_ident:
+                raise ValueError(f"controls_identifier {ci} not found in foo[\"{unit_variable}\"]")
+        self.controls_identifier: Iterable[Union[int, str]] = controls_identifier
+
+        if not isinstance(time_optimize_ssr, (list, tuple, range)):
+            raise TypeError("time_optimize_ssr must be of type list, tuple or range.")
+        self.time_optimize_ssr: TimeRange_t = time_optimize_ssr
 
     def compute_X0_X1(self):
         X0_nonspecial = (
