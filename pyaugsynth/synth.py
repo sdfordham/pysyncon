@@ -26,7 +26,7 @@ class Synth:
         optim_method: Literal["Nelder-Mead", "BFGS"] = "Nelder-Mead",
         optim_initial: Literal["equal", "ols"] = "equal",
         optim_options: dict = {"maxiter": 1000},
-    ):
+    ) -> None:
         if dataprep:
             self.dataprep = dataprep
             X0, X1 = dataprep.compute_X0_X1()
@@ -117,7 +117,9 @@ class Synth:
         loss_V = (Z1 - Z0 @ W).T @ (Z1 - Z0 @ W) / len(Z0)
         return W, loss_W.item(), loss_V.item()
 
-    def path_plot(self, treatment_time: Optional[int] = None, grid: bool = True):
+    def path_plot(
+        self, treatment_time: Optional[int] = None, grid: bool = True
+    ) -> None:
         if self.dataprep is None:
             raise ValueError("dataprep must be set for automatic plots.")
         if self.W is None:
@@ -150,7 +152,9 @@ class Synth:
         plt.grid(grid)
         plt.show()
 
-    def gaps_plot(self, treatment_time: Optional[int] = None, grid: bool = True):
+    def gaps_plot(
+        self, treatment_time: Optional[int] = None, grid: bool = True
+    ) -> None:
         if self.dataprep is None:
             raise ValueError("dataprep must be set for automatic plots.")
         if self.W is None:
