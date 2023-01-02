@@ -51,6 +51,7 @@ class Synth:
                 V=custom_V, X0=X0_arr, X1=X1_arr, Z0=Z0_arr, Z1=Z1_arr
             )
             self.W, self.loss_W, self.V, self.loss_V = W, loss_W, custom_V, loss_V
+            return
 
         n_r, _ = X0_arr.shape
 
