@@ -185,8 +185,8 @@ class Synth:
         if self.dataprep is None:
             raise ValueError("dataprep must be set for weight summary.")
         if self.W is None:
-            raise ValueError("Fit data first.")
-        weights_ser = pd.Series(self.W, index=self.dataprep.controls_identifier).round(
+            raise ValueError("No weight matrix available: fit data first.")
+        weights_ser = pd.Series(self.W, index=list(self.dataprep.controls_identifier)).round(
             round
         )
         weights_ser.name = "weights"
@@ -196,10 +196,12 @@ class Synth:
         if self.dataprep is None:
             raise ValueError("dataprep must be set for summary.")
         if self.W is None:
-            raise ValueError("Fit data first.")
+            raise ValueError("No weight matrix available: fit data first")
+        if self.V is None:
+            raise ValueError("No V matrix available: fit data first")
         X0, X1 = self.dataprep.compute_X0_X1()
 
-        V = pd.Series(np.diag(self.V), index=X1.index, name="V")
+        V = pd.Series(self.V.diagonal(), index=X1.index, name="V")
         treated = X1.rename("treated")
         synthetic = (X0 * self.W).sum(axis=1).rename("synthetic")
         sample_mean = X0.mean(axis=1).rename("sample mean")
