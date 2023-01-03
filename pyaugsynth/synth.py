@@ -7,7 +7,43 @@ from scipy.optimize import minimize, Bounds, LinearConstraint
 from .dataprep import Dataprep
 
 
-class Synth:
+class WeightOptimizerMixin:
+    @staticmethod
+    def w_optimize(
+        V_mat: np.ndarray,
+        X0: np.ndarray,
+        X1: np.ndarray,
+        Z0: np.ndarray,
+        Z1: np.ndarray,
+        qp_method: Literal["SLSQP"] = "SLSQP",
+        qp_options: dict = {"maxiter": 1000},
+    ) -> tuple[np.ndarray, float, float]:
+        _, n_c = X0.shape
+
+        P = X0.T @ V_mat @ X0
+        q = -1.0 * X1.T @ V_mat @ X0
+
+        def fun(x):
+            return q.T @ x + 0.5 * x.T @ P @ x
+
+        bounds = Bounds(lb=np.array([0.0] * n_c).T, ub=np.array([1.0] * n_c).T)
+        constraints = LinearConstraint(A=np.array([1.0] * n_c), lb=1.0, ub=1.0)
+
+        x0 = np.array([1 / n_c] * n_c)
+        res = minimize(
+            fun=fun,
+            x0=x0,
+            bounds=bounds,
+            constraints=constraints,
+            method=qp_method,
+            options=qp_options,
+        )
+        W, loss_W = res["x"], res["fun"]
+        loss_V = (Z1 - Z0 @ W).T @ (Z1 - Z0 @ W) / len(Z0)
+        return W, loss_W.item(), loss_V.item()
+
+
+class Synth(WeightOptimizerMixin):
     def __init__(self) -> None:
         self.dataprep: Optional[Dataprep] = None
         self.W: Optional[np.ndarray] = None
@@ -48,7 +84,7 @@ class Synth:
 
         if custom_V is not None:
             V_mat = np.diag(custom_V)
-            W, loss_W, loss_V = self.optimize_W(
+            W, loss_W, loss_V = self.w_optimize(
                 V_mat=V_mat, X0=X0_arr, X1=X1_arr, Z0=Z0_arr, Z1=Z1_arr
             )
             self.W, self.loss_W, self.V, self.loss_V = W, loss_W, custom_V, loss_V
@@ -72,51 +108,17 @@ class Synth:
 
         def fun(x):
             V_mat = np.diag(np.abs(x)) / np.sum(np.abs(x))
-            _, _, loss_V = self.optimize_W(
+            _, _, loss_V = self.w_optimize(
                 V_mat=V_mat, X0=X0_arr, X1=X1_arr, Z0=Z0_arr, Z1=Z1_arr
             )
             return loss_V
 
         res = minimize(fun=fun, x0=x0, method=optim_method, options=optim_options)
         V_mat = np.diag(np.abs(res["x"])) / np.sum(np.abs(res["x"]))
-        W, loss_W, loss_V = self.optimize_W(
+        W, loss_W, loss_V = self.w_optimize(
             V_mat=V_mat, X0=X0_arr, X1=X1_arr, Z0=Z0_arr, Z1=Z1_arr
         )
         self.W, self.loss_W, self.V, self.loss_V = W, loss_W, V_mat.diagonal(), loss_V
-
-    @staticmethod
-    def optimize_W(
-        V_mat: np.ndarray,
-        X0: np.ndarray,
-        X1: np.ndarray,
-        Z0: np.ndarray,
-        Z1: np.ndarray,
-        qp_method: Literal["SLSQP"] = "SLSQP",
-        qp_options: dict = {"maxiter": 1000},
-    ) -> tuple[np.ndarray, float, float]:
-        _, n_c = X0.shape
-
-        P = X0.T @ V_mat @ X0
-        q = -1.0 * X1.T @ V_mat @ X0
-
-        def fun(x):
-            return q.T @ x + 0.5 * x.T @ P @ x
-
-        bounds = Bounds(lb=np.array([0.0] * n_c).T, ub=np.array([1.0] * n_c).T)
-        constraints = LinearConstraint(A=np.array([1.0] * n_c), lb=1.0, ub=1.0)
-
-        x0 = np.array([1 / n_c] * n_c)
-        res = minimize(
-            fun=fun,
-            x0=x0,
-            bounds=bounds,
-            constraints=constraints,
-            method=qp_method,
-            options=qp_options,
-        )
-        W, loss_W = res["x"], res["fun"]
-        loss_V = (Z1 - Z0 @ W).T @ (Z1 - Z0 @ W) / len(Z0)
-        return W, loss_W.item(), loss_V.item()
 
     def path_plot(
         self, treatment_time: Optional[int] = None, grid: bool = True
