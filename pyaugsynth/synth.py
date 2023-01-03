@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from scipy.optimize import minimize, Bounds, LinearConstraint
 
 from .dataprep import Dataprep
-
+from .my_types import OptimizerMethod_t
 
 class WeightOptimizerMixin:
     @staticmethod
@@ -15,7 +15,7 @@ class WeightOptimizerMixin:
         X1: np.ndarray,
         Z0: np.ndarray,
         Z1: np.ndarray,
-        qp_method: Literal["SLSQP"] = "SLSQP",
+        qp_method: OptimizerMethod_t = "SLSQP",
         qp_options: dict = {"maxiter": 1000},
     ) -> tuple[np.ndarray, float, float]:
         _, n_c = X0.shape
@@ -59,7 +59,7 @@ class Synth(WeightOptimizerMixin):
         Z0: Optional[pd.DataFrame] = None,
         Z1: Optional[Union[pd.Series, pd.DataFrame]] = None,
         custom_V: Optional[np.ndarray] = None,
-        optim_method: Literal["Nelder-Mead", "BFGS"] = "Nelder-Mead",
+        optim_method: OptimizerMethod_t = "Nelder-Mead",
         optim_initial: Literal["equal", "ols"] = "equal",
         optim_options: dict = {"maxiter": 1000},
     ) -> None:
