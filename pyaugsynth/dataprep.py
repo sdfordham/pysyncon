@@ -79,7 +79,7 @@ class Dataprep:
             raise TypeError("time_optimize_ssr must be of type list, tuple or range.")
         self.time_optimize_ssr: TimeRange_t = time_optimize_ssr
 
-    def make_covariate_arrs(self):
+    def make_covariate_mats(self) -> tuple[pd.DataFrame, pd.Series]:
         X0_nonspecial = (
             self.foo[self.foo[self.time_variable].isin(self.time_predictors_prior)]
             .groupby(self.unit_variable)[list(self.predictors)]
@@ -139,7 +139,7 @@ class Dataprep:
         X1 = pd.concat([X1_nonspecial, X1_special], axis=0)
         return X0, X1
 
-    def make_outcome_arrs(self):
+    def make_outcome_mats(self) -> tuple[pd.DataFrame, pd.Series]:
         Z = self.foo[self.foo[self.time_variable].isin(self.time_optimize_ssr)].pivot(
             index=self.time_variable, columns=self.unit_variable, values=self.dependent
         )
