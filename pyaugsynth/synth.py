@@ -65,8 +65,8 @@ class Synth(WeightOptimizerMixin):
     ) -> None:
         if dataprep:
             self.dataprep = dataprep
-            X0, X1 = dataprep.compute_X0_X1()
-            Z0, Z1 = dataprep.compute_Z0_Z1()
+            X0, X1 = dataprep.make_covariate_arrs()
+            Z0, Z1 = dataprep.make_outcome_arrs()
         else:
             if X0 is None or X1 is None or Z0 is None or Z1 is None:
                 raise ValueError(
@@ -202,7 +202,7 @@ class Synth(WeightOptimizerMixin):
             raise ValueError("No weight matrix available: fit data first.")
         if self.V is None:
             raise ValueError("No V matrix available: fit data first.")
-        X0, X1 = self.dataprep.compute_X0_X1()
+        X0, X1 = self.dataprep.make_covariate_arrs()
 
         V = pd.Series(self.V, index=X1.index, name="V")
         treated = X1.rename("treated")
