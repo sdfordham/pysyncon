@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from scipy.optimize import minimize, Bounds, LinearConstraint
 
 from .dataprep import Dataprep
-from .my_types import OptimizerMethod_t
+from ._types import OptimizerMethod_t
 
 class WeightOptimizerMixin:
     @staticmethod

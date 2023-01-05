@@ -1,7 +1,7 @@
 import pandas as pd
 from typing import Iterable, Union, Optional
 
-from .my_types import TimeRange_t, PredictorsOp_t, SpecialPredictor_t
+from ._types import TimeRange_t, PredictorsOp_t, SpecialPredictor_t
 
 
 class Dataprep:
