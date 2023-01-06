@@ -1,6 +1,6 @@
 # pyaugsynth
 
-A python module that aims at replicating the methods in the R packages [Synth](https://CRAN.R-project.org/package=Synth) and [augsynth](https://github.com/ebenmichael/augsynth) and related to the SCM.
+A python module that aims at replicating the methods in the R packages [Synth](https://CRAN.R-project.org/package=Synth) and [augsynth](https://github.com/ebenmichael/augsynth) and some other methods related to the SCM.
 
 ## Usage
 
