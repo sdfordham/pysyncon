@@ -8,36 +8,34 @@ class Dataprep:
     def __init__(
         self,
         foo: pd.DataFrame,
-        predictors: Iterable[Union[int, str]],
+        predictors: list,
         predictors_op: PredictorsOp_t,
         time_predictors_prior: TimeRange_t,
         dependent: Union[int, str],
         unit_variable: Union[int, str],
         time_variable: Union[int, str],
         treatment_identifier: Union[int, str],
-        controls_identifier: Iterable[Union[int, str]],
+        controls_identifier: list,
         time_optimize_ssr: TimeRange_t,
-        special_predictors: Optional[Iterable[SpecialPredictor_t]] = None,
+        special_predictors: Optional[list[SpecialPredictor_t]] = None,
     ) -> None:
         if not isinstance(foo, pd.DataFrame):
             raise TypeError("foo must be pandas.DataFrame.")
         self.foo: pd.DataFrame = foo
 
-        if not isinstance(predictors, Iterable):
-            raise TypeError("predictors must be an iterable (list, tuple etc.)")
-        for p in predictors:
-            if p not in foo.columns:
-                raise ValueError(f"predictor {p} not in foo columns.")
+        if not isinstance(predictors, list):
+            raise TypeError(f"predictors must be a list.{type(predictors)}")
+        for predictor in predictors:
+            if predictor not in foo.columns:
+                raise ValueError(f"predictor {predictor} not in foo columns.")
         self.predictors: Iterable = predictors
 
         if predictors_op not in ("mean", "std", "median"):
             raise ValueError("predictors_op must be one of mean, std, median.")
         self.predictors_op: PredictorsOp_t = predictors_op
 
-        if not isinstance(time_predictors_prior, (list, tuple, range)):
-            raise TypeError(
-                "time_predictors_prior must be of type list, tuple or range."
-            )
+        if not isinstance(time_predictors_prior, (list, range)):
+            raise TypeError("time_predictors_prior must be of type list or range.")
         self.time_predictors_prior: TimeRange_t = time_predictors_prior
 
         if dependent not in foo.columns:
@@ -55,30 +53,28 @@ class Dataprep:
         uniq_ident = foo[unit_variable].unique()
         if treatment_identifier not in uniq_ident:
             raise ValueError(
-                f'treatment_identifier {treatment_identifier} not found in foo["{unit_variable}"]'
+                f'treatment_identifier {treatment_identifier} not found in foo["{unit_variable}"].'
             )
         self.treatment_identifier: Union[int, str] = treatment_identifier
 
-        if not isinstance(controls_identifier, Iterable):
-            raise TypeError(
-                "controls_identifier must be an iterable (list, tuple etc.)"
-            )
-        for ci in controls_identifier:
-            if ci not in uniq_ident:
+        if not isinstance(controls_identifier, list):
+            raise TypeError("controls_identifier must be a list.")
+        for control in controls_identifier:
+            if control == treatment_identifier:
+                raise ValueError("treatment_identifier in controls_identifier.")
+            if control not in uniq_ident:
                 raise ValueError(
-                    f'controls_identifier {ci} not found in foo["{unit_variable}"]'
+                    f'controls_identifier {control} not found in foo["{unit_variable}"].'
                 )
-        self.controls_identifier: Iterable[Union[int, str]] = controls_identifier
+        self.controls_identifier: Union[list, tuple] = controls_identifier
 
-        if not isinstance(time_optimize_ssr, (list, tuple, range)):
-            raise TypeError("time_optimize_ssr must be of type list, tuple or range.")
+        if not isinstance(time_optimize_ssr, (list, range)):
+            raise TypeError("time_optimize_ssr must be of type list or range.")
         self.time_optimize_ssr: TimeRange_t = time_optimize_ssr
 
         if special_predictors:
-            if not isinstance(special_predictors, Iterable):
-                raise TypeError(
-                    "special_predictors must be an iterable (list, tuple etc.)"
-                )
+            if not isinstance(special_predictors, list):
+                raise TypeError("special_predictors must be a list.")
             for el in special_predictors:
                 if not isinstance(el, tuple) or len(el) != 3:
                     raise ValueError(
@@ -89,9 +85,9 @@ class Dataprep:
                     raise ValueError(
                         f"{pred} in special_predictors not in foo columns."
                     )
-                if not isinstance(rng, (list, tuple, range)):
+                if not isinstance(rng, (list, range)):
                     raise TypeError(
-                        f"{rng} in special_predictors must be of type list, tuple or range."
+                        f"{rng} in special_predictors must be of type list or range."
                     )
                 if op not in ("mean", "std", "median"):
                     raise ValueError(
