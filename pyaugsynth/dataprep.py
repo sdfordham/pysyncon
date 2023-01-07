@@ -10,12 +10,12 @@ class Dataprep:
         foo: pd.DataFrame,
         predictors: list,
         predictors_op: PredictorsOp_t,
-        time_predictors_prior: TimeRange_t,
         dependent: Union[int, str],
         unit_variable: Union[int, str],
         time_variable: Union[int, str],
         treatment_identifier: Union[int, str],
         controls_identifier: list,
+        time_predictors_prior: TimeRange_t,
         time_optimize_ssr: TimeRange_t,
         special_predictors: Optional[list[SpecialPredictor_t]] = None,
     ) -> None:
@@ -33,10 +33,6 @@ class Dataprep:
         if predictors_op not in ("mean", "std", "median"):
             raise ValueError("predictors_op must be one of mean, std, median.")
         self.predictors_op: PredictorsOp_t = predictors_op
-
-        if not isinstance(time_predictors_prior, (list, range)):
-            raise TypeError("time_predictors_prior must be of type list or range.")
-        self.time_predictors_prior: TimeRange_t = time_predictors_prior
 
         if dependent not in foo.columns:
             raise ValueError(f"dependent {dependent} not in foo columns.")
@@ -67,6 +63,10 @@ class Dataprep:
                     f'controls_identifier {control} not found in foo["{unit_variable}"].'
                 )
         self.controls_identifier: Union[list, tuple] = controls_identifier
+
+        if not isinstance(time_predictors_prior, (list, range)):
+            raise TypeError("time_predictors_prior must be of type list or range.")
+        self.time_predictors_prior: TimeRange_t = time_predictors_prior
 
         if not isinstance(time_optimize_ssr, (list, range)):
             raise TypeError("time_optimize_ssr must be of type list or range.")

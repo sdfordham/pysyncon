@@ -19,12 +19,12 @@ class TestDataprep(unittest.TestCase):
         )
         self.predictors = ["predictor1"]
         self.predictors_op = "mean"
-        self.time_predictors_prior = [2, 3]
         self.dependent = "dependent"
         self.unit_variable = "name"
         self.time_variable = "time"
         self.treatment_identifier = 1
         self.controls_identifier = [2, 3]
+        self.time_predictors_prior = [2, 3]
         self.time_optimize_ssr = [1, 2, 3]
         self.special_predictors = [
             ("predictor1", [2], "mean"),
@@ -36,12 +36,12 @@ class TestDataprep(unittest.TestCase):
         kwargs = {
             "predictors": self.predictors,
             "predictors_op": self.predictors_op,
-            "time_predictors_prior": self.time_predictors_prior,
             "dependent": self.dependent,
             "unit_variable": self.unit_variable,
             "time_variable": self.time_variable,
             "treatment_identifier": self.treatment_identifier,
             "controls_identifier": self.controls_identifier,
+            "time_predictors_prior": self.time_predictors_prior,
             "time_optimize_ssr": self.time_optimize_ssr,
             "special_predictors": self.special_predictors,
         }
@@ -54,12 +54,12 @@ class TestDataprep(unittest.TestCase):
         kwargs = {
             "foo": self.foo,
             "predictors_op": self.predictors_op,
-            "time_predictors_prior": self.time_predictors_prior,
             "dependent": self.dependent,
             "unit_variable": self.unit_variable,
             "time_variable": self.time_variable,
             "treatment_identifier": self.treatment_identifier,
             "controls_identifier": self.controls_identifier,
+            "time_predictors_prior": self.time_predictors_prior,
             "time_optimize_ssr": self.time_optimize_ssr,
             "special_predictors": self.special_predictors,
         }
@@ -71,17 +71,99 @@ class TestDataprep(unittest.TestCase):
         kwargs = {
             "foo": self.foo,
             "predictors": self.predictors,
-            "time_predictors_prior": self.time_predictors_prior,
             "dependent": self.dependent,
             "unit_variable": self.unit_variable,
             "time_variable": self.time_variable,
             "treatment_identifier": self.treatment_identifier,
             "controls_identifier": self.controls_identifier,
+            "time_predictors_prior": self.time_predictors_prior,
             "time_optimize_ssr": self.time_optimize_ssr,
             "special_predictors": self.special_predictors,
         }
 
         self.assertRaises(ValueError, Dataprep, predictors_op="badval", **kwargs)
+
+    def test_init_arg_dependent(self):
+        kwargs = {
+            "foo": self.foo,
+            "predictors": self.predictors,
+            "predictors_op": self.predictors_op,
+            "unit_variable": self.unit_variable,
+            "time_variable": self.time_variable,
+            "treatment_identifier": self.treatment_identifier,
+            "controls_identifier": self.controls_identifier,
+            "time_predictors_prior": self.time_predictors_prior,
+            "time_optimize_ssr": self.time_optimize_ssr,
+            "special_predictors": self.special_predictors,
+        }
+
+        self.assertRaises(ValueError, Dataprep, dependent="badval", **kwargs)
+
+    def test_init_arg_unit_variable(self):
+        kwargs = {
+            "foo": self.foo,
+            "predictors": self.predictors,
+            "predictors_op": self.predictors_op,
+            "dependent": self.dependent,
+            "time_variable": self.time_variable,
+            "treatment_identifier": self.treatment_identifier,
+            "controls_identifier": self.controls_identifier,
+            "time_predictors_prior": self.time_predictors_prior,
+            "time_optimize_ssr": self.time_optimize_ssr,
+            "special_predictors": self.special_predictors,
+        }
+
+        self.assertRaises(ValueError, Dataprep, unit_variable="badval", **kwargs)
+
+    def test_init_arg_time_variable(self):
+        kwargs = {
+            "foo": self.foo,
+            "predictors": self.predictors,
+            "predictors_op": self.predictors_op,
+            "dependent": self.dependent,
+            "unit_variable": self.unit_variable,
+            "treatment_identifier": self.treatment_identifier,
+            "controls_identifier": self.controls_identifier,
+            "time_predictors_prior": self.time_predictors_prior,
+            "time_optimize_ssr": self.time_optimize_ssr,
+            "special_predictors": self.special_predictors,
+        }
+
+        self.assertRaises(ValueError, Dataprep, time_variable="badval", **kwargs)
+
+    def test_init_arg_treatment_identifier(self):
+        kwargs = {
+            "foo": self.foo,
+            "predictors": self.predictors,
+            "predictors_op": self.predictors_op,
+            "dependent": self.dependent,
+            "unit_variable": self.unit_variable,
+            "time_variable": self.time_variable,
+            "controls_identifier": self.controls_identifier,
+            "time_predictors_prior": self.time_predictors_prior,
+            "time_optimize_ssr": self.time_optimize_ssr,
+            "special_predictors": self.special_predictors,
+        }
+
+        self.assertRaises(ValueError, Dataprep, treatment_identifier="badval", **kwargs)
+
+    def test_init_arg_controls_identifier(self):
+        kwargs = {
+            "foo": self.foo,
+            "predictors": self.predictors,
+            "predictors_op": self.predictors_op,
+            "dependent": self.dependent,
+            "unit_variable": self.unit_variable,
+            "time_variable": self.time_variable,
+            "treatment_identifier": self.treatment_identifier,
+            "time_predictors_prior": self.time_predictors_prior,
+            "time_optimize_ssr": self.time_optimize_ssr,
+            "special_predictors": self.special_predictors,
+        }
+
+        self.assertRaises(TypeError, Dataprep, controls_identifier="badarg", **kwargs)
+        self.assertRaises(ValueError, Dataprep, controls_identifier=[1], **kwargs)
+        self.assertRaises(ValueError, Dataprep, controls_identifier=[5], **kwargs)
 
     def test_init_arg_time_predictors_prior(self):
         kwargs = {
@@ -99,99 +181,17 @@ class TestDataprep(unittest.TestCase):
 
         self.assertRaises(TypeError, Dataprep, time_predictors_prior="badarg", **kwargs)
 
-    def test_init_arg_dependent(self):
-        kwargs = {
-            "foo": self.foo,
-            "predictors": self.predictors,
-            "predictors_op": self.predictors_op,
-            "time_predictors_prior": self.time_predictors_prior,
-            "unit_variable": self.unit_variable,
-            "time_variable": self.time_variable,
-            "treatment_identifier": self.treatment_identifier,
-            "controls_identifier": self.controls_identifier,
-            "time_optimize_ssr": self.time_optimize_ssr,
-            "special_predictors": self.special_predictors,
-        }
-
-        self.assertRaises(ValueError, Dataprep, dependent="badval", **kwargs)
-
-    def test_init_arg_unit_variable(self):
-        kwargs = {
-            "foo": self.foo,
-            "predictors": self.predictors,
-            "predictors_op": self.predictors_op,
-            "time_predictors_prior": self.time_predictors_prior,
-            "dependent": self.dependent,
-            "time_variable": self.time_variable,
-            "treatment_identifier": self.treatment_identifier,
-            "controls_identifier": self.controls_identifier,
-            "time_optimize_ssr": self.time_optimize_ssr,
-            "special_predictors": self.special_predictors,
-        }
-
-        self.assertRaises(ValueError, Dataprep, unit_variable="badval", **kwargs)
-
-    def test_init_arg_time_variable(self):
-        kwargs = {
-            "foo": self.foo,
-            "predictors": self.predictors,
-            "predictors_op": self.predictors_op,
-            "time_predictors_prior": self.time_predictors_prior,
-            "dependent": self.dependent,
-            "unit_variable": self.unit_variable,
-            "treatment_identifier": self.treatment_identifier,
-            "controls_identifier": self.controls_identifier,
-            "time_optimize_ssr": self.time_optimize_ssr,
-            "special_predictors": self.special_predictors,
-        }
-
-        self.assertRaises(ValueError, Dataprep, time_variable="badval", **kwargs)
-
-    def test_init_arg_treatment_identifier(self):
-        kwargs = {
-            "foo": self.foo,
-            "predictors": self.predictors,
-            "predictors_op": self.predictors_op,
-            "time_predictors_prior": self.time_predictors_prior,
-            "dependent": self.dependent,
-            "unit_variable": self.unit_variable,
-            "time_variable": self.time_variable,
-            "controls_identifier": self.controls_identifier,
-            "time_optimize_ssr": self.time_optimize_ssr,
-            "special_predictors": self.special_predictors,
-        }
-
-        self.assertRaises(ValueError, Dataprep, treatment_identifier="badval", **kwargs)
-
-    def test_init_arg_controls_identifier(self):
-        kwargs = {
-            "foo": self.foo,
-            "predictors": self.predictors,
-            "predictors_op": self.predictors_op,
-            "time_predictors_prior": self.time_predictors_prior,
-            "dependent": self.dependent,
-            "unit_variable": self.unit_variable,
-            "time_variable": self.time_variable,
-            "treatment_identifier": self.treatment_identifier,
-            "time_optimize_ssr": self.time_optimize_ssr,
-            "special_predictors": self.special_predictors,
-        }
-
-        self.assertRaises(TypeError, Dataprep, controls_identifier="badarg", **kwargs)
-        self.assertRaises(ValueError, Dataprep, controls_identifier=[1], **kwargs)
-        self.assertRaises(ValueError, Dataprep, controls_identifier=[5], **kwargs)
-
     def test_init_arg_time_optimize_ssr(self):
         kwargs = {
             "foo": self.foo,
             "predictors": self.predictors,
             "predictors_op": self.predictors_op,
-            "time_predictors_prior": self.time_predictors_prior,
             "dependent": self.dependent,
             "unit_variable": self.unit_variable,
             "time_variable": self.time_variable,
             "treatment_identifier": self.treatment_identifier,
             "controls_identifier": self.controls_identifier,
+            "time_predictors_prior": self.time_predictors_prior,
             "special_predictors": self.special_predictors,
         }
 
@@ -202,12 +202,12 @@ class TestDataprep(unittest.TestCase):
             "foo": self.foo,
             "predictors": self.predictors,
             "predictors_op": self.predictors_op,
-            "time_predictors_prior": self.time_predictors_prior,
             "dependent": self.dependent,
             "unit_variable": self.unit_variable,
             "time_variable": self.time_variable,
             "treatment_identifier": self.treatment_identifier,
             "controls_identifier": self.controls_identifier,
+            "time_predictors_prior": self.time_predictors_prior,
             "time_optimize_ssr": self.time_optimize_ssr,
         }
 
@@ -232,12 +232,12 @@ class TestDataprep(unittest.TestCase):
         kwargs = {
             "foo": self.foo,
             "predictors": self.predictors,
-            "time_predictors_prior": self.time_predictors_prior,
             "dependent": self.dependent,
             "unit_variable": self.unit_variable,
             "time_variable": self.time_variable,
             "treatment_identifier": self.treatment_identifier,
             "controls_identifier": self.controls_identifier,
+            "time_predictors_prior": self.time_predictors_prior,
             "time_optimize_ssr": self.time_optimize_ssr,
             "special_predictors": self.special_predictors,
         }
@@ -298,12 +298,12 @@ class TestDataprep(unittest.TestCase):
             "foo": self.foo,
             "predictors": self.predictors,
             "predictors_op": self.predictors_op,
-            "time_predictors_prior": self.time_predictors_prior,
             "dependent": self.dependent,
             "unit_variable": self.unit_variable,
             "time_variable": self.time_variable,
             "treatment_identifier": self.treatment_identifier,
             "controls_identifier": self.controls_identifier,
+            "time_predictors_prior": self.time_predictors_prior,
             "time_optimize_ssr": self.time_optimize_ssr,
             "special_predictors": self.special_predictors,
         }
