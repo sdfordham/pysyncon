@@ -1,11 +1,11 @@
 import pandas as pd
 from pandas._typing import Axes
-from typing import Iterable, Union, Optional, Literal, Sequence, Mapping
+from typing import Any, Iterable, Union, Optional, Literal, Sequence, Mapping
 
 
 PredictorsOp_t = Literal["mean", "std", "median"]
 SpecialPredictor_t = tuple[
-    str, Union[pd.Series, pd.DataFrame, Sequence, Mapping], PredictorsOp_t
+    Any, Union[pd.Series, pd.DataFrame, Sequence, Mapping], PredictorsOp_t
 ]
 
 
@@ -15,10 +15,10 @@ class Dataprep:
         foo: pd.DataFrame,
         predictors: Axes,
         predictors_op: PredictorsOp_t,
-        dependent,
-        unit_variable,
-        time_variable,
-        treatment_identifier,
+        dependent: Any,
+        unit_variable: Any,
+        time_variable: Any,
+        treatment_identifier: Any,
         controls_identifier: Union[pd.Series, pd.DataFrame, Sequence, Mapping],
         time_predictors_prior: Union[pd.Series, pd.DataFrame, Sequence, Mapping],
         time_optimize_ssr: Union[pd.Series, pd.DataFrame, Sequence, Mapping],
