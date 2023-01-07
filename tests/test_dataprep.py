@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from pyaugsynth import Dataprep
+from pysyncon import Dataprep
 
 
 class TestDataprep(unittest.TestCase):
