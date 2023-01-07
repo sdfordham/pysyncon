@@ -123,10 +123,10 @@ class Synth(WeightOptimizerMixin):
     def path_plot(
         self, treatment_time: Optional[int] = None, grid: bool = True
     ) -> None:
+        if self.W is None:
+            raise ValueError("No weight matrix available; fit data first.")
         if self.dataprep is None:
             raise ValueError("dataprep must be set for automatic plots.")
-        if self.W is None:
-            raise ValueError("Fit data before plotting.")
 
         ts_all = self.dataprep.foo.pivot(
             index=self.dataprep.time_variable,
@@ -161,7 +161,7 @@ class Synth(WeightOptimizerMixin):
         if self.dataprep is None:
             raise ValueError("dataprep must be set for automatic plots.")
         if self.W is None:
-            raise ValueError("Fit data before plotting.")
+            raise ValueError("No weight matrix available; fit data first.")
 
         ts_all = self.dataprep.foo.pivot(
             index=self.dataprep.time_variable,
@@ -188,7 +188,7 @@ class Synth(WeightOptimizerMixin):
         if self.dataprep is None:
             raise ValueError("dataprep must be set for weight summary.")
         if self.W is None:
-            raise ValueError("No weight matrix available: fit data first.")
+            raise ValueError("No weight matrix available; fit data first.")
         weights_ser = pd.Series(
             self.W, index=list(self.dataprep.controls_identifier)
         ).round(round)
@@ -201,7 +201,7 @@ class Synth(WeightOptimizerMixin):
         if self.W is None:
             raise ValueError("No weight matrix available: fit data first.")
         if self.V is None:
-            raise ValueError("No V matrix available: fit data first.")
+            raise ValueError("No V matrix available; fit data first.")
         X0, X1 = self.dataprep.make_covariate_mats()
 
         V = pd.Series(self.V, index=X1.index, name="V")
