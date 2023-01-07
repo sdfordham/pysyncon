@@ -114,10 +114,6 @@ class Dataprep:
         for ci in self.controls_identifier:
             this_control = list()
             for sp_pred, sp_period, sp_op in self.special_predictors:
-                if not isinstance(sp_pred, str):
-                    raise TypeError("Elements of predictors must be str.")
-                if sp_pred not in self.foo.columns:
-                    raise ValueError(f"{sp_pred} not in dataframe column names")
                 mask = (self.foo[self.unit_variable] == ci) & (
                     self.foo[self.time_variable].isin(sp_period)
                 )
