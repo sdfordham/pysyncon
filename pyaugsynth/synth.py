@@ -7,6 +7,7 @@ from scipy.optimize import minimize, Bounds, LinearConstraint
 from .dataprep import Dataprep
 from ._types import OptimizerMethod_t
 
+
 class WeightOptimizerMixin:
     @staticmethod
     def w_optimize(
@@ -99,7 +100,7 @@ class Synth(WeightOptimizerMixin):
             X_arr = np.hstack([np.array([1] * X_arr.shape[1], ndmin=2).T, X_arr.T])
             Z_arr = np.hstack([Z0_arr, Z1_arr.reshape(-1, 1)])
             beta = np.linalg.inv(X_arr.T @ X_arr) @ X_arr.T @ Z_arr.T
-            beta = beta[1:,]
+            beta = beta[1:,]  # fmt: skip
 
             x0 = np.diag(beta @ beta.T)
             x0 = x0 / sum(x0)
