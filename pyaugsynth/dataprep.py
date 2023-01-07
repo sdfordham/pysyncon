@@ -101,25 +101,25 @@ class Dataprep:
             return X0_nonspecial, X1_nonspecial
 
         X0_special = list()
-        for ci in self.controls_identifier:
+        for control in self.controls_identifier:
             this_control = list()
-            for sp_pred, sp_period, sp_op in self.special_predictors:
-                mask = (self.foo[self.unit_variable] == ci) & (
-                    self.foo[self.time_variable].isin(sp_period)
+            for predictor, time_period, op in self.special_predictors:
+                mask = (self.foo[self.unit_variable] == control) & (
+                    self.foo[self.time_variable].isin(time_period)
                 )
-                if sp_op == "mean":
-                    this_control.append(self.foo[mask][sp_pred].mean())
-                elif sp_op == "std":
-                    this_control.append(self.foo[mask][sp_pred].std())
-                elif sp_op == "median":
-                    this_control.append(self.foo[mask][sp_pred].median())
+                if op == "mean":
+                    this_control.append(self.foo[mask][predictor].mean())
+                elif op == "std":
+                    this_control.append(self.foo[mask][predictor].std())
+                elif op == "median":
+                    this_control.append(self.foo[mask][predictor].median())
                 else:
                     raise ValueError(f"Invalid predictors_op: {self.predictors_op}")
             X0_special.append(this_control)
 
         X0_special_columns = list()
-        for i, (sp_pred, _, _) in enumerate(self.special_predictors, 1):
-            X0_special_columns.append(f"special.{i}.{sp_pred}")
+        for idx, (predictor, _, _) in enumerate(self.special_predictors, 1):
+            X0_special_columns.append(f"special.{idx}.{predictor}")
 
         X0_special = pd.DataFrame(
             X0_special, columns=X0_special_columns, index=self.controls_identifier
@@ -127,16 +127,16 @@ class Dataprep:
         X0 = pd.concat([X0_nonspecial, X0_special], axis=0)
 
         X1_special = list()
-        for sp_pred, sp_period, sp_op in self.special_predictors:
+        for predictor, time_period, op in self.special_predictors:
             mask = (self.foo[self.unit_variable] == self.treatment_identifier) & (
-                self.foo[self.time_variable].isin(sp_period)
+                self.foo[self.time_variable].isin(time_period)
             )
-            if sp_op == "mean":
-                X1_special.append(self.foo[mask][sp_pred].mean())
-            elif sp_op == "std":
-                X1_special.append(self.foo[mask][sp_pred].std())
-            elif sp_op == "median":
-                X1_special.append(self.foo[mask][sp_pred].median())
+            if op == "mean":
+                X1_special.append(self.foo[mask][predictor].mean())
+            elif op == "std":
+                X1_special.append(self.foo[mask][predictor].std())
+            elif op == "median":
+                X1_special.append(self.foo[mask][predictor].median())
             else:
                 raise ValueError(f"Invalid predictors_op: {self.predictors_op}")
 
