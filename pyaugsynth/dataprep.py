@@ -1,60 +1,63 @@
 import pandas as pd
-from typing import Iterable, Union, Optional
+from pandas._typing import Axes
+from typing import Iterable, Union, Optional, Literal, Sequence, Mapping
 
-from ._types import TimeRange_t, PredictorsOp_t, SpecialPredictor_t
+
+PredictorsOp_t = Literal["mean", "std", "median"]
+SpecialPredictor_t = tuple[
+    str, Union[pd.Series, pd.DataFrame, Sequence, Mapping], PredictorsOp_t
+]
 
 
 class Dataprep:
     def __init__(
         self,
         foo: pd.DataFrame,
-        predictors: list,
+        predictors: Axes,
         predictors_op: PredictorsOp_t,
-        dependent: Union[int, str],
-        unit_variable: Union[int, str],
-        time_variable: Union[int, str],
-        treatment_identifier: Union[int, str],
-        controls_identifier: list,
-        time_predictors_prior: TimeRange_t,
-        time_optimize_ssr: TimeRange_t,
-        special_predictors: Optional[list[SpecialPredictor_t]] = None,
+        dependent,
+        unit_variable,
+        time_variable,
+        treatment_identifier,
+        controls_identifier: Union[pd.Series, pd.DataFrame, Sequence, Mapping],
+        time_predictors_prior: Union[pd.Series, pd.DataFrame, Sequence, Mapping],
+        time_optimize_ssr: Union[pd.Series, pd.DataFrame, Sequence, Mapping],
+        special_predictors: Optional[Iterable[SpecialPredictor_t]] = None,
     ) -> None:
         if not isinstance(foo, pd.DataFrame):
             raise TypeError("foo must be pandas.DataFrame.")
-        self.foo: pd.DataFrame = foo
+        self.foo = foo
 
-        if not isinstance(predictors, list):
-            raise TypeError(f"predictors must be a list.{type(predictors)}")
         for predictor in predictors:
             if predictor not in foo.columns:
                 raise ValueError(f"predictor {predictor} not in foo columns.")
-        self.predictors: Iterable = predictors
+        self.predictors = predictors
 
         if predictors_op not in ("mean", "std", "median"):
             raise ValueError("predictors_op must be one of mean, std, median.")
-        self.predictors_op: PredictorsOp_t = predictors_op
+        self.predictors_op = predictors_op
 
         if dependent not in foo.columns:
             raise ValueError(f"dependent {dependent} not in foo columns.")
-        self.dependent: Union[int, str] = dependent
+        self.dependent = dependent
 
         if unit_variable not in foo.columns:
             raise ValueError(f"unit_variable {unit_variable} not in foo columns.")
-        self.unit_variable: Union[int, str] = unit_variable
+        self.unit_variable = unit_variable
 
         if time_variable not in foo.columns:
             raise ValueError(f"time_variable {time_variable} not in foo columns.")
-        self.time_variable: Union[int, str] = time_variable
+        self.time_variable = time_variable
 
         uniq_ident = foo[unit_variable].unique()
         if treatment_identifier not in uniq_ident:
             raise ValueError(
                 f'treatment_identifier {treatment_identifier} not found in foo["{unit_variable}"].'
             )
-        self.treatment_identifier: Union[int, str] = treatment_identifier
+        self.treatment_identifier = treatment_identifier
 
-        if not isinstance(controls_identifier, list):
-            raise TypeError("controls_identifier must be a list.")
+        if not isinstance(controls_identifier, Iterable):
+            raise TypeError("controls_identifier should be an Iterable")
         for control in controls_identifier:
             if control == treatment_identifier:
                 raise ValueError("treatment_identifier in controls_identifier.")
@@ -62,45 +65,32 @@ class Dataprep:
                 raise ValueError(
                     f'controls_identifier {control} not found in foo["{unit_variable}"].'
                 )
-        self.controls_identifier: Union[list, tuple] = controls_identifier
+        self.controls_identifier = controls_identifier
 
-        if not isinstance(time_predictors_prior, (list, range)):
-            raise TypeError("time_predictors_prior must be of type list or range.")
-        self.time_predictors_prior: TimeRange_t = time_predictors_prior
-
-        if not isinstance(time_optimize_ssr, (list, range)):
-            raise TypeError("time_optimize_ssr must be of type list or range.")
-        self.time_optimize_ssr: TimeRange_t = time_optimize_ssr
+        self.time_predictors_prior = time_predictors_prior
+        self.time_optimize_ssr = time_optimize_ssr
 
         if special_predictors:
-            if not isinstance(special_predictors, list):
-                raise TypeError("special_predictors must be a list.")
             for el in special_predictors:
                 if not isinstance(el, tuple) or len(el) != 3:
                     raise ValueError(
                         "Elements of special_predictors should be tuples of length 3."
                     )
-                pred, rng, op = el
-                if pred not in foo.columns:
+                predictor, _, op = el
+                if predictor not in foo.columns:
                     raise ValueError(
-                        f"{pred} in special_predictors not in foo columns."
-                    )
-                if not isinstance(rng, (list, range)):
-                    raise TypeError(
-                        f"{rng} in special_predictors must be of type list or range."
+                        f"{predictor} in special_predictors not in foo columns."
                     )
                 if op not in ("mean", "std", "median"):
                     raise ValueError(
                         f"{op} in special_predictors must be one of mean, std, median."
                     )
-        self.special_predictors: Optional[
-            Iterable[SpecialPredictor_t]
-        ] = special_predictors
+        self.special_predictors = special_predictors
 
     def make_covariate_mats(self) -> tuple[pd.DataFrame, pd.Series]:
         X_nonspecial = (
             self.foo[self.foo[self.time_variable].isin(self.time_predictors_prior)]
-            .groupby(self.unit_variable)[list(self.predictors)]
+            .groupby(self.unit_variable)[self.predictors]
             .agg(self.predictors_op)
             .T
         )

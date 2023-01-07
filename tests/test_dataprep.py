@@ -64,7 +64,6 @@ class TestDataprep(unittest.TestCase):
             "special_predictors": self.special_predictors,
         }
 
-        self.assertRaises(TypeError, Dataprep, predictors="badarg", **kwargs)
         self.assertRaises(ValueError, Dataprep, predictors=["badval"], **kwargs)
 
     def test_init_arg_predictors_op(self):
@@ -161,41 +160,8 @@ class TestDataprep(unittest.TestCase):
             "special_predictors": self.special_predictors,
         }
 
-        self.assertRaises(TypeError, Dataprep, controls_identifier="badarg", **kwargs)
         self.assertRaises(ValueError, Dataprep, controls_identifier=[1], **kwargs)
         self.assertRaises(ValueError, Dataprep, controls_identifier=[5], **kwargs)
-
-    def test_init_arg_time_predictors_prior(self):
-        kwargs = {
-            "foo": self.foo,
-            "predictors": self.predictors,
-            "predictors_op": self.predictors_op,
-            "dependent": self.dependent,
-            "unit_variable": self.unit_variable,
-            "time_variable": self.time_variable,
-            "treatment_identifier": self.treatment_identifier,
-            "controls_identifier": self.controls_identifier,
-            "time_optimize_ssr": self.time_optimize_ssr,
-            "special_predictors": self.special_predictors,
-        }
-
-        self.assertRaises(TypeError, Dataprep, time_predictors_prior="badarg", **kwargs)
-
-    def test_init_arg_time_optimize_ssr(self):
-        kwargs = {
-            "foo": self.foo,
-            "predictors": self.predictors,
-            "predictors_op": self.predictors_op,
-            "dependent": self.dependent,
-            "unit_variable": self.unit_variable,
-            "time_variable": self.time_variable,
-            "treatment_identifier": self.treatment_identifier,
-            "controls_identifier": self.controls_identifier,
-            "time_predictors_prior": self.time_predictors_prior,
-            "special_predictors": self.special_predictors,
-        }
-
-        self.assertRaises(TypeError, Dataprep, time_optimize_ssr="badarg", **kwargs)
 
     def test_init_arg_special_predictors(self):
         kwargs = {
@@ -211,14 +177,13 @@ class TestDataprep(unittest.TestCase):
             "time_optimize_ssr": self.time_optimize_ssr,
         }
 
-        self.assertRaises(TypeError, Dataprep, special_predictors="badarg", **kwargs)
         self.assertRaises(
             ValueError, Dataprep, special_predictors=[("predictor1", [1])], **kwargs
         )
         self.assertRaises(
-            TypeError,
+            ValueError,
             Dataprep,
-            special_predictors=[("predictor1", "badarg", "mean")],
+            special_predictors=[("badval", [1], "mean")],
             **kwargs,
         )
         self.assertRaises(
