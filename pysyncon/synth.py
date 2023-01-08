@@ -80,7 +80,7 @@ class Synth(WeightOptimizerMixin):
                 )
 
         X = pd.concat([X0, X1], axis=1)
-        X_scaled = X.divide(X.var(axis=1).pow(0.5), axis=0)
+        X_scaled = X.divide(X.std(axis=1), axis=0)
         X0_scaled, X1_scaled = X_scaled.drop(columns=X1.name), X_scaled[X1.name]
 
         X0_arr = X0_scaled.to_numpy()
