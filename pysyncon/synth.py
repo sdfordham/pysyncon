@@ -104,9 +104,16 @@ class Synth(WeightOptimizerMixin):
             X_arr = np.hstack([X0_arr, X1_arr.reshape(-1, 1)])
             X_arr = np.hstack([np.array([1] * X_arr.shape[1], ndmin=2).T, X_arr.T])
             Z_arr = np.hstack([Z0_arr, Z1_arr.reshape(-1, 1)])
-            beta = np.linalg.inv(X_arr.T @ X_arr) @ X_arr.T @ Z_arr.T
-            beta = beta[1:,]  # fmt: skip
 
+            try:
+                beta = np.linalg.inv(X_arr.T @ X_arr) @ X_arr.T @ Z_arr.T
+            except np.linalg.LinAlgError:
+                raise ValueError(
+                    'Could not invert X^T.X required for `optim_initial="ols"`, '
+                    'probably there is collinearity in your data.'
+                )
+
+            beta = beta[1:,]  # fmt: skip
             x0 = np.diag(beta @ beta.T)
             x0 = x0 / sum(x0)
         else:
