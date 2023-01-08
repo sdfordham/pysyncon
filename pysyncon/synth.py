@@ -189,13 +189,14 @@ class Synth(WeightOptimizerMixin):
         plt.show()
 
     def weights(self, threshold: float = 0.0, round: int = 3) -> pd.Series:
-        if self.dataprep is None:
-            raise ValueError("dataprep must be set for weight summary.")
         if self.W is None:
             raise ValueError("No weight matrix available; fit data first.")
-        weights_ser = pd.Series(
-            self.W, index=list(self.dataprep.controls_identifier)
-        ).rename("weights")
+        if self.dataprep is None:
+            weights_ser = pd.Series(self.W).rename("weights")
+        else:
+            weights_ser = pd.Series(
+                self.W, index=list(self.dataprep.controls_identifier)
+            ).rename("weights")
         return weights_ser[weights_ser >= threshold].round(round)
 
     def summary(self, round: int = 3) -> pd.DataFrame:
