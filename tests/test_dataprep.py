@@ -274,7 +274,30 @@ class TestDataprep(unittest.TestCase):
         }
 
         dataprep = Dataprep(**kwargs)
+        # All time
         Z0, Z1 = dataprep.make_outcome_mats()
+
+        # Treated
+        mask_treated = self.foo[self.unit_variable] == self.treatment_identifier
+        pd.testing.assert_series_equal(
+            self.foo[mask_treated]
+            .set_index(self.time_variable)[self.dependent]
+            .rename(self.treatment_identifier),
+            Z1,
+        )
+
+        # Control
+        for control in self.controls_identifier:
+            mask = self.foo[self.unit_variable] == control
+            pd.testing.assert_series_equal(
+                self.foo[mask]
+                .set_index(self.time_variable)[self.dependent]
+                .rename(control),
+                Z0[control],
+            )
+        
+        # Set time
+        Z0, Z1 = dataprep.make_outcome_mats(time_period=self.time_optimize_ssr)
 
         # Treated
         mask_treated = (self.foo[self.unit_variable] == self.treatment_identifier) & (

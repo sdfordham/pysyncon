@@ -1,11 +1,16 @@
 from typing import Union, Optional, Literal
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize, Bounds, LinearConstraint
 
-from .dataprep import Dataprep
-from ._types import OptimizerMethod_t
+from .dataprep import Dataprep, IsinArg_t
+
+
+OptimizerMethod_t = Literal[
+    "Nelder-Mead", "Powell", "CG", "BFGS", "L-BFGS-B", "TNC", "COBYLA", "trust-constr"
+]
 
 
 class WeightOptimizerMixin:
@@ -16,7 +21,7 @@ class WeightOptimizerMixin:
         X1: np.ndarray,
         Z0: np.ndarray,
         Z1: np.ndarray,
-        qp_method: OptimizerMethod_t = "SLSQP",
+        qp_method: Literal["SLSQP"] = "SLSQP",
         qp_options: dict = {"maxiter": 1000},
     ) -> tuple[np.ndarray, float, float]:
         _, n_c = X0.shape
@@ -122,27 +127,16 @@ class Synth(WeightOptimizerMixin):
         self.W, self.loss_W, self.V, self.loss_V = W, loss_W, V_mat.diagonal(), loss_V
 
     def path_plot(
-        self, treatment_time: Optional[int] = None, grid: bool = True
+        self, time_period: Optional[IsinArg_t] = None, treatment_time: Optional[int] = None, grid: bool = True
     ) -> None:
         if self.W is None:
             raise ValueError("No weight matrix available; fit data first.")
         if self.dataprep is None:
             raise ValueError("dataprep must be set for automatic plots.")
 
-        ts_all = self.dataprep.foo.pivot(
-            index=self.dataprep.time_variable,
-            columns=self.dataprep.unit_variable,
-            values=self.dataprep.dependent,
-        )
-
-        ts_treated = ts_all[self.dataprep.treatment_identifier]
-        ts_treated.name = "treated"
-
-        ts_units = ts_all[list(self.dataprep.controls_identifier)]
-        ts_synthetic = (ts_units * self.W).sum(axis=1)
-        ts_synthetic.name = "synthetic"
-
-        ts_treated.plot(ylabel=self.dataprep.dependent, color="black", linewidth=1)
+        Z0, Z1 = self.dataprep.make_outcome_mats(time_period=time_period)
+        ts_synthetic = (Z0 * self.W).sum(axis=1).rename("Synthetic")
+        Z1.plot(ylabel=self.dataprep.dependent, color="black", linewidth=1)
         ts_synthetic.plot(
             ylabel=self.dataprep.dependent,
             color="black",
@@ -157,29 +151,19 @@ class Synth(WeightOptimizerMixin):
         plt.show()
 
     def gaps_plot(
-        self, treatment_time: Optional[int] = None, grid: bool = True
+        self, time_period: Optional[IsinArg_t] = None, treatment_time: Optional[int] = None, grid: bool = True
     ) -> None:
         if self.dataprep is None:
             raise ValueError("dataprep must be set for automatic plots.")
         if self.W is None:
             raise ValueError("No weight matrix available; fit data first.")
 
-        ts_all = self.dataprep.foo.pivot(
-            index=self.dataprep.time_variable,
-            columns=self.dataprep.unit_variable,
-            values=self.dataprep.dependent,
-        )
-
-        ts_treated = ts_all[self.dataprep.treatment_identifier]
-        ts_units = ts_all[list(self.dataprep.controls_identifier)]
-        ts_synthetic = (ts_units * self.W).sum(axis=1)
-        ts_gap = ts_treated - ts_synthetic
-
+        Z0, Z1 = self.dataprep.make_outcome_mats(time_period=time_period)
+        ts_synthetic = (Z0 * self.W).sum(axis=1)
+        ts_gap = Z1 - ts_synthetic
         ts_gap.plot(ylabel=self.dataprep.dependent, color="black", linewidth=1)
 
-        plt.hlines(
-            y=0, xmin=min(ts_gap.index), xmax=max(ts_gap.index), linestyle="dashed"
-        )
+        plt.hlines(y=0, xmin=min(ts_gap.index), xmax=max(ts_gap.index), color="black", linestyle="dashed")
         if treatment_time:
             plt.axvline(x=treatment_time, ymin=0.05, ymax=0.95, linestyle="dashed")
         plt.grid(grid)
@@ -192,9 +176,8 @@ class Synth(WeightOptimizerMixin):
             raise ValueError("No weight matrix available; fit data first.")
         weights_ser = pd.Series(
             self.W, index=list(self.dataprep.controls_identifier)
-        ).round(round)
-        weights_ser.name = "weights"
-        return weights_ser[weights_ser >= threshold]
+        ).rename("weights")
+        return weights_ser[weights_ser >= threshold].round(round)
 
     def summary(self, round: int = 3) -> pd.DataFrame:
         if self.dataprep is None:

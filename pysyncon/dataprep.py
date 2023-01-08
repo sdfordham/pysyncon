@@ -1,13 +1,14 @@
+from typing import Any, Iterable, Union, Optional, Literal, Sequence, Mapping
+
 import pandas as pd
 from pandas._typing import Axes
-from typing import Any, Iterable, Union, Optional, Literal, Sequence, Mapping
 
 
 PredictorsOp_t = Literal["mean", "std", "median"]
+IsinArg_t = Union[Iterable, pd.Series, dict]
 SpecialPredictor_t = tuple[
     Any, Union[pd.Series, pd.DataFrame, Sequence, Mapping], PredictorsOp_t
 ]
-
 
 class Dataprep:
     def __init__(
@@ -19,9 +20,9 @@ class Dataprep:
         unit_variable: Any,
         time_variable: Any,
         treatment_identifier: Any,
-        controls_identifier: Union[pd.Series, pd.DataFrame, Sequence, Mapping],
-        time_predictors_prior: Union[pd.Series, pd.DataFrame, Sequence, Mapping],
-        time_optimize_ssr: Union[pd.Series, pd.DataFrame, Sequence, Mapping],
+        controls_identifier: Iterable,
+        time_predictors_prior: IsinArg_t,
+        time_optimize_ssr: IsinArg_t,
         special_predictors: Optional[Iterable[SpecialPredictor_t]] = None,
     ) -> None:
         if not isinstance(foo, pd.DataFrame):
@@ -146,8 +147,10 @@ class Dataprep:
         X1 = pd.concat([X1_nonspecial, X1_special], axis=0)
         return X0, X1
 
-    def make_outcome_mats(self) -> tuple[pd.DataFrame, pd.Series]:
-        Z = self.foo[self.foo[self.time_variable].isin(self.time_optimize_ssr)].pivot(
+    def make_outcome_mats(self, time_period: Optional[IsinArg_t] = None) -> tuple[pd.DataFrame, pd.Series]:
+        time_period = time_period if time_period else self.time_optimize_ssr
+        
+        Z = self.foo[self.foo[self.time_variable].isin(time_period)].pivot(
             index=self.time_variable, columns=self.unit_variable, values=self.dependent
         )
         Z0, Z1 = Z[list(self.controls_identifier)], Z[self.treatment_identifier]
