@@ -2,6 +2,8 @@
 
 A python module for the synthetic control method that provides the same functionality as the R package [Synth](https://CRAN.R-project.org/package=Synth) and eventually [augsynth](https://github.com/ebenmichael/augsynth) and some other methods related.
 
+Install it using pip: ``python -m pip install pysyncon``.
+
 ## Usage
 
 In the examples folder are notebooks reproducing the weights from:
