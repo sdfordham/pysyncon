@@ -10,6 +10,7 @@ SpecialPredictor_t = tuple[
     Any, Union[pd.Series, pd.DataFrame, Sequence, Mapping], PredictorsOp_t
 ]
 
+
 class Dataprep:
     def __init__(
         self,
@@ -147,9 +148,11 @@ class Dataprep:
         X1 = pd.concat([X1_nonspecial, X1_special], axis=0)
         return X0, X1
 
-    def make_outcome_mats(self, time_period: Optional[IsinArg_t] = None) -> tuple[pd.DataFrame, pd.Series]:
+    def make_outcome_mats(
+        self, time_period: Optional[IsinArg_t] = None
+    ) -> tuple[pd.DataFrame, pd.Series]:
         time_period = time_period if time_period else self.time_optimize_ssr
-        
+
         Z = self.foo[self.foo[self.time_variable].isin(time_period)].pivot(
             index=self.time_variable, columns=self.unit_variable, values=self.dependent
         )
