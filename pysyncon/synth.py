@@ -192,11 +192,11 @@ class Synth(WeightOptimizerMixin):
         if self.W is None:
             raise ValueError("No weight matrix available; fit data first.")
         if self.dataprep is None:
-            weights_ser = pd.Series(self.W).rename("weights")
+            weights_ser = pd.Series(self.W, name="weights")
         else:
             weights_ser = pd.Series(
-                self.W, index=list(self.dataprep.controls_identifier)
-            ).rename("weights")
+                self.W, index=list(self.dataprep.controls_identifier), name="weights"
+            )
         return weights_ser[weights_ser >= threshold].round(round)
 
     def summary(self, round: int = 3) -> pd.DataFrame:
