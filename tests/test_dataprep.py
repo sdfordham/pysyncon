@@ -275,7 +275,8 @@ class TestDataprep(unittest.TestCase):
 
         dataprep = Dataprep(**kwargs)
         # All time
-        Z0, Z1 = dataprep.make_outcome_mats()
+        all_time = dataprep.foo[dataprep.time_variable].unique()
+        Z0, Z1 = dataprep.make_outcome_mats(time_period=all_time)
 
         # Treated
         mask_treated = self.foo[self.unit_variable] == self.treatment_identifier
@@ -297,7 +298,7 @@ class TestDataprep(unittest.TestCase):
             )
         
         # Set time
-        Z0, Z1 = dataprep.make_outcome_mats(time_period=self.time_optimize_ssr)
+        Z0, Z1 = dataprep.make_outcome_mats()
 
         # Treated
         mask_treated = (self.foo[self.unit_variable] == self.treatment_identifier) & (

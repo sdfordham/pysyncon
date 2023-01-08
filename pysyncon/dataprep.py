@@ -151,7 +151,7 @@ class Dataprep:
     def make_outcome_mats(
         self, time_period: Optional[IsinArg_t] = None
     ) -> tuple[pd.DataFrame, pd.Series]:
-        time_period = time_period if time_period else self.time_optimize_ssr
+        time_period = time_period if time_period is not None else self.time_optimize_ssr
 
         Z = self.foo[self.foo[self.time_variable].isin(time_period)].pivot(
             index=self.time_variable, columns=self.unit_variable, values=self.dependent
