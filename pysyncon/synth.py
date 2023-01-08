@@ -127,7 +127,10 @@ class Synth(WeightOptimizerMixin):
         self.W, self.loss_W, self.V, self.loss_V = W, loss_W, V_mat.diagonal(), loss_V
 
     def path_plot(
-        self, time_period: Optional[IsinArg_t] = None, treatment_time: Optional[int] = None, grid: bool = True
+        self,
+        time_period: Optional[IsinArg_t] = None,
+        treatment_time: Optional[int] = None,
+        grid: bool = True,
     ) -> None:
         if self.W is None:
             raise ValueError("No weight matrix available; fit data first.")
@@ -151,7 +154,10 @@ class Synth(WeightOptimizerMixin):
         plt.show()
 
     def gaps_plot(
-        self, time_period: Optional[IsinArg_t] = None, treatment_time: Optional[int] = None, grid: bool = True
+        self,
+        time_period: Optional[IsinArg_t] = None,
+        treatment_time: Optional[int] = None,
+        grid: bool = True,
     ) -> None:
         if self.dataprep is None:
             raise ValueError("dataprep must be set for automatic plots.")
@@ -163,7 +169,13 @@ class Synth(WeightOptimizerMixin):
         ts_gap = Z1 - ts_synthetic
         ts_gap.plot(ylabel=self.dataprep.dependent, color="black", linewidth=1)
 
-        plt.hlines(y=0, xmin=min(ts_gap.index), xmax=max(ts_gap.index), color="black", linestyle="dashed")
+        plt.hlines(
+            y=0,
+            xmin=min(ts_gap.index),
+            xmax=max(ts_gap.index),
+            color="black",
+            linestyle="dashed",
+        )
         if treatment_time:
             plt.axvline(x=treatment_time, ymin=0.05, ymax=0.95, linestyle="dashed")
         plt.grid(grid)
