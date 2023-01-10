@@ -43,7 +43,7 @@ class AugSynth(WeightOptimizerMixin):
         X_1_stacked = pd.concat([X_1, Z_1_normal], axis=0)  # X_1 after "concatenate"
 
         V_mat = np.diag([1.0 / Z0.shape[0]] * Z0.shape[0])
-        print(Z0.shape, V_mat.shape, Z1.shape)
+
         W, _, _ = self.w_optimize(
             V_mat=V_mat,
             X0=Z0.to_numpy(),
@@ -57,10 +57,13 @@ class AugSynth(WeightOptimizerMixin):
         )
         self.W = W + W_ridge
 
-    def solve_ridge(self, A, B, W, lmbda):
+    @staticmethod
+    def solve_ridge(
+        A: np.ndarray, B: np.ndarray, W: np.ndarray, lmbda: float
+    ) -> np.ndarray:
         M = A - B @ W
         N = np.linalg.inv(B @ B.T + lmbda * np.identity(B.shape[0]))
-        return M @ (N @ B)
+        return M @ N @ B
 
     def path_plot(
         self,
