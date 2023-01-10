@@ -13,11 +13,7 @@ class AugSynth(WeightOptimizerMixin):
         self.dataprep: Optional[Dataprep] = None
         self.W: Optional[np.ndarray] = None
 
-    def fit(
-        self,
-        dataprep: Optional[Dataprep],
-        ridge_param : float = 0.001
-    ) -> None:
+    def fit(self, dataprep: Optional[Dataprep], ridge_param: float = 0.001) -> None:
         self.dataprep = dataprep
         # Follow the paper variable names for now...
 
@@ -27,30 +23,42 @@ class AugSynth(WeightOptimizerMixin):
         X0, X1 = dataprep.make_covariate_mats()
         Z0, Z1 = dataprep.make_outcome_mats()
 
-        X_c = Z0.subtract(Z0.mean(axis=1), axis=0) # X_cent
-        X_1 = Z1.subtract(Z0.mean(axis=1), axis=0) # X_1
+        X_c = Z0.subtract(Z0.mean(axis=1), axis=0)  # X_cent
+        X_1 = Z1.subtract(Z0.mean(axis=1), axis=0)  # X_1
 
-        Z_c = X0.subtract(X0.mean(axis=1), axis=0) # Z_c <- Z_c[sorted(Z_c.columns)].T
+        Z_c = X0.subtract(X0.mean(axis=1), axis=0)  # Z_c <- Z_c[sorted(Z_c.columns)].T
         Z_1 = X1.subtract(X0.mean(axis=1), axis=0)
 
         Z_c_std = Z_c.std(axis=1)
         X_c_std = X_c.to_numpy().std(ddof=1).item()
 
-        Z_c_normal = Z_c.divide(Z_c_std, axis=0) * X_c_std  # Z_c after "standardize covariates"
-        Z_1_normal = Z_1.divide(Z_c_std, axis=0) * X_c_std  # Z_1 after "standardize covariates"
+        Z_c_normal = (
+            Z_c.divide(Z_c_std, axis=0) * X_c_std
+        )  # Z_c after "standardize covariates"
+        Z_1_normal = (
+            Z_1.divide(Z_c_std, axis=0) * X_c_std
+        )  # Z_1 after "standardize covariates"
 
         X_c_stacked = pd.concat([X_c, Z_c_normal], axis=0)  # X_c after "concatenate"
         X_1_stacked = pd.concat([X_1, Z_1_normal], axis=0)  # X_1 after "concatenate"
 
-        V_mat = np.diag([1. / Z0.shape[0]] * Z0.shape[0])
+        V_mat = np.diag([1.0 / Z0.shape[0]] * Z0.shape[0])
         print(Z0.shape, V_mat.shape, Z1.shape)
-        W, _, _ = self.w_optimize(V_mat=V_mat, X0=Z0.to_numpy(), X1=Z1.to_numpy(), Z0=Z0.to_numpy(), Z1=Z1.to_numpy())
+        W, _, _ = self.w_optimize(
+            V_mat=V_mat,
+            X0=Z0.to_numpy(),
+            X1=Z1.to_numpy(),
+            Z0=Z0.to_numpy(),
+            Z1=Z1.to_numpy(),
+        )
 
-        W_ridge = self.solve_ridge(X_1_stacked.to_numpy(), X_c_stacked.to_numpy(), W, ridge_param)
+        W_ridge = self.solve_ridge(
+            X_1_stacked.to_numpy(), X_c_stacked.to_numpy(), W, ridge_param
+        )
         self.W = W + W_ridge
 
     def solve_ridge(self, A, B, W, lmbda):
-        M = (A - B @ W)
+        M = A - B @ W
         N = np.linalg.inv(B @ B.T + lmbda * np.identity(B.shape[0]))
         return M @ (N @ B)
 
