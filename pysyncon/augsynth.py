@@ -1,4 +1,5 @@
 from typing import Optional
+from collections import namedtuple
 
 import numpy as np
 import pandas as pd
@@ -6,54 +7,45 @@ import matplotlib.pyplot as plt
 
 from .dataprep import Dataprep, IsinArg_t
 from .synth import WeightOptimizerMixin
+from .utils import HoldoutSplitter, CrossValidationResult
 
 
 class AugSynth(WeightOptimizerMixin):
     def __init__(self) -> None:
         self.dataprep: Optional[Dataprep] = None
+        self.lambda_: Optional[float] = None
         self.W: Optional[np.ndarray] = None
+        self.cv_result: Optional[CrossValidationResult] = None
 
-    def fit(self, dataprep: Optional[Dataprep], ridge_param: float = 0.001) -> None:
+    def fit(
+        self, dataprep: Optional[Dataprep], lambda_: Optional[float] = None
+    ) -> None:
         self.dataprep = dataprep
-        # Follow the paper variable names for now...
+        Z0, Z1 = self.dataprep.make_covariate_mats()
+        X0, X1 = self.dataprep.make_outcome_mats()
 
-        # X <- Z0[sorted(Z0.columns)].T
-        # y <- same as X except for post treatment years
-        # Z <- X0[sorted(X0.columns)].T
-        X0, X1 = dataprep.make_covariate_mats()
-        Z0, Z1 = dataprep.make_outcome_mats()
+        X0_demean, X1_demean, Z0_normal, Z1_normal = self._normalize(X0, X1, Z0, Z1)
+        X0_stacked = pd.concat([X0_demean, Z0_normal], axis=0)
+        X1_stacked = pd.concat([X1_demean, Z1_normal], axis=0)
 
-        X_c = Z0.subtract(Z0.mean(axis=1), axis=0)  # X_cent
-        X_1 = Z1.subtract(Z0.mean(axis=1), axis=0)  # X_1
+        if lambda_ is None:
+            lambdas = self.generate_lambdas(X0)
+            self.cv_result = self.cross_validate(X0, X1, lambdas)
+            self.lambda_ = self.cv_result.best_lambda()
+        else:
+            self.lambda_ = lambda_
 
-        Z_c = X0.subtract(X0.mean(axis=1), axis=0)  # Z_c <- Z_c[sorted(Z_c.columns)].T
-        Z_1 = X1.subtract(X0.mean(axis=1), axis=0)
-
-        Z_c_std = Z_c.std(axis=1)
-        X_c_std = X_c.to_numpy().std(ddof=1).item()
-
-        Z_c_normal = (
-            Z_c.divide(Z_c_std, axis=0) * X_c_std
-        )  # Z_c after "standardize covariates"
-        Z_1_normal = (
-            Z_1.divide(Z_c_std, axis=0) * X_c_std
-        )  # Z_1 after "standardize covariates"
-
-        X_c_stacked = pd.concat([X_c, Z_c_normal], axis=0)  # X_c after "concatenate"
-        X_1_stacked = pd.concat([X_1, Z_1_normal], axis=0)  # X_1 after "concatenate"
-
-        V_mat = np.diag([1.0 / Z0.shape[0]] * Z0.shape[0])
-
+        V_mat = np.diag([1.0 / X0.shape[0]] * X0.shape[0])
         W, _, _ = self.w_optimize(
             V_mat=V_mat,
-            X0=Z0.to_numpy(),
-            X1=Z1.to_numpy(),
-            Z0=Z0.to_numpy(),
-            Z1=Z1.to_numpy(),
+            X0=X0.to_numpy(),
+            X1=X1.to_numpy(),
+            Z0=X0.to_numpy(),
+            Z1=X1.to_numpy(),
         )
 
         W_ridge = self.solve_ridge(
-            X_1_stacked.to_numpy(), X_c_stacked.to_numpy(), W, ridge_param
+            X1_stacked.to_numpy(), X0_stacked.to_numpy(), W, self.lambda_
         )
         self.W = W + W_ridge
 
@@ -64,6 +56,54 @@ class AugSynth(WeightOptimizerMixin):
         M = A - B @ W
         N = np.linalg.inv(B @ B.T + lmbda * np.identity(B.shape[0]))
         return M @ N @ B
+
+    def _normalize(
+        self, X0: pd.DataFrame, X1: pd.Series, Z0: pd.DataFrame, Z1: pd.Series
+    ) -> tuple[pd.DataFrame, pd.Series, pd.DataFrame, pd.Series]:
+        X0_demean = X0.subtract(X0.mean(axis=1), axis=0)
+        X1_demean = X1.subtract(X0.mean(axis=1), axis=0)
+
+        Z0_demean = Z0.subtract(Z0.mean(axis=1), axis=0)
+        Z1_demean = Z1.subtract(Z0.mean(axis=1), axis=0)
+
+        Z0_std = Z0_demean.std(axis=1)
+        X0_std = X0_demean.to_numpy().std(ddof=1).item()
+
+        Z0_normal = Z0_demean.divide(Z0_std, axis=0) * X0_std
+        Z1_normal = Z1_demean.divide(Z0_std, axis=0) * X0_std
+        return X0_demean, X1_demean, Z0_normal, Z1_normal
+
+    def cross_validate(
+        self, X0: np.ndarray, X1: np.ndarray, lambdas: np.ndarray, holdout_len: int = 1
+    ) -> CrossValidationResult:
+        V = np.identity(X0.shape[0] - holdout_len)
+        res = list()
+        for X0_t, X0_v, X1_t, X1_v in HoldoutSplitter(X0, X1, holdout_len=holdout_len):
+            W, _, _ = self.w_optimize(
+                V_mat=V,
+                X0=X0_t.to_numpy(),
+                X1=X1_t.to_numpy(),
+                Z0=X0_t.to_numpy(),
+                Z1=X1_t.to_numpy(),
+            )
+            this_res = list()
+            for l in lambdas:
+                ridge_weights = self.solve_ridge(A=X1_t, B=X0_t, W=W, lmbda=l)
+                W_aug = W + ridge_weights
+                err = (X1_v - X0_v @ W_aug).pow(2).sum()
+                this_res.append(err.item())
+            res.append(this_res)
+        means = np.array(res).mean(axis=0)
+        ses = np.array(res).std(axis=0) / np.sqrt(len(lambdas))
+        return CrossValidationResult(lambdas, means, ses)
+
+    def generate_lambdas(
+        self, X: pd.DataFrame, lambda_min_ratio: float = 1e-8, n_lambda: int = 20
+    ) -> np.ndarray:
+        _, sing, _ = np.linalg.svd(X.T)
+        lambda_max = sing[0].item() ** 2.0
+        scaler = lambda_min_ratio ** (1 / n_lambda)
+        return lambda_max * (scaler ** np.array(range(n_lambda)))
 
     def path_plot(
         self,
