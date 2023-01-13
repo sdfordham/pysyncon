@@ -1,5 +1,4 @@
 from typing import Optional
-from collections import namedtuple
 
 import numpy as np
 import pandas as pd
@@ -51,10 +50,10 @@ class AugSynth(WeightOptimizerMixin):
 
     @staticmethod
     def solve_ridge(
-        A: np.ndarray, B: np.ndarray, W: np.ndarray, lmbda: float
+        A: np.ndarray, B: np.ndarray, W: np.ndarray, lambda_: float
     ) -> np.ndarray:
         M = A - B @ W
-        N = np.linalg.inv(B @ B.T + lmbda * np.identity(B.shape[0]))
+        N = np.linalg.inv(B @ B.T + lambda_ * np.identity(B.shape[0]))
         return M @ N @ B
 
     def _normalize(
@@ -88,7 +87,7 @@ class AugSynth(WeightOptimizerMixin):
             )
             this_res = list()
             for l in lambdas:
-                ridge_weights = self.solve_ridge(A=X1_t, B=X0_t, W=W, lmbda=l)
+                ridge_weights = self.solve_ridge(A=X1_t, B=X0_t, W=W, lambda_=l)
                 W_aug = W + ridge_weights
                 err = (X1_v - X0_v @ W_aug).pow(2).sum()
                 this_res.append(err.item())
