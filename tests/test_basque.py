@@ -6,7 +6,7 @@ from pysyncon import Dataprep, Synth
 
 class TestBasque(unittest.TestCase):
     def setUp(self):
-        df = pd.read_csv("./examples/basque.csv")
+        df = pd.read_csv("./data/basque.csv")
         self.dataprep = Dataprep(
             foo=df,
             predictors=[

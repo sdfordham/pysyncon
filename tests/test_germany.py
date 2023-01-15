@@ -6,7 +6,7 @@ from pysyncon import Dataprep, Synth
 
 class TestGermany(unittest.TestCase):
     def setUp(self):
-        df = pd.read_csv("./examples/germany.csv")
+        df = pd.read_csv("./data/germany.csv")
         dataprep_train = Dataprep(
             foo=df,
             predictors=["gdp", "trade", "infrate"],
