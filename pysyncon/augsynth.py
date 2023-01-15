@@ -169,3 +169,17 @@ class AugSynth(WeightOptimizerMixin):
                 self.W, index=list(self.dataprep.controls_identifier), name="weights"
             )
         return weights_ser[weights_ser >= threshold].round(round)
+
+    def l2_imbalance(self) -> tuple[float, float]:
+        if self.dataprep is None:
+            raise ValueError("dataprep must be set for L2 imbalance.")
+        if self.W is None:
+            raise ValueError("No weight matrix available; fit data first.")
+
+        Z0, Z1 = self.dataprep.make_covariate_mats()
+        W_eq = np.array([1 / Z0.shape[1]] * Z0.shape[1])
+
+        l2_imbalance = np.sqrt((Z0 @ self.W - Z1).pow(2).sum()).item()
+        l2_imbalance_eq = np.sqrt((Z0 @ W_eq - Z1).pow(2).sum()).item()
+        l2_imbalance_scaled = l2_imbalance / l2_imbalance_eq
+        return l2_imbalance, l2_imbalance_scaled
