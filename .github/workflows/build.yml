@@ -32,4 +32,4 @@ jobs:
         black --check .
     - name: Run tests
       run: |
-        python -m unittest discover .\tests\
+        python -m unittest discover -s tests
