@@ -2,9 +2,9 @@
 
 # pysyncon ![](https://img.shields.io/badge/python-3.9+-blue.svg) ![build](https://github.com/sdfordham/pysyncon/actions/workflows/build.yml/badge.svg)
 
-A python module for the synthetic control method that provides the same functionality as the R package [Synth](https://CRAN.R-project.org/package=Synth) and eventually [augsynth](https://github.com/ebenmichael/augsynth) and some other methods related.
+A python module for the synthetic control method that provides the same functionality as the R package [Synth](https://CRAN.R-project.org/package=Synth) and [augsynth](https://github.com/ebenmichael/augsynth) and eventually some other related methods (e.g. placebo tests).
 
-## Installaion
+## Installation
 Install it from PyPI using pip:
 
 ````bash
