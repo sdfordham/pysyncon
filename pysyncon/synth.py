@@ -110,7 +110,7 @@ class Synth(WeightOptimizerMixin):
             except np.linalg.LinAlgError:
                 raise ValueError(
                     'Could not invert X^T.X required for `optim_initial="ols"`, '
-                    'probably there is collinearity in your data.'
+                    "probably there is collinearity in your data."
                 )
 
             beta = beta[1:,]  # fmt: skip
@@ -146,14 +146,10 @@ class Synth(WeightOptimizerMixin):
 
         Z0, Z1 = self.dataprep.make_outcome_mats(time_period=time_period)
         ts_synthetic = (Z0 * self.W).sum(axis=1).rename("Synthetic")
-        Z1.plot(ylabel=self.dataprep.dependent, color="black", linewidth=1)
-        ts_synthetic.plot(
-            ylabel=self.dataprep.dependent,
-            color="black",
-            linewidth=1,
-            linestyle="dashed",
-        )
 
+        plt.plot(Z1, color="black", linewidth=1)
+        plt.plot(ts_synthetic, color="black", linewidth=1, linestyle="dashed")
+        plt.ylabel(self.dataprep.dependent)
         if treatment_time:
             plt.axvline(x=treatment_time, ymin=0.05, ymax=0.95, linestyle="dashed")
         plt.legend()
