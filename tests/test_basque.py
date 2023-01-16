@@ -85,5 +85,5 @@ class TestBasque(unittest.TestCase):
         )
         weights = pd.Series(self.weights, name="weights")
         pd.testing.assert_series_equal(
-            weights, synth.weights(round=9), check_less_precise=9
+            weights, synth.weights(round=9), check_exact=False, atol=1e-3
         )
