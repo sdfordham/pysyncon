@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Any, Iterable, Union, Optional, Literal, Sequence, Mapping
 
 import pandas as pd
