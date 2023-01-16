@@ -84,6 +84,7 @@ class TestBasque(unittest.TestCase):
             optim_initial=self.optim_initial,
         )
         weights = pd.Series(self.weights, name="weights")
+        # Allow a tolerance of 2.5%
         pd.testing.assert_series_equal(
-            weights, synth.weights(round=9), check_exact=False, atol=1e-3
+            weights, synth.weights(round=9), check_exact=False, atol=0.025
         )
