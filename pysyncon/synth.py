@@ -110,7 +110,7 @@ class Synth(WeightOptimizerMixin):
             except np.linalg.LinAlgError:
                 raise ValueError(
                     'Could not invert X^T.X required for `optim_initial="ols"`, '
-                    'probably there is collinearity in your data.'
+                    "probably there is collinearity in your data."
                 )
 
             beta = beta[1:,]  # fmt: skip
