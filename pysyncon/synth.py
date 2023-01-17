@@ -146,10 +146,16 @@ class Synth(WeightOptimizerMixin):
             raise ValueError("dataprep must be set for automatic plots.")
 
         Z0, Z1 = self.dataprep.make_outcome_mats(time_period=time_period)
-        ts_synthetic = (Z0 * self.W).sum(axis=1).rename("Synthetic")
+        ts_synthetic = (Z0 * self.W).sum(axis=1)
 
-        plt.plot(Z1, color="black", linewidth=1)
-        plt.plot(ts_synthetic, color="black", linewidth=1, linestyle="dashed")
+        plt.plot(Z1, color="black", linewidth=1, label=Z1.name)
+        plt.plot(
+            ts_synthetic,
+            color="black",
+            linewidth=1,
+            linestyle="dashed",
+            label="Synthetic",
+        )
         plt.ylabel(self.dataprep.dependent)
         if treatment_time:
             plt.axvline(x=treatment_time, ymin=0.05, ymax=0.95, linestyle="dashed")
