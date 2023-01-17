@@ -38,7 +38,6 @@ class TestSynth(unittest.TestCase):
     def test_path_plot(self, mock_plt: Mock):
         synth = pysyncon.Synth()
         synth.fit(dataprep=self.dataprep)
-
         synth.path_plot()
 
         self.assertEqual(len(mock_plt.plot.call_args_list), 2)
@@ -60,6 +59,32 @@ class TestSynth(unittest.TestCase):
 
         synth.path_plot(treatment_time=3)
         mock_plt.axvline.assert_called_once()
+
+        _, kwargs = mock_plt.axvline.call_args
+        self.assertEqual(kwargs["x"], 3)
+        self.assertEqual(kwargs["ymin"], 0.05)
+        self.assertEqual(kwargs["ymax"], 0.95)
+        self.assertEqual(kwargs["linestyle"], "dashed")
+
+    @patch("pysyncon.synth.plt")
+    def test_gaps_plot(self, mock_plt: Mock):
+        synth = pysyncon.Synth()
+        synth.fit(dataprep=self.dataprep)
+        synth.gaps_plot()
+
+        self.assertEqual(len(mock_plt.plot.call_args_list), 1)
+        _, kwargs = mock_plt.plot.call_args
+
+        self.assertEqual(kwargs["color"], "black")
+        self.assertEqual(kwargs["linewidth"], 1)
+
+        mock_plt.axvline.assert_not_called()
+        mock_plt.grid.assert_called_with(True)
+        mock_plt.show.assert_called()
+
+        synth.path_plot(treatment_time=3)
+        mock_plt.axvline.assert_called_once()
+
         _, kwargs = mock_plt.axvline.call_args
         self.assertEqual(kwargs["x"], 3)
         self.assertEqual(kwargs["ymin"], 0.05)
