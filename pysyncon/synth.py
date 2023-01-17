@@ -147,14 +147,10 @@ class Synth(WeightOptimizerMixin):
 
         Z0, Z1 = self.dataprep.make_outcome_mats(time_period=time_period)
         ts_synthetic = (Z0 * self.W).sum(axis=1).rename("Synthetic")
-        Z1.plot(ylabel=self.dataprep.dependent, color="black", linewidth=1)
-        ts_synthetic.plot(
-            ylabel=self.dataprep.dependent,
-            color="black",
-            linewidth=1,
-            linestyle="dashed",
-        )
 
+        plt.plot(Z1, color="black", linewidth=1)
+        plt.plot(ts_synthetic, color="black", linewidth=1, linestyle="dashed")
+        plt.ylabel(self.dataprep.dependent)
         if treatment_time:
             plt.axvline(x=treatment_time, ymin=0.05, ymax=0.95, linestyle="dashed")
         plt.legend()
@@ -175,8 +171,9 @@ class Synth(WeightOptimizerMixin):
         Z0, Z1 = self.dataprep.make_outcome_mats(time_period=time_period)
         ts_synthetic = (Z0 * self.W).sum(axis=1)
         ts_gap = Z1 - ts_synthetic
-        ts_gap.plot(ylabel=self.dataprep.dependent, color="black", linewidth=1)
 
+        plt.plot(ts_gap, color="black", linewidth=1)
+        plt.ylabel(self.dataprep.dependent)
         plt.hlines(
             y=0,
             xmin=min(ts_gap.index),
