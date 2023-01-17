@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, Iterable, Union, Optional, Literal, Sequence, Mapping
+from typing import Any, Iterable, Union, Optional, Literal, Sequence, Mapping, Tuple
 
 import pandas as pd
 from pandas._typing import Axes
@@ -7,7 +7,7 @@ from pandas._typing import Axes
 
 PredictorsOp_t = Literal["mean", "std", "median"]
 IsinArg_t = Union[Iterable, pd.Series, dict]
-SpecialPredictor_t = tuple[
+SpecialPredictor_t = Tuple[
     Any, Union[pd.Series, pd.DataFrame, Sequence, Mapping], PredictorsOp_t
 ]
 

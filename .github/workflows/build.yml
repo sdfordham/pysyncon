@@ -15,7 +15,7 @@ jobs:
       fail-fast: false
       matrix:
         buildplat: [ubuntu-20.04, windows-2019]
-        python: ["3.9", "3.10", "3.11"]
+        python: ["3.8", "3.9", "3.10", "3.11"]
     runs-on: ${{ matrix.buildplat }}
     steps:
     - uses: actions/checkout@v3

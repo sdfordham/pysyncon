@@ -1,6 +1,6 @@
 
 
-# pysyncon ![](https://img.shields.io/badge/python-3.9+-blue.svg) ![build](https://github.com/sdfordham/pysyncon/actions/workflows/build.yml/badge.svg)
+# pysyncon ![](https://img.shields.io/badge/python-3.8+-blue.svg) ![build](https://github.com/sdfordham/pysyncon/actions/workflows/build.yml/badge.svg)
 
 A python module for the synthetic control method that provides the same functionality as the R package [Synth](https://CRAN.R-project.org/package=Synth) and [augsynth](https://github.com/ebenmichael/augsynth) and eventually some other related methods (e.g. placebo tests).
 
