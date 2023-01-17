@@ -40,7 +40,7 @@ class TestSynth(unittest.TestCase):
         synth.fit(dataprep=self.dataprep)
         synth.path_plot()
 
-        self.assertEqual(len(mock_plt.plot.call_args_list), 2)
+        self.assertEqual(mock_plt.plot.call_count, 2)
         first_call, second_call = mock_plt.plot.call_args_list
 
         _, first_call_kwargs = first_call
@@ -72,7 +72,7 @@ class TestSynth(unittest.TestCase):
         synth.fit(dataprep=self.dataprep)
         synth.gaps_plot()
 
-        self.assertEqual(len(mock_plt.plot.call_args_list), 1)
+        self.assertEqual(mock_plt.plot.call_count, 1)
         _, kwargs = mock_plt.plot.call_args
 
         self.assertEqual(kwargs["color"], "black")
