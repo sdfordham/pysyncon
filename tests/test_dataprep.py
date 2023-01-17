@@ -258,7 +258,7 @@ class TestDataprep(unittest.TestCase):
                     self.foo[mask][predictor].agg(op), X0.loc[column_name, control]
                 )
 
-    def test_make_covariate_mats(self):
+    def test_make_outcome_mats(self):
         kwargs = {
             "foo": self.foo,
             "predictors": self.predictors,
@@ -296,7 +296,7 @@ class TestDataprep(unittest.TestCase):
                 .rename(control),
                 Z0[control],
             )
-        
+
         # Set time
         Z0, Z1 = dataprep.make_outcome_mats()
 

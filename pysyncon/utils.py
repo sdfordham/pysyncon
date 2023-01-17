@@ -1,3 +1,4 @@
+from __future__ import annotations
 from dataclasses import dataclass
 
 import numpy as np
@@ -21,7 +22,7 @@ class HoldoutSplitter:
             raise StopIteration
         holdout = slice(self.idx, self.idx + self.holdout_len)
 
-        df_holdout = self.df.iloc[holdout,]    # fmt: skip
+        df_holdout = self.df.iloc[holdout,]  # fmt: skip
         ser_holdout = self.ser.iloc[holdout]
 
         df = self.df.drop(index=self.df.index[holdout])
