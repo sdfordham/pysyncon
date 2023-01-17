@@ -171,8 +171,9 @@ class Synth(WeightOptimizerMixin):
         Z0, Z1 = self.dataprep.make_outcome_mats(time_period=time_period)
         ts_synthetic = (Z0 * self.W).sum(axis=1)
         ts_gap = Z1 - ts_synthetic
-        ts_gap.plot(ylabel=self.dataprep.dependent, color="black", linewidth=1)
 
+        plt.plot(ts_gap, color="black", linewidth=1)
+        plt.ylabel(self.dataprep.dependent)
         plt.hlines(
             y=0,
             xmin=min(ts_gap.index),
