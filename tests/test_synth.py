@@ -46,11 +46,13 @@ class TestSynth(unittest.TestCase):
         _, first_call_kwargs = first_call
         self.assertEqual(first_call_kwargs["color"], "black")
         self.assertEqual(first_call_kwargs["linewidth"], 1)
+        self.assertEqual(first_call_kwargs["label"], self.dataprep.treatment_identifier)
 
         _, second_call_kwargs = second_call
         self.assertEqual(second_call_kwargs["color"], "black")
         self.assertEqual(second_call_kwargs["linewidth"], 1)
         self.assertEqual(second_call_kwargs["linestyle"], "dashed")
+        self.assertEqual(second_call_kwargs["label"], "Synthetic")
 
         mock_plt.axvline.assert_not_called()
         mock_plt.legend.assert_called()
