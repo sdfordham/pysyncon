@@ -3,18 +3,16 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 
-from .dataprep import Dataprep, IsinArg_t
-from .synth import WeightOptimizerMixin
+from .dataprep import Dataprep
+from .base import BaseSynth
 from .utils import HoldoutSplitter, CrossValidationResult
 
 
-class AugSynth(WeightOptimizerMixin):
+class AugSynth(BaseSynth):
     def __init__(self) -> None:
-        self.dataprep: Optional[Dataprep] = None
+        super().__init__()
         self.lambda_: Optional[float] = None
-        self.W: Optional[np.ndarray] = None
         self.cv_result: Optional[CrossValidationResult] = None
 
     def fit(
@@ -104,83 +102,3 @@ class AugSynth(WeightOptimizerMixin):
         lambda_max = sing[0].item() ** 2.0
         scaler = lambda_min_ratio ** (1 / n_lambda)
         return lambda_max * (scaler ** np.array(range(n_lambda)))
-
-    def path_plot(
-        self,
-        time_period: Optional[IsinArg_t] = None,
-        treatment_time: Optional[int] = None,
-        grid: bool = True,
-    ) -> None:
-        if self.W is None:
-            raise ValueError("No weight matrix available; fit data first.")
-        if self.dataprep is None:
-            raise ValueError("dataprep must be set for automatic plots.")
-
-        Z0, Z1 = self.dataprep.make_outcome_mats(time_period=time_period)
-        ts_synthetic = (Z0 * self.W).sum(axis=1).rename("Synthetic")
-        Z1.plot(ylabel=self.dataprep.dependent, color="black", linewidth=1)
-        ts_synthetic.plot(
-            ylabel=self.dataprep.dependent,
-            color="black",
-            linewidth=1,
-            linestyle="dashed",
-        )
-
-        if treatment_time:
-            plt.axvline(x=treatment_time, ymin=0.05, ymax=0.95, linestyle="dashed")
-        plt.legend()
-        plt.grid(grid)
-        plt.show()
-
-    def gaps_plot(
-        self,
-        time_period: Optional[IsinArg_t] = None,
-        treatment_time: Optional[int] = None,
-        grid: bool = True,
-    ) -> None:
-        if self.dataprep is None:
-            raise ValueError("dataprep must be set for automatic plots.")
-        if self.W is None:
-            raise ValueError("No weight matrix available; fit data first.")
-
-        Z0, Z1 = self.dataprep.make_outcome_mats(time_period=time_period)
-        ts_synthetic = (Z0 * self.W).sum(axis=1)
-        ts_gap = Z1 - ts_synthetic
-        ts_gap.plot(ylabel=self.dataprep.dependent, color="black", linewidth=1)
-
-        plt.hlines(
-            y=0,
-            xmin=min(ts_gap.index),
-            xmax=max(ts_gap.index),
-            color="black",
-            linestyle="dashed",
-        )
-        if treatment_time:
-            plt.axvline(x=treatment_time, ymin=0.05, ymax=0.95, linestyle="dashed")
-        plt.grid(grid)
-        plt.show()
-
-    def weights(self, threshold: float = 0.0, round: int = 3) -> pd.Series:
-        if self.W is None:
-            raise ValueError("No weight matrix available; fit data first.")
-        if self.dataprep is None:
-            weights_ser = pd.Series(self.W, name="weights")
-        else:
-            weights_ser = pd.Series(
-                self.W, index=list(self.dataprep.controls_identifier), name="weights"
-            )
-        return weights_ser[weights_ser >= threshold].round(round)
-
-    def l2_imbalance(self) -> tuple[float, float]:
-        if self.dataprep is None:
-            raise ValueError("dataprep must be set for L2 imbalance.")
-        if self.W is None:
-            raise ValueError("No weight matrix available; fit data first.")
-
-        Z0, Z1 = self.dataprep.make_covariate_mats()
-        W_eq = np.array([1 / Z0.shape[1]] * Z0.shape[1])
-
-        l2_imbalance = np.sqrt((Z0 @ self.W - Z1).pow(2).sum()).item()
-        l2_imbalance_eq = np.sqrt((Z0 @ W_eq - Z1).pow(2).sum()).item()
-        l2_imbalance_scaled = l2_imbalance / l2_imbalance_eq
-        return l2_imbalance, l2_imbalance_scaled

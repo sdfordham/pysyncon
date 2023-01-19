@@ -34,7 +34,7 @@ class TestSynth(unittest.TestCase):
             ],
         )
 
-    @patch("pysyncon.synth.plt")
+    @patch("pysyncon.base.plt")
     def test_path_plot(self, mock_plt: Mock):
         synth = pysyncon.Synth()
         synth.fit(dataprep=self.dataprep)
@@ -68,7 +68,7 @@ class TestSynth(unittest.TestCase):
         self.assertEqual(kwargs["ymax"], 0.95)
         self.assertEqual(kwargs["linestyle"], "dashed")
 
-    @patch("pysyncon.synth.plt")
+    @patch("pysyncon.base.plt")
     def test_gaps_plot(self, mock_plt: Mock):
         synth = pysyncon.Synth()
         synth.fit(dataprep=self.dataprep)
