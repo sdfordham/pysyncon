@@ -50,11 +50,22 @@ class TestUtils(unittest.TestCase):
                     iter_len += 1
                 self.assertEqual(iter_len - 1, rows - holdout)
 
-        df = pd.DataFrame(np.random.random(size=(1, 1)))
-        ser = pd.Series(np.random.random(size=2))
-        self.assertRaises(ValueError, HoldoutSplitter, df=df, ser=ser, holdout_len=1)
+        cases = [(1, 1, 2, 2), (2, 2, 1, 1), (3, 2, 1, 2), (2, 1, 2, 3)]
+        for case in cases:
+            with self.subTest(case=case):
+                df_rows, df_cols, holdout, ser_rows = case
 
-        df = pd.DataFrame(np.random.random(size=(1, 1)))
-        ser = pd.Series(np.random.random(size=1))
-        self.assertRaises(ValueError, HoldoutSplitter, df=df, ser=ser, holdout_len=0)
-        self.assertRaises(ValueError, HoldoutSplitter, df=df, ser=ser, holdout_len=2)
+                df = pd.DataFrame(np.random.random(size=(df_rows, df_cols)))
+                ser = pd.Series(np.random.random(size=ser_rows))
+
+                self.assertRaises(ValueError, HoldoutSplitter, df=df, ser=ser, holdout_len=holdout)
+
+        cases = [(1, 1, 0, 1), (2, 2, 2, 2), (3, 3, 4, 3)]
+        for case in cases:
+            with self.subTest(case=case):
+                df_rows, df_cols, holdout, ser_rows = case
+
+                df = pd.DataFrame(np.random.random(size=(df_rows, df_cols)))
+                ser = pd.Series(np.random.random(size=ser_rows))
+                
+                self.assertRaises(ValueError, HoldoutSplitter, df=df, ser=ser, holdout_len=holdout)
