@@ -8,6 +8,12 @@ import matplotlib.pyplot as plt
 
 class HoldoutSplitter:
     def __init__(self, df: pd.DataFrame, ser: pd.Series, holdout_len: int = 1):
+        if df.shape[0] != ser.shape[0]:
+            raise ValueError("`df` and `ser` must have the same number of rows.")
+        if holdout_len < 1:
+            raise ValueError("`holdout_len` must be at least 1.")
+        if df.shape[0] <= holdout_len:
+            raise ValueError("`holdout` must be less than df.shape[0]")
         self.df = df
         self.ser = ser
         self.holdout_len = holdout_len
@@ -18,7 +24,7 @@ class HoldoutSplitter:
         return self
 
     def __next__(self) -> tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
-        if (self.idx + self.holdout_len) == self.df.shape[0]:
+        if (self.idx + self.holdout_len) > self.df.shape[0]:
             raise StopIteration
         holdout = slice(self.idx, self.idx + self.holdout_len)
 
