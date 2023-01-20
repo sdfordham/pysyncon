@@ -23,7 +23,7 @@ class TestUtils(unittest.TestCase):
                         df_,
                         df.drop(
                             index=df.index[
-                                slice(iter_len, iter_len + holdout),
+                                iter_len : iter_len + holdout,
                             ]
                         ),
                     )
@@ -31,7 +31,7 @@ class TestUtils(unittest.TestCase):
                     self.assertIsInstance(ser_, pd.Series)
                     pd.testing.assert_series_equal(
                         ser_,
-                        ser.drop(index=ser.index[slice(iter_len, iter_len + holdout)]),
+                        ser.drop(index=ser.index[iter_len : iter_len + holdout]),
                     )
 
                     self.assertIsInstance(df_h, pd.DataFrame)
