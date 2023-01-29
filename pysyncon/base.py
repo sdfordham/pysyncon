@@ -113,7 +113,7 @@ class BaseSynth(metaclass=ABCMeta):
         plt.grid(grid)
         plt.show()
 
-    def weights(self, threshold: float = 0.0, round: int = 3) -> pd.Series:
+    def weights(self, round: int = 3, threshold: Optional[float] = None) -> pd.Series:
         if self.W is None:
             raise ValueError("No weight matrix available; fit data first.")
         if self.dataprep is None:
@@ -122,7 +122,10 @@ class BaseSynth(metaclass=ABCMeta):
             weights_ser = pd.Series(
                 self.W, index=list(self.dataprep.controls_identifier), name="weights"
             )
-        return weights_ser[weights_ser >= threshold].round(round)
+        weights_ser = (
+            weights_ser[weights_ser >= threshold] if threshold else weights_ser
+        )
+        return weights_ser.round(round)
 
     def summary(self, round: int = 3) -> pd.DataFrame:
         if self.dataprep is None:
