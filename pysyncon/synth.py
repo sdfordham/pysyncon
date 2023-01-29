@@ -54,9 +54,8 @@ class Synth(BaseSynth):
 
         if custom_V is not None:
             V_mat = np.diag(custom_V)
-            W, loss_W, loss_V = self.w_optimize(
-                V_mat=V_mat, X0=X0_arr, X1=X1_arr, Z0=Z0_arr, Z1=Z1_arr
-            )
+            W, loss_W = self.w_optimize(V_mat=V_mat, X0=X0_arr, X1=X1_arr)
+            loss_V = self.calc_loss_V(W=W, Z0=Z0_arr, Z1=Z1_arr)
             self.W, self.loss_W, self.V, self.loss_V = W, loss_W, custom_V, loss_V
             return
 
@@ -85,14 +84,13 @@ class Synth(BaseSynth):
 
         def fun(x):
             V_mat = np.diag(np.abs(x)) / np.sum(np.abs(x))
-            _, _, loss_V = self.w_optimize(
-                V_mat=V_mat, X0=X0_arr, X1=X1_arr, Z0=Z0_arr, Z1=Z1_arr
-            )
+            W, _ = self.w_optimize(V_mat=V_mat, X0=X0_arr, X1=X1_arr)
+            loss_V = self.calc_loss_V(W=W, Z0=Z0_arr, Z1=Z1_arr)
             return loss_V
 
         res = minimize(fun=fun, x0=x0, method=optim_method, options=optim_options)
         V_mat = np.diag(np.abs(res["x"])) / np.sum(np.abs(res["x"]))
-        W, loss_W, loss_V = self.w_optimize(
-            V_mat=V_mat, X0=X0_arr, X1=X1_arr, Z0=Z0_arr, Z1=Z1_arr
-        )
+        W, loss_W = self.w_optimize(V_mat=V_mat, X0=X0_arr, X1=X1_arr)
+        loss_V = self.calc_loss_V(W=W, Z0=Z0_arr, Z1=Z1_arr)
+        
         self.W, self.loss_W, self.V, self.loss_V = W, loss_W, V_mat.diagonal(), loss_V
