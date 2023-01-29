@@ -92,5 +92,5 @@ class Synth(BaseSynth):
         V_mat = np.diag(np.abs(res["x"])) / np.sum(np.abs(res["x"]))
         W, loss_W = self.w_optimize(V_mat=V_mat, X0=X0_arr, X1=X1_arr)
         loss_V = self.calc_loss_V(W=W, Z0=Z0_arr, Z1=Z1_arr)
-        
+
         self.W, self.loss_W, self.V, self.loss_V = W, loss_W, V_mat.diagonal(), loss_V
