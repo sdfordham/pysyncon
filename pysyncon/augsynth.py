@@ -34,13 +34,7 @@ class AugSynth(BaseSynth):
             self.lambda_ = lambda_
 
         V_mat = np.diag([1.0 / X0.shape[0]] * X0.shape[0])
-        W, _, _ = self.w_optimize(
-            V_mat=V_mat,
-            X0=X0.to_numpy(),
-            X1=X1.to_numpy(),
-            Z0=X0.to_numpy(),
-            Z1=X1.to_numpy(),
-        )
+        W, _ = self.w_optimize(V_mat=V_mat, X0=X0.to_numpy(), X1=X1.to_numpy())
 
         W_ridge = self.solve_ridge(
             X1_stacked.to_numpy(), X0_stacked.to_numpy(), W, self.lambda_
@@ -77,13 +71,7 @@ class AugSynth(BaseSynth):
         V = np.identity(X0.shape[0] - holdout_len)
         res = list()
         for X0_t, X0_v, X1_t, X1_v in HoldoutSplitter(X0, X1, holdout_len=holdout_len):
-            W, _, _ = self.w_optimize(
-                V_mat=V,
-                X0=X0_t.to_numpy(),
-                X1=X1_t.to_numpy(),
-                Z0=X0_t.to_numpy(),
-                Z1=X1_t.to_numpy(),
-            )
+            W, _ = self.w_optimize(V_mat=V, X0=X0_t.to_numpy(), X1=X1_t.to_numpy())
             this_res = list()
             for l in lambdas:
                 ridge_weights = self.solve_ridge(A=X1_t, B=X0_t, W=W, lambda_=l)

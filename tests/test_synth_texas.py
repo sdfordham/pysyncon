@@ -4,7 +4,7 @@ import pandas as pd
 from pysyncon import Dataprep, Synth
 
 
-class TestTexas(unittest.TestCase):
+class TestSynthTexas(unittest.TestCase):
     def setUp(self):
         df = pd.read_csv("./data/texas.csv")
         self.dataprep = Dataprep(

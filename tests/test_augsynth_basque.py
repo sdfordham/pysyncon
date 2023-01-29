@@ -1,10 +1,10 @@
 import unittest
 import pandas as pd
 
-from pysyncon import Dataprep, Synth
+from pysyncon import Dataprep, AugSynth
 
 
-class TestBasque(unittest.TestCase):
+class TestAugsynthBasque(unittest.TestCase):
     def setUp(self):
         df = pd.read_csv("./data/basque.csv")
         self.dataprep = Dataprep(
@@ -34,15 +34,13 @@ class TestBasque(unittest.TestCase):
             time_variable="year",
             treatment_identifier="Basque Country (Pais Vasco)",
             controls_identifier=[
-                "Spain (Espana)",
                 "Andalucia",
                 "Aragon",
-                "Principado De Asturias",
                 "Baleares (Islas)",
                 "Canarias",
                 "Cantabria",
-                "Castilla Y Leon",
                 "Castilla-La Mancha",
+                "Castilla Y Leon",
                 "Cataluna",
                 "Comunidad Valenciana",
                 "Extremadura",
@@ -50,41 +48,40 @@ class TestBasque(unittest.TestCase):
                 "Madrid (Comunidad De)",
                 "Murcia (Region de)",
                 "Navarra (Comunidad Foral De)",
+                "Principado De Asturias",
                 "Rioja (La)",
+                "Spain (Espana)",
             ],
             time_optimize_ssr=range(1960, 1970),
         )
         self.optim_method = "Nelder-Mead"
         self.optim_initial = "equal"
         self.weights = {
-            "Spain (Espana)": 0.0,
-            "Andalucia": 0.0,
-            "Aragon": 0.0,
-            "Principado De Asturias": 0.0,
-            "Baleares (Islas)": 0.0,
-            "Canarias": 0.0,
-            "Cantabria": 0.0,
-            "Castilla Y Leon": 0.0,
-            "Castilla-La Mancha": 0.0,
-            "Cataluna": 0.850816306,
-            "Comunidad Valenciana": 0.0,
-            "Extremadura": 0.0,
-            "Galicia": 0.0,
-            "Madrid (Comunidad De)": 0.149183694,
-            "Murcia (Region de)": 0.0,
-            "Navarra (Comunidad Foral De)": 0.0,
-            "Rioja (La)": 0.0,
+            "Andalucia": 0.113627911,
+            "Aragon": 1.774922286,
+            "Baleares (Islas)": -0.713432799,
+            "Canarias": 1.19397534,
+            "Cantabria": 0.497825351,
+            "Castilla-La Mancha": 0.131573892,
+            "Castilla Y Leon": -1.405974956,
+            "Cataluna": 1.31890027,
+            "Comunidad Valenciana": -1.731140541,
+            "Extremadura": -1.134362989,
+            "Galicia": 1.982136937,
+            "Madrid (Comunidad De)": 0.110801212,
+            "Murcia (Region de)": -1.31476635,
+            "Navarra (Comunidad Foral De)": -1.303045915,
+            "Principado De Asturias": -0.02423815,
+            "Rioja (La)": 1.58950474,
+            "Spain (Espana)": -0.086306241,
         }
 
     def test_weights(self):
-        synth = Synth()
-        synth.fit(
-            dataprep=self.dataprep,
-            optim_method=self.optim_method,
-            optim_initial=self.optim_initial,
-        )
+        augsynth = AugSynth()
+        augsynth.fit(dataprep=self.dataprep)
+
         weights = pd.Series(self.weights, name="weights")
         # Allow a tolerance of 2.5%
         pd.testing.assert_series_equal(
-            weights, synth.weights(round=9), check_exact=False, atol=0.025
+            weights, augsynth.weights(round=9), check_exact=False, atol=0.025
         )
