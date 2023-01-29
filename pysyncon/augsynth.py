@@ -10,6 +10,10 @@ from .utils import HoldoutSplitter, CrossValidationResult
 
 
 class AugSynth(BaseSynth):
+    """Implementation of the augmented synthetic control method
+    due to Eli Ben-Michael, Feller & Rothstein. The implementation
+    follows the augsynth R package with the option `progfunc="Ridge"`.
+    """
     def __init__(self) -> None:
         super().__init__()
         self.lambda_: Optional[float] = None
@@ -18,6 +22,14 @@ class AugSynth(BaseSynth):
     def fit(
         self, dataprep: Optional[Dataprep], lambda_: Optional[float] = None
     ) -> None:
+        """Fit the model/calculate the weights.
+
+        :param dataprep: Dataprep object containing data to model.
+        :type dataprep: Optional[Dataprep]
+        :param lambda_: Ridge parameter to use. If not supplied, then it is 
+        obtained by cross-validation.
+        :type lambda_: Optional[float], optional
+        """
         self.dataprep = dataprep
         Z0, Z1 = self.dataprep.make_covariate_mats()
         X0, X1 = self.dataprep.make_outcome_mats()
@@ -45,6 +57,8 @@ class AugSynth(BaseSynth):
     def solve_ridge(
         A: np.ndarray, B: np.ndarray, W: np.ndarray, lambda_: float
     ) -> np.ndarray:
+        """Calculate the ridge adjustment to the weights.
+        """
         M = A - B @ W
         N = np.linalg.inv(B @ B.T + lambda_ * np.identity(B.shape[0]))
         return M @ N @ B
@@ -52,6 +66,8 @@ class AugSynth(BaseSynth):
     def _normalize(
         self, X0: pd.DataFrame, X1: pd.Series, Z0: pd.DataFrame, Z1: pd.Series
     ) -> tuple[pd.DataFrame, pd.Series, pd.DataFrame, pd.Series]:
+        """Normalise the data before the weight calculation.
+        """
         X0_demean = X0.subtract(X0.mean(axis=1), axis=0)
         X1_demean = X1.subtract(X0.mean(axis=1), axis=0)
 
@@ -68,6 +84,11 @@ class AugSynth(BaseSynth):
     def cross_validate(
         self, X0: np.ndarray, X1: np.ndarray, lambdas: np.ndarray, holdout_len: int = 1
     ) -> CrossValidationResult:
+        """Method that calculates the mean error
+        and standard error to the mean error using a
+        cross-validation procedure for the given ridge
+        parameter values.
+        """
         V = np.identity(X0.shape[0] - holdout_len)
         res = list()
         for X0_t, X0_v, X1_t, X1_v in HoldoutSplitter(X0, X1, holdout_len=holdout_len):
@@ -86,6 +107,9 @@ class AugSynth(BaseSynth):
     def generate_lambdas(
         self, X: pd.DataFrame, lambda_min_ratio: float = 1e-8, n_lambda: int = 20
     ) -> np.ndarray:
+        """Generate a suitable set of lambdas to run the
+        cross-validation procedure on.
+        """
         _, sing, _ = np.linalg.svd(X.T)
         lambda_max = sing[0].item() ** 2.0
         scaler = lambda_min_ratio ** (1 / n_lambda)
