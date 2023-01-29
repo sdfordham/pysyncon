@@ -24,8 +24,6 @@ class BaseSynth(metaclass=ABCMeta):
         V_mat: np.ndarray,
         X0: np.ndarray,
         X1: np.ndarray,
-        Z0: np.ndarray,
-        Z1: np.ndarray,
         qp_method: Literal["SLSQP"] = "SLSQP",
         qp_options: dict = {"maxiter": 1000},
     ) -> tuple[np.ndarray, float, float]:
@@ -50,8 +48,12 @@ class BaseSynth(metaclass=ABCMeta):
             options=qp_options,
         )
         W, loss_W = res["x"], res["fun"]
+        return W, loss_W.item()
+
+    @staticmethod
+    def calc_loss_V(W: np.ndarray, Z0: np.ndarray, Z1: np.ndarray):
         loss_V = (Z1 - Z0 @ W).T @ (Z1 - Z0 @ W) / len(Z0)
-        return W, loss_W.item(), loss_V.item()
+        return loss_V.item()
 
     def path_plot(
         self,
