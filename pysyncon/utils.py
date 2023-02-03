@@ -7,7 +7,31 @@ import matplotlib.pyplot as plt
 
 
 class HoldoutSplitter:
+    """Iterator that prepares the time series for cross-validation by
+    progressively removing blocks of length `holdout_len`.
+    """
     def __init__(self, df: pd.DataFrame, ser: pd.Series, holdout_len: int = 1):
+        """Iterator that prepares the time series for cross-validation by
+        progressively removing blocks of length `holdout_len`.
+
+        Parameters
+        ----------
+        df : pandas.DataFrame, shape (r, c)
+            Dataframe that will be split for the cross-validation.
+        ser : pandas.Series, shape (r, 1)
+            Series that will split for the cross-validation.
+        holdout_len : int, optional
+            Number of days to remove in each iteration, by default 1.
+
+        Raises
+        ------
+        ValueError
+            if df and ser do not have the same number of rows.
+        ValueError
+            if `holdout_len` is not >= 1.
+        ValueError
+            if `holdout_len` is larger than the number of rows of df.
+        """
         if df.shape[0] != ser.shape[0]:
             raise ValueError("`df` and `ser` must have the same number of rows.")
         if holdout_len < 1:
@@ -40,11 +64,26 @@ class HoldoutSplitter:
 
 @dataclass
 class CrossValidationResult:
+    """Convenience class for holding the results of the cross-validation
+    procedure from the AugSynth.
+    """
     lambdas: np.ndarray
     errors_mean: np.ndarray
     errors_se: np.ndarray
 
     def best_lambda(self, min_1se: bool = True) -> float:
+        """Return the best lambda.
+
+        Parameters
+        ----------
+        min_1se : bool, optional
+            return the largest lambda within 1 standard error of the minimum
+            , by default True
+
+        Returns
+        -------
+        float
+        """
         if min_1se:
             return (
                 self.lambdas[
@@ -58,6 +97,9 @@ class CrossValidationResult:
         return self.lambdas[self.errors_mean.argmin()].item()
 
     def plot(self) -> None:
+        """Plots the mean errors against the lambda values with the standard
+        errors as error bars.
+        """
         plt.errorbar(
             x=self.lambdas,
             y=self.errors_mean,
