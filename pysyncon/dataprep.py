@@ -46,7 +46,7 @@ class Dataprep:
         that should be used that should be averaged over custom time
         periods and using possibly different statistical operator. In
         particular a special operator consists of triple
-        
+
             - column: the column of foo to use,
             - time-range: the time range to apply the operator over, should
               have the same type as ``time_predictors_prior`` or ``time_optimize_ssr``
@@ -87,6 +87,7 @@ class Dataprep:
         if one of the operators in an element of ``special_predictors`` is not
         one of "mean", "std", "median"
     """
+
     def __init__(
         self,
         foo: pd.DataFrame,

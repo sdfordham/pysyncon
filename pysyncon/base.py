@@ -11,8 +11,8 @@ from .dataprep import Dataprep, IsinArg_t
 
 
 class BaseSynth(metaclass=ABCMeta):
-    """Metaclass that defines methods common to synthetic control methods.
-    """
+    """Metaclass that defines methods common to synthetic control methods."""
+
     def __init__(self) -> None:
         self.dataprep: Optional[Dataprep] = None
         self.W: Optional[np.ndarray] = None

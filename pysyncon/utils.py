@@ -10,6 +10,7 @@ class HoldoutSplitter:
     """Iterator that prepares the time series for cross-validation by
     progressively removing blocks of length `holdout_len`.
     """
+
     def __init__(self, df: pd.DataFrame, ser: pd.Series, holdout_len: int = 1):
         """Iterator that prepares the time series for cross-validation by
         progressively removing blocks of length `holdout_len`.
@@ -67,6 +68,7 @@ class CrossValidationResult:
     """Convenience class for holding the results of the cross-validation
     procedure from the AugSynth.
     """
+
     lambdas: np.ndarray
     errors_mean: np.ndarray
     errors_se: np.ndarray
