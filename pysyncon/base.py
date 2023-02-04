@@ -11,6 +11,8 @@ from .dataprep import Dataprep, IsinArg_t
 
 
 class BaseSynth(metaclass=ABCMeta):
+    """Metaclass that defines methods common to synthetic control methods.
+    """
     def __init__(self) -> None:
         self.dataprep: Optional[Dataprep] = None
         self.W: Optional[np.ndarray] = None
@@ -26,7 +28,31 @@ class BaseSynth(metaclass=ABCMeta):
         X1: np.ndarray,
         qp_method: Literal["SLSQP"] = "SLSQP",
         qp_options: dict = {"maxiter": 1000},
-    ) -> tuple[np.ndarray, float, float]:
+    ) -> tuple[np.ndarray, float]:
+        """Solves the inner part of the quadratic minimization problem for a
+        given V matrix.
+
+        Parameters
+        ----------
+        V_mat : numpy.ndarray, shape (c, c)
+            V matrix using the notation of the Abadie, Diamond & Hainmueller
+            paper defining.
+        X0 : numpy.ndarray, shape (m, c)
+            Matrix with each column corresponding to a control unit and each
+            row is covariates.
+        X1 : numpy.ndarray, shape (m,)
+            Column vector giving the covariate values for the treated unit.
+        qp_method : str, optional
+            Minimization routine to use in scipy minimize to solve the problem
+            , by default "SLSQP"
+        qp_options : dict, optional
+            Options for scipy minimize, by default {"maxiter": 1000}
+
+        Returns
+        -------
+        tuple[np.ndarray, float]
+            tuple of the optimal weights and the loss
+        """
         _, n_c = X0.shape
 
         P = X0.T @ V_mat @ X0
@@ -51,7 +77,26 @@ class BaseSynth(metaclass=ABCMeta):
         return W, loss_W.item()
 
     @staticmethod
-    def calc_loss_V(W: np.ndarray, Z0: np.ndarray, Z1: np.ndarray):
+    def calc_loss_V(W: np.ndarray, Z0: np.ndarray, Z1: np.ndarray) -> float:
+        """Calculates the V loss.
+
+        Parameters
+        ----------
+        W : numpy.ndarray, shape (n,)
+            Vector of the control weights
+        Z0 : numpy.ndarray, shape (m, n)
+            Matrix of the time series of the outcome variable with each
+            column corresponding to a control unit and the rows are the time
+            steps.
+        Z1 : numpy.ndarray, shape (m,)
+            Column vector giving the outcome variable values over time for the
+            treated unit
+
+        Returns
+        -------
+        float
+            V loss.
+        """
         loss_V = (Z1 - Z0 @ W).T @ (Z1 - Z0 @ W) / len(Z0)
         return loss_V.item()
 
@@ -61,10 +106,33 @@ class BaseSynth(metaclass=ABCMeta):
         treatment_time: Optional[int] = None,
         grid: bool = True,
     ) -> None:
-        if self.W is None:
-            raise ValueError("No weight matrix available; fit data first.")
+        """Plot the outcome variable over time for the treated unit and the
+        synthetic control. The fit method needs to be run with a Dataprep
+        object for this method to be available.
+
+        Parameters
+        ----------
+        time_period : Iterable | pandas.Series | dict, optional
+            Time range to plot, if none is supplied then the time range used
+            is the time period over which the optimisation happens, by default
+            None
+        treatment_time : int, optional
+            If supplied, plot a vertical line at the time period that the
+            treatment time occurred, by default None
+        grid : bool, optional
+            Whether or not to plot a grid, by default True
+
+        Raises
+        ------
+        ValueError
+            If there is no weight matrix available
+        ValueError
+            If there is no Dataprep object set
+        """
         if self.dataprep is None:
             raise ValueError("dataprep must be set for automatic plots.")
+        if self.W is None:
+            raise ValueError("No weight matrix available; fit data first.")
 
         Z0, Z1 = self.dataprep.make_outcome_mats(time_period=time_period)
         ts_synthetic = (Z0 * self.W).sum(axis=1)
@@ -90,6 +158,29 @@ class BaseSynth(metaclass=ABCMeta):
         treatment_time: Optional[int] = None,
         grid: bool = True,
     ) -> None:
+        """Plots the gap between the treated unit and the synthetic unit over
+        time. The fit method needs to be run with a Dataprep
+        object for this method to be available.
+
+        Parameters
+        ----------
+        time_period : Iterable | pandas.Series | dict, optional
+            Time range to plot, if none is supplied then the time range used
+            is the time period over which the optimisation happens, by default
+            None
+        treatment_time : int, optional
+            If supplied, plot a vertical line at the time period that the
+            treatment time occurred, by default None
+        grid : bool, optional
+            Whether or not to plot a grid, by default True
+
+        Raises
+        ------
+        ValueError
+            If there is no Dataprep object set
+        ValueError
+            If there is no weight matrix available
+        """
         if self.dataprep is None:
             raise ValueError("dataprep must be set for automatic plots.")
         if self.W is None:
@@ -114,6 +205,26 @@ class BaseSynth(metaclass=ABCMeta):
         plt.show()
 
     def weights(self, round: int = 3, threshold: Optional[float] = None) -> pd.Series:
+        """Return a pandas.Series of the weights for each control unit.
+
+        Parameters
+        ----------
+        round : int, optional
+            Round the weights to given number of places, by default 3
+        threshold : float, optional
+            If supplied, will only show weights above this value, by default
+            None
+
+        Returns
+        -------
+        pd.Series
+            The weights computed
+
+        Raises
+        ------
+        ValueError
+            If there is no weight matrix available
+        """
         if self.W is None:
             raise ValueError("No weight matrix available; fit data first.")
         if self.dataprep is None:
@@ -128,6 +239,27 @@ class BaseSynth(metaclass=ABCMeta):
         return weights_ser.round(round)
 
     def summary(self, round: int = 3) -> pd.DataFrame:
+        """Generates a pandas.DataFrame with summary data.
+
+        Parameters
+        ----------
+        round : int, optional
+            Round the weights to given number of places, by default 3
+
+        Returns
+        -------
+        pd.DataFrame
+            Summary data.
+
+        Raises
+        ------
+        ValueError
+            If there is no Dataprep object set
+        ValueError
+            If there is no weight matrix available
+        ValueError
+            If there is no V matrix available
+        """
         if self.dataprep is None:
             raise ValueError("dataprep must be set for summary.")
         if self.W is None:
