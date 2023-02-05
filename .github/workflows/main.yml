@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  tests:
     strategy:
       fail-fast: false
       matrix:
@@ -21,26 +21,37 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
     - name: Set up Python
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python }}
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         python -m pip install -r requirements-dev.txt
-    - name: Lint
-      run: |
-        black --check .
     - name: Run tests
+      run: python -m unittest discover -s tests
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.9"
+    - name: Install dependencies
       run: |
-        python -m unittest discover -s tests
+        python -m pip install --upgrade pip
+        python -m pip install -r requirements-dev.txt
+    - name: Lint
+      run: black --check .
   codecov:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: "3.9"
       - name: Install dependencies
