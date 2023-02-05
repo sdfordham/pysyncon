@@ -13,6 +13,81 @@ SpecialPredictor_t = Tuple[
 
 
 class Dataprep:
+    """Helper class that takes in the panel data and all necessary information
+    and can be used to automatically generate the matrices needed for the
+    optimisation methods.
+
+    Parameters
+    ----------
+    foo : pandas.DataFrame
+        Panel data where the columns are predictor/outcome variables and
+        each row is a time-step.
+    predictors : Axes
+        Columns of foo to use as predictors.
+    predictors_op : "mean" | "std" | "median"
+        The statistical operation to use on the predictors.
+    dependent : Any
+        Column of foo to use as the dependent variable.
+    unit_variable : Any
+        Column of foo that gives the labels of the unit
+    time_variable : Any
+        Column of foo that gives the time variable.
+    treatment_identifier : Any
+        The label that indicates which unit is the treated one.
+    controls_identifier : Iterable
+        The labels of the units that should be used as controls.
+    time_predictors_prior : Iterable | pandas.Series | dict
+        The time range to average the predictors over.
+    time_optimize_ssr : Iterable | pandas.Series | dict
+        The time range over which the the loss function should be
+        minimised.
+    special_predictors : Iterable[SpecialPredictor_t], optional
+        An iterable of special predictors which are additional predictors
+        that should be used that should be averaged over custom time
+        periods and using possibly different statistical operator. In
+        particular a special operator consists of triple
+
+            - column: the column of foo to use,
+            - time-range: the time range to apply the operator over, should
+              have the same type as ``time_predictors_prior`` or ``time_optimize_ssr``
+            - operator: the operator to apply, should be the same type as
+              predictors_op
+
+        by default None.
+
+    Raises
+    ------
+    TypeError
+        if ``foo`` is not of type pandas.DataFrame
+    ValueError
+        if ``predictor`` is not a column of ``foo``
+    ValueError
+        if ``predictor_op`` is not one of "mean", "std", "median"
+    ValueError
+        if ``dependent`` is not a column of ``foo``
+    ValueError
+        if ``unit_variable`` is not a column of ``foo``
+    ValueError
+        if ``time_variable`` is not a column of ``foo``
+    ValueError
+        if ``treatment_identifier`` is not present in ``foo['unit_variable']``
+    TypeError
+        if ``controls_identifier`` is not of type ``Iterable``
+    ValueError
+        if ``treatment_identifier`` is in the list of controls
+    ValueError
+        if any of the controls is not in ``foo['unit_variable']``
+    ValueError
+        if any element of ``special_predictors`` is not an Iterable of length
+        3
+    ValueError
+        if a predictor in an element of ``special_predictors`` is not a column
+        of foo
+    ValueError
+        if one of the operators in an element of ``special_predictors`` is not
+        one of "mean", "std", "median"
+    """
+
     def __init__(
         self,
         foo: pd.DataFrame,
@@ -91,6 +166,20 @@ class Dataprep:
         self.special_predictors = special_predictors
 
     def make_covariate_mats(self) -> tuple[pd.DataFrame, pd.Series]:
+        """Generate the covariate matrices to use as input to the fit method
+        of the synthetic control computation.
+
+        Returns
+        -------
+        tuple[pandas.DataFrame, pandas.Series]
+            Returns the matrices X0, X1 (using the notation of the Abadie,
+            Diamond & Hainmueller paper).
+
+        Raises
+        ------
+        ValueError
+            if predictors_op is not one of "mean", "std", "median"
+        """
         X_nonspecial = (
             self.foo[self.foo[self.time_variable].isin(self.time_predictors_prior)]
             .groupby(self.unit_variable)[self.predictors]
@@ -152,6 +241,21 @@ class Dataprep:
     def make_outcome_mats(
         self, time_period: Optional[IsinArg_t] = None
     ) -> tuple[pd.DataFrame, pd.Series]:
+        """Generates the time-series matrices to use as input to the fit
+        method of the synthetic control computation.
+
+        Parameters
+        ----------
+        time_period : Iterable | pandas.Series | dict, optional
+            Time period to use when generating the matrices, defaults to
+            time_optimize_ssr set when initialising the class, by default None
+
+        Returns
+        -------
+        tuple[pd.DataFrame, pd.Series]
+            Returns the matrices Z0, Z1 (using the notation of the Abadie,
+            Diamond & Hainmueller paper).
+        """
         time_period = time_period if time_period is not None else self.time_optimize_ssr
 
         Z = self.foo[self.foo[self.time_variable].isin(time_period)].pivot(

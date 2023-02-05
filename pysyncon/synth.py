@@ -15,6 +15,9 @@ OptimizerMethod_t = Literal[
 
 
 class Synth(BaseSynth):
+    """Implementation of the synthetic control method due to Abadie, Diamond &
+    Hainmueller."""
+
     def __init__(self) -> None:
         super().__init__()
         self.loss_W: Optional[float] = None
@@ -33,6 +36,77 @@ class Synth(BaseSynth):
         optim_initial: Literal["equal", "ols"] = "equal",
         optim_options: dict = {"maxiter": 1000},
     ) -> None:
+        """Fit the model/calculate the weights. Either a dataprep object
+        should be provided or otherwise matrices (X0, X1, Z0, Z1)
+        should be provided (using the same notation as the Abadie, Diamond &
+        Hainmueller paper).
+
+        Parameters
+        ----------
+        dataprep : Dataprep, optional
+            Dataprep object containing data to model, by default None.
+        X0 : pd.DataFrame, shape (m, c), optional
+            Matrix with each column corresponding to a control unit and each
+            row is covariates, by default None.
+        X1 : pandas.Series | pandas.DataFrame, shape (m, 1), optional
+            Column vector giving the covariate values for the treated unit, by
+            default None.
+        Z0 : pandas.DataFrame, shape (n, c), optional
+            A matrix of the time series of the outcome variable with each
+            column corresponding to a control unit and the rows are the time
+            steps; the columns correspond with the columns of X0, by default
+            None.
+        Z1 : pandas.Series | pandas.DataFrame, shape (n, 1), optional
+            Column vector giving the outcome variable values over time for the
+            treated unit, by default None.
+        custom_V : numpy.ndarray, shape (c, c), optional
+            Provide a V matrix (using the notation of the Abadie, Diamond &
+            Hainmueller paper), the optimisation problem will only then be
+            solved for the weight matrix W, by default None.
+        optim_method : str, optional
+            Optimisation method to use for the outer optimisation, can be be
+            any of the valid options for scipy minimize that do not require a
+            jacobian matrix, namely
+
+                - 'Nelder-Mead'
+                - 'Powell'
+                - 'CG'
+                - 'BFGS'
+                - 'L-BFGS-B'
+                - 'TNC'
+                - 'COBYLA'
+                - 'trust-constr'
+
+            By default 'Nelder-Mead'.
+        optim_initial : str, optional
+            Starting value for the outer optimisation, possible starting
+            values are
+
+                - 'equal', where the weights are all equal,
+                - 'ols', which uses a starting value obtained for fitting a
+                  regression.
+
+            By default 'equal'.
+        optim_options : dict, optional
+            options to provide to the outer part of the optimisation, value
+            options are any option that can be provided to scipy minimize for
+            the given optimisation method, by default {'maxiter': 1000}.
+
+        Returns
+        -------
+        NoneType
+            None
+
+        Raises
+        ------
+        ValueError
+            if neither a Dataprep object nor all of (X0, X1, Z0, Z1) are
+            supplied.
+        ValueError
+            if `optim_initial=ols` there is collinearity in the data.
+        ValueError
+            if `optim_initial` is not one of `'equal'` or `'ols'`.
+        """
         if dataprep:
             self.dataprep = dataprep
             X0, X1 = dataprep.make_covariate_mats()

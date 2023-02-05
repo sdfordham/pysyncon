@@ -37,6 +37,15 @@ class TestSynth(unittest.TestCase):
     @patch("pysyncon.base.plt")
     def test_path_plot(self, mock_plt: Mock):
         synth = pysyncon.Synth()
+        # No weight matrix set
+        self.assertRaises(ValueError, synth.path_plot)
+
+        X0, X1 = self.dataprep.make_covariate_mats()
+        Z0, Z1 = self.dataprep.make_outcome_mats()
+        synth.fit(X0=X0, X1=X1, Z0=Z0, Z1=Z1)
+        # No Dataprep object available
+        self.assertRaises(ValueError, synth.path_plot)
+
         synth.fit(dataprep=self.dataprep)
         synth.path_plot()
 
@@ -71,6 +80,15 @@ class TestSynth(unittest.TestCase):
     @patch("pysyncon.base.plt")
     def test_gaps_plot(self, mock_plt: Mock):
         synth = pysyncon.Synth()
+        # No weight matrix set
+        self.assertRaises(ValueError, synth.gaps_plot)
+
+        X0, X1 = self.dataprep.make_covariate_mats()
+        Z0, Z1 = self.dataprep.make_outcome_mats()
+        synth.fit(X0=X0, X1=X1, Z0=Z0, Z1=Z1)
+        # No Dataprep object available
+        self.assertRaises(ValueError, synth.gaps_plot)
+
         synth.fit(dataprep=self.dataprep)
         synth.gaps_plot()
 
@@ -92,3 +110,22 @@ class TestSynth(unittest.TestCase):
         self.assertEqual(kwargs["ymin"], 0.05)
         self.assertEqual(kwargs["ymax"], 0.95)
         self.assertEqual(kwargs["linestyle"], "dashed")
+
+    def test_weight(self):
+        synth = pysyncon.Synth()
+        # No weight matrix set
+        self.assertRaises(ValueError, synth.weights)
+
+    def test_summary(self):
+        synth = pysyncon.Synth()
+        # No weight matrix set
+        self.assertRaises(ValueError, synth.summary)
+        X0, X1 = self.dataprep.make_covariate_mats()
+        Z0, Z1 = self.dataprep.make_outcome_mats()
+        synth.fit(X0=X0, X1=X1, Z0=Z0, Z1=Z1)
+        # No Dataprep object available
+        self.assertRaises(ValueError, synth.summary)
+
+        synth.V = None
+        # No V matrix available
+        self.assertRaises(ValueError, synth.summary)
