@@ -12,7 +12,6 @@ release = "0.2.1"
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
+    "sphinx.ext.mathjax"
 ]
-templates_path = ["_templates"]
 html_theme = "alabaster"
-html_static_path = ["_static"]

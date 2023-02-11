@@ -15,8 +15,9 @@ OptimizerMethod_t = Literal[
 
 
 class Synth(BaseSynth):
-    """Implementation of the synthetic control method due to Abadie, Diamond &
-    Hainmueller."""
+    """Implementation of the synthetic control method due to
+    `Abadie, Diamond & Hainmueller <http://dx.doi.org/10.1198/jasa.2009.ap08746>`_.
+    """
 
     def __init__(self) -> None:
         super().__init__()
@@ -38,8 +39,9 @@ class Synth(BaseSynth):
     ) -> None:
         """Fit the model/calculate the weights. Either a dataprep object
         should be provided or otherwise matrices (X0, X1, Z0, Z1)
-        should be provided (using the same notation as the Abadie, Diamond &
-        Hainmueller paper).
+        should be provided (using the same notation as the
+        `Abadie, Diamond & Hainmueller <http://dx.doi.org/10.1198/jasa.2009.ap08746>`_
+        paper).
 
         Parameters
         ----------
