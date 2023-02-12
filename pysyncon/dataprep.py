@@ -14,7 +14,7 @@ SpecialPredictor_t = Tuple[
 
 class Dataprep:
     """Helper class that takes in the panel data and all necessary information
-    need to describe the study setup. It is used to automatically generate
+    needed to describe the study setup. It is used to automatically generate
     the matrices needed for the optimisation methods, plots of the results etc.
 
     Parameters

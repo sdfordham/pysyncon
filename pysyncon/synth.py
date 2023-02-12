@@ -37,7 +37,7 @@ class Synth(BaseSynth):
         optim_initial: Literal["equal", "ols"] = "equal",
         optim_options: dict = {"maxiter": 1000},
     ) -> None:
-        """Fit the model/calculate the weights. Either a dataprep object
+        """Fit the model/calculate the weights. Either a :class:`Dataprep` object
         should be provided or otherwise matrices (X0, X1, Z0, Z1)
         should be provided (using the same notation as the
         `Abadie, Diamond & Hainmueller <http://dx.doi.org/10.1198/jasa.2009.ap08746>`_
@@ -46,7 +46,7 @@ class Synth(BaseSynth):
         Parameters
         ----------
         dataprep : Dataprep, optional
-            Dataprep object containing data to model, by default None.
+            :class:`Dataprep` object containing data to model, by default None.
         X0 : pd.DataFrame, shape (m, c), optional
             Matrix with each column corresponding to a control unit and each
             row is covariates, by default None.

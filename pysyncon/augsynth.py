@@ -27,8 +27,8 @@ class AugSynth(BaseSynth):
 
         Parameters
         ----------
-        dataprep : Optional[Dataprep]
-            Dataprep object containing data to model.
+        dataprep : Dataprep, optional
+            :class:`Dataprep` object containing data to model.
         lambda_ : float, optional
             Ridge parameter to use. If not supplied, then it is obtained by
             cross-validation, by default None
