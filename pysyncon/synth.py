@@ -15,8 +15,9 @@ OptimizerMethod_t = Literal[
 
 
 class Synth(BaseSynth):
-    """Implementation of the synthetic control method due to Abadie, Diamond &
-    Hainmueller."""
+    """Implementation of the synthetic control method due to
+    `Abadie, Diamond & Hainmueller <http://dx.doi.org/10.1198/jasa.2009.ap08746>`_.
+    """
 
     def __init__(self) -> None:
         super().__init__()
@@ -36,15 +37,16 @@ class Synth(BaseSynth):
         optim_initial: Literal["equal", "ols"] = "equal",
         optim_options: dict = {"maxiter": 1000},
     ) -> None:
-        """Fit the model/calculate the weights. Either a dataprep object
+        """Fit the model/calculate the weights. Either a :class:`Dataprep` object
         should be provided or otherwise matrices (X0, X1, Z0, Z1)
-        should be provided (using the same notation as the Abadie, Diamond &
-        Hainmueller paper).
+        should be provided (using the same notation as the
+        `Abadie, Diamond & Hainmueller <http://dx.doi.org/10.1198/jasa.2009.ap08746>`_
+        paper).
 
         Parameters
         ----------
         dataprep : Dataprep, optional
-            Dataprep object containing data to model, by default None.
+            :class:`Dataprep` object containing data to model, by default None.
         X0 : pd.DataFrame, shape (m, c), optional
             Matrix with each column corresponding to a control unit and each
             row is covariates, by default None.
@@ -64,7 +66,7 @@ class Synth(BaseSynth):
             Hainmueller paper), the optimisation problem will only then be
             solved for the weight matrix W, by default None.
         optim_method : str, optional
-            Optimisation method to use for the outer optimisation, can be be
+            Optimisation method to use for the outer optimisation, can be
             any of the valid options for scipy minimize that do not require a
             jacobian matrix, namely
 

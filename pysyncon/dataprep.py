@@ -14,51 +14,50 @@ SpecialPredictor_t = Tuple[
 
 class Dataprep:
     """Helper class that takes in the panel data and all necessary information
-    and can be used to automatically generate the matrices needed for the
-    optimisation methods.
+    needed to describe the study setup. It is used to automatically generate
+    the matrices needed for the optimisation methods, plots of the results etc.
 
     Parameters
     ----------
     foo : pandas.DataFrame
         Panel data where the columns are predictor/outcome variables and
-        each row is a time-step.
+        each row is a time-step for some unit
     predictors : Axes
-        Columns of foo to use as predictors.
+        Columns of ``foo`` to use as predictors
     predictors_op : "mean" | "std" | "median"
-        The statistical operation to use on the predictors.
+        The statistical operation to use on the predictors
     dependent : Any
-        Column of foo to use as the dependent variable.
+        Column of ``foo`` to use as the dependent variable.
     unit_variable : Any
-        Column of foo that gives the labels of the unit
+        Column of ``foo`` that gives the unit labels
     time_variable : Any
-        Column of foo that gives the time variable.
+        Column of ``foo`` that gives the time variable
     treatment_identifier : Any
-        The label that indicates which unit is the treated one.
+        The unit label indicating the treated unit
     controls_identifier : Iterable
-        The labels of the units that should be used as controls.
+        The unit labels indicating the control units
     time_predictors_prior : Iterable | pandas.Series | dict
-        The time range to average the predictors over.
+        The time range over which to average the predictors
     time_optimize_ssr : Iterable | pandas.Series | dict
-        The time range over which the the loss function should be
-        minimised.
+        The time range over which the loss function should be minimised
     special_predictors : Iterable[SpecialPredictor_t], optional
         An iterable of special predictors which are additional predictors
-        that should be used that should be averaged over custom time
-        periods and using possibly different statistical operator. In
-        particular a special operator consists of triple
+        that should be averaged over a custom time period and using a possibly
+        different statistical operator. In particular a special operator
+        consists of a triple of:
 
-            - column: the column of foo to use,
+            - column: the column of ``foo`` to use,
             - time-range: the time range to apply the operator over, should
               have the same type as ``time_predictors_prior`` or ``time_optimize_ssr``
             - operator: the operator to apply, should be the same type as
-              predictors_op
+              ``predictors_op``
 
-        by default None.
+        by default None
 
     Raises
     ------
     TypeError
-        if ``foo`` is not of type pandas.DataFrame
+        if ``foo`` is not of type ``pandas.DataFrame``
     ValueError
         if ``predictor`` is not a column of ``foo``
     ValueError
@@ -179,6 +178,8 @@ class Dataprep:
         ------
         ValueError
             if predictors_op is not one of "mean", "std", "median"
+
+        :meta private:
         """
         X_nonspecial = (
             self.foo[self.foo[self.time_variable].isin(self.time_predictors_prior)]
@@ -255,6 +256,8 @@ class Dataprep:
         tuple[pd.DataFrame, pd.Series]
             Returns the matrices Z0, Z1 (using the notation of the Abadie,
             Diamond & Hainmueller paper).
+
+        :meta private:
         """
         time_period = time_period if time_period is not None else self.time_optimize_ssr
 
