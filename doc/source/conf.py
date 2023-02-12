@@ -9,9 +9,5 @@ copyright = "2023, Stiofáin Fordham"
 author = "Stiofáin Fordham"
 release = "0.2.1"
 
-extensions = [
-    "sphinx.ext.autodoc",
-    "sphinx.ext.napoleon",
-    "sphinx.ext.mathjax"
-]
+extensions = ["sphinx.ext.autodoc", "sphinx.ext.napoleon", "sphinx.ext.mathjax"]
 html_theme = "alabaster"

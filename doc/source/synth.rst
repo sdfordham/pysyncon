@@ -35,17 +35,19 @@ where
    - :math:`z_1` is a (column) vector of the corresponding values for the
      treated unit.
 
-The total minimization problem is then solved for :math:`(V,W)`.
-
 The :class:`Synth` class
 ************************
 
 The :class:`Synth <pysyncon.Synth>` class implements the synthetic control
 method. The expected way to use the class is to first create a
 :class:`Dataprep <pysyncon.Dataprep>` object that defines the study data and
-then use it as input to the :class:`Synth <pysyncon.Synth>` class. See the
+then use it as input to a :class:`Synth <pysyncon.Synth>` object. See the
 `examples folder <https://github.com/sdfordham/pysyncon/tree/main/examples>`_
 of the repository for examples illustrating usage.
+
+The implementation is based on the same method in the R
+`Synth package <https://cran.r-project.org/web/packages/Synth/index.html>`_
+and aims to produce results that can be reconciled with that package.
 
 .. autoclass:: pysyncon.Synth
    :members:

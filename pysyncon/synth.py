@@ -66,7 +66,7 @@ class Synth(BaseSynth):
             Hainmueller paper), the optimisation problem will only then be
             solved for the weight matrix W, by default None.
         optim_method : str, optional
-            Optimisation method to use for the outer optimisation, can be be
+            Optimisation method to use for the outer optimisation, can be
             any of the valid options for scipy minimize that do not require a
             jacobian matrix, namely
 
