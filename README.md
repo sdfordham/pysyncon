@@ -13,7 +13,7 @@ python -m pip install pysyncon
 
 ## Usage
 
-In the examples folder are notebooks reproducing the weights from:
+Documentation is available on [github-pages](https://sdfordham.github.io/pysyncon/). In the examples folder are notebooks reproducing the weights from:
 
 - The Economic Costs of Conflict: A Case Study of the Basque Country, Alberto Abadie and Javier Gardeazabal; The American Economic Review Vol. 93, No. 1 (Mar., 2003), pp. 113-132.
 - The worked example 'Prison construction and Black male incarceration' from the last chapter of 'Causal Inference: The Mixtape' by Scott Cunningham.
