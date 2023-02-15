@@ -8,9 +8,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from .dataprep import Dataprep
-from .synth import Synth
-from .augsynth import AugSynth
+from .dataprep import Dataprep, IsinArg_t
+from .base import BaseSynth
 
 
 class HoldoutSplitter:
@@ -134,13 +133,14 @@ class PlaceboTest:
     """
 
     def __init__(self) -> None:
-        self.placebo_paths = None
-        self.placebo_gaps = None
+        self.paths: Optional[pd.DataFrame] = None
+        self.gaps: Optional[pd.DataFrame] = None
+        self.time_optimize_ssr: Optional[IsinArg_t] = None
 
     def fit(
         self,
         dataprep: Dataprep,
-        scm_type: Union[Synth, AugSynth],
+        scm: BaseSynth,
         scm_options: dict = {},
         max_workers: Optional[int] = None,
         verbose: bool = True,
@@ -153,8 +153,8 @@ class PlaceboTest:
         ----------
         dataprep : Dataprep
             :class:`Dataprep` object containing data to model, by default None.
-        scm_type : Synth | AugSynth
-            Type of synthetic control study to use
+        scm : Synth | AugSynth
+            Synthetic control study to use
         scm_options : dict, optional
             Options to provide to the fit method of the synthetic control
             study, valid options are any valid option that the `scm_type`
@@ -165,7 +165,7 @@ class PlaceboTest:
         verbose : bool, optional
             Whether or not to output progress, by default True
         """
-        placebo_paths, placebo_gaps = list(), list()
+        paths, gaps = list(), list()
         n_tests = len(dataprep.controls_identifier)
         with futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
             to_do = list()
@@ -175,18 +175,22 @@ class PlaceboTest:
                 _dataprep.controls_identifier = controls
                 to_do.append(
                     executor.submit(
-                        self._single_placebo, _dataprep, scm_type, scm_options
+                        self._single_placebo,
+                        dataprep=_dataprep,
+                        scm=scm,
+                        scm_options=scm_options,
                     )
                 )
             for idx, future in enumerate(futures.as_completed(to_do), 1):
                 path, gap = future.result()
                 if verbose:
                     print(f"({idx}/{n_tests}) Completed placebo test for {path.name}")
-                placebo_paths.append(path)
-                placebo_gaps.append(gap)
+                paths.append(path)
+                gaps.append(gap)
 
-        self.placebo_paths = pd.concat(placebo_paths, axis=1)
-        self.placebo_gaps = pd.concat(placebo_gaps, axis=1)
+        self.paths = pd.concat(paths, axis=1)
+        self.gaps = pd.concat(gaps, axis=1)
+        self.time_optimize_ssr = dataprep.time_optimize_ssr
 
     @staticmethod
     def placebo_iter(controls: list[str]) -> tuple[str, list[str]]:
@@ -210,7 +214,7 @@ class PlaceboTest:
 
     @staticmethod
     def _single_placebo(
-        dataprep: Dataprep, scm_type: Union[Synth, AugSynth], scm_options: dict = {}
+        dataprep: Dataprep, scm: BaseSynth, scm_options: dict = {}
     ) -> tuple[pd.Series, pd.Series]:
         """Run a single placebo test.
 
@@ -234,9 +238,21 @@ class PlaceboTest:
 
         :meta private:
         """
-        scm = scm_type()
         scm.fit(dataprep=dataprep, **scm_options)
 
-        Z0, Z1 = dataprep.make_outcome_mats()
+        min_ = int(min(dataprep.foo[dataprep.time_variable]))
+        max_ = int(max(dataprep.foo[dataprep.time_variable]))
+        Z0, Z1 = dataprep.make_outcome_mats(time_period=range(min_, max_))
         path = (Z0 * scm.W).sum(axis=1).rename(dataprep.treatment_identifier)
         return path, (path - Z1).rename(dataprep.treatment_identifier)
+
+    def gaps_plot(
+        self,
+        time_period: Optional[IsinArg_t] = None,
+    ):
+        if self.gaps is None:
+            raise ValueError("No gaps available; run a placebo test first.")
+        time_period = time_period if time_period is not None else self.time_optimize_ssr
+        self.gaps[self.gaps.index.isin(time_period)].plot(
+            color="black", legend=False, alpha=0.1
+        )
