@@ -1,9 +1,16 @@
 from __future__ import annotations
+from typing import Optional, Union
+from concurrent import futures
+import copy
 from dataclasses import dataclass
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+
+from .dataprep import Dataprep
+from .synth import Synth
+from .augsynth import AugSynth
 
 
 class HoldoutSplitter:
@@ -116,3 +123,120 @@ class CrossValidationResult:
         plt.title("Cross validation result")
         plt.grid()
         plt.show()
+
+
+class PlaceboTest:
+    """Class that carries out placebo tests by running a synthetic control
+    study using each possible control unit as the treated unit and the
+    remaining control units as controls. See
+    `Abadie & Gardeazabal <https://www.aeaweb.org/articles?id=10.1257/000282803321455188>`_
+    for more details.
+    """
+
+    def __init__(self) -> None:
+        self.placebo_paths = None
+        self.placebo_gaps = None
+
+    def fit(
+        self,
+        dataprep: Dataprep,
+        scm_type: Union[Synth, AugSynth],
+        scm_options: dict = {},
+        max_workers: Optional[int] = None,
+        verbose: bool = True,
+    ):
+        """Run the placebo tests. This method is multi-process and by default
+        will use all available processors. Use the `max_workers` option to change
+        this behaviour.
+
+        Parameters
+        ----------
+        dataprep : Dataprep
+            :class:`Dataprep` object containing data to model, by default None.
+        scm_type : Synth | AugSynth
+            Type of synthetic control study to use
+        scm_options : dict, optional
+            Options to provide to the fit method of the synthetic control
+            study, valid options are any valid option that the `scm_type`
+            takes, by default {}
+        max_workers : Optional[int], optional
+            Maximum number of processes to use, if not provided then will use
+            all available, by default None
+        verbose : bool, optional
+            Whether or not to output progress, by default True
+        """
+        placebo_paths, placebo_gaps = list(), list()
+        n_tests = len(dataprep.controls_identifier)
+        with futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
+            to_do = list()
+            for treated, controls in self.placebo_iter(dataprep.controls_identifier):
+                _dataprep = copy.copy(dataprep)
+                _dataprep.treatment_identifier = treated
+                _dataprep.controls_identifier = controls
+                to_do.append(
+                    executor.submit(
+                        self._single_placebo, _dataprep, scm_type, scm_options
+                    )
+                )
+            for idx, future in enumerate(futures.as_completed(to_do), 1):
+                path, gap = future.result()
+                if verbose:
+                    print(f"({idx}/{n_tests}) Completed placebo test for {path.name}")
+                placebo_paths.append(path)
+                placebo_gaps.append(gap)
+
+        self.placebo_paths = pd.concat(placebo_paths, axis=1)
+        self.placebo_gaps = pd.concat(placebo_gaps, axis=1)
+
+    @staticmethod
+    def placebo_iter(controls: list[str]) -> tuple[str, list[str]]:
+        """Generates combinations of (treated unit, control units) for the
+        placebo tests.
+
+        Parameters
+        ----------
+        controls : list[str]
+            List of unit labels to use
+
+        Yields
+        ------
+        tuple[str, list[str]]
+            Tuple of (treated unit label, control unit labels)
+
+        :meta private:
+        """
+        for control in controls:
+            yield (control, [c for c in controls if c != control])
+
+    @staticmethod
+    def _single_placebo(
+        dataprep: Dataprep, scm_type: Union[Synth, AugSynth], scm_options: dict = {}
+    ) -> tuple[pd.Series, pd.Series]:
+        """Run a single placebo test.
+
+        Parameters
+        ----------
+        dataprep : Dataprep
+            :class:`Dataprep` object containing data to model, by default None.
+        scm_type : Synth | AugSynth
+            Type of synthetic control study to use
+        scm_options : dict, optional
+            Options to provide to the fit method of the synthetic control
+            study, valid options are any valid option that the `scm_type`
+            takes, by default {}
+
+        Returns
+        -------
+        tuple[pandas.Series, pandas.Series]
+            A time-series of the path of the synthetic control and a
+            time-series of the gap between the treated unit and the synthetic
+            control.
+
+        :meta private:
+        """
+        scm = scm_type()
+        scm.fit(dataprep=dataprep, **scm_options)
+
+        Z0, Z1 = dataprep.make_outcome_mats()
+        path = (Z0 * scm.W).sum(axis=1).rename(dataprep.treatment_identifier)
+        return path, (path - Z1).rename(dataprep.treatment_identifier)
