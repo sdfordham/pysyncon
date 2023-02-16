@@ -35,4 +35,4 @@ and aims to produce results that can be reconciled with that package.
 
 .. autoclass:: pysyncon.AugSynth
    :members:
-   
+   :inherited-members:

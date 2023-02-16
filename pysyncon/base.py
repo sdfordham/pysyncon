@@ -52,6 +52,8 @@ class BaseSynth(metaclass=ABCMeta):
         -------
         tuple[np.ndarray, float]
             tuple of the optimal weights and the loss
+
+        :meta private:
         """
         _, n_c = X0.shape
 
@@ -96,6 +98,8 @@ class BaseSynth(metaclass=ABCMeta):
         -------
         float
             V loss.
+
+        :meta private:
         """
         loss_V = (Z1 - Z0 @ W).T @ (Z1 - Z0 @ W) / len(Z0)
         return loss_V.item()
@@ -107,7 +111,7 @@ class BaseSynth(metaclass=ABCMeta):
         grid: bool = True,
     ) -> None:
         """Plot the outcome variable over time for the treated unit and the
-        synthetic control. The fit method needs to be run with a Dataprep
+        synthetic control. The fit method needs to be run with a :class:`Dataprep`
         object for this method to be available.
 
         Parameters
@@ -127,7 +131,7 @@ class BaseSynth(metaclass=ABCMeta):
         ValueError
             If there is no weight matrix available
         ValueError
-            If there is no Dataprep object set
+            If there is no :class:`Dataprep` object set
         """
         if self.dataprep is None:
             raise ValueError("dataprep must be set for automatic plots.")
@@ -177,7 +181,7 @@ class BaseSynth(metaclass=ABCMeta):
         Raises
         ------
         ValueError
-            If there is no Dataprep object set
+            If there is no :class:`Dataprep` object set
         ValueError
             If there is no weight matrix available
         """
@@ -205,7 +209,7 @@ class BaseSynth(metaclass=ABCMeta):
         plt.show()
 
     def weights(self, round: int = 3, threshold: Optional[float] = None) -> pd.Series:
-        """Return a pandas.Series of the weights for each control unit.
+        """Return a ``pandas.Series`` of the weights for each control unit.
 
         Parameters
         ----------
@@ -217,7 +221,7 @@ class BaseSynth(metaclass=ABCMeta):
 
         Returns
         -------
-        pd.Series
+        pandas.Series
             The weights computed
 
         Raises
@@ -239,7 +243,7 @@ class BaseSynth(metaclass=ABCMeta):
         return weights_ser.round(round)
 
     def summary(self, round: int = 3) -> pd.DataFrame:
-        """Generates a pandas.DataFrame with summary data.
+        """Generates a ``pandas.DataFrame`` with summary data.
 
         Parameters
         ----------
@@ -248,13 +252,13 @@ class BaseSynth(metaclass=ABCMeta):
 
         Returns
         -------
-        pd.DataFrame
+        pandas.DataFrame
             Summary data.
 
         Raises
         ------
         ValueError
-            If there is no Dataprep object set
+            If there is no :class:`Dataprep` object set
         ValueError
             If there is no weight matrix available
         ValueError
