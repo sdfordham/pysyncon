@@ -246,11 +246,7 @@ class PlaceboTest:
         path = (Z0 * scm.W).sum(axis=1).rename(dataprep.treatment_identifier)
         return path, (path - Z1).rename(dataprep.treatment_identifier)
 
-    def gaps_plot(
-        self,
-        time_period: Optional[IsinArg_t] = None,
-        grid: bool = True
-    ):
+    def gaps_plot(self, time_period: Optional[IsinArg_t] = None, grid: bool = True):
         """Plot the gaps between the treated unit and the synthetic control
         for each placebo test.
 
@@ -271,9 +267,5 @@ class PlaceboTest:
             raise ValueError("No gaps available; run a placebo test first.")
         time_period = time_period if time_period is not None else self.time_optimize_ssr
 
-        plt.plot(
-            self.gaps[self.gaps.index.isin(time_period)],
-            color="black",
-            alpha=0.1
-        )
+        plt.plot(self.gaps[self.gaps.index.isin(time_period)], color="black", alpha=0.1)
         plt.grid(grid)
