@@ -143,12 +143,14 @@ class TestSynthBasque(unittest.TestCase):
             },
         )
 
-        placebo_gaps = pd.DataFrame.from_dict(self.placebo_gaps)
+        placebo_gaps = pd.DataFrame.from_dict(self.placebo_gaps).rename_axis(
+            index="year"
+        )
         regions = self.placebo_gaps.keys()
         years = list(self.placebo_gaps["Cataluna"].keys())
         pd.testing.assert_frame_equal(
             placebo_gaps,
-            placebo_test.gaps[regions].iloc[years],
+            placebo_test.gaps[regions].loc[years],
             check_exact=False,
             atol=0.025,
         )
