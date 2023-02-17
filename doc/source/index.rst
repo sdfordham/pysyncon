@@ -12,3 +12,4 @@ performing placebo tests.
 
    Synthetic Control Method <synth>
    Augmented Synthetic Control Method <augsynth>
+   Placebo tests <placebo>

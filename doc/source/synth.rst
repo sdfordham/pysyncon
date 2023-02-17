@@ -51,3 +51,4 @@ and aims to produce results that can be reconciled with that package.
 
 .. autoclass:: pysyncon.Synth
    :members:
+   :inherited-members:

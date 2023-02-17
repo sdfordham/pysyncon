@@ -1,9 +1,15 @@
 from __future__ import annotations
+from typing import Optional, Union
+from concurrent import futures
+import copy
 from dataclasses import dataclass
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+
+from .dataprep import Dataprep, IsinArg_t
+from .base import BaseSynth
 
 
 class HoldoutSplitter:
@@ -116,3 +122,150 @@ class CrossValidationResult:
         plt.title("Cross validation result")
         plt.grid()
         plt.show()
+
+
+class PlaceboTest:
+    """Class that carries out placebo tests by running a synthetic control
+    study using each possible control unit as the treated unit and the
+    remaining control units as controls. See
+    `Abadie & Gardeazabal <https://www.aeaweb.org/articles?id=10.1257/000282803321455188>`_
+    for more details.
+    """
+
+    def __init__(self) -> None:
+        self.paths: Optional[pd.DataFrame] = None
+        self.gaps: Optional[pd.DataFrame] = None
+        self.time_optimize_ssr: Optional[IsinArg_t] = None
+
+    def fit(
+        self,
+        dataprep: Dataprep,
+        scm: BaseSynth,
+        scm_options: dict = {},
+        max_workers: Optional[int] = None,
+        verbose: bool = True,
+    ):
+        """Run the placebo tests. This method is multi-process and by default
+        will use all available processors. Use the `max_workers` option to change
+        this behaviour.
+
+        Parameters
+        ----------
+        dataprep : Dataprep
+            :class:`Dataprep` object containing data to model, by default None.
+        scm : Synth | AugSynth
+            Synthetic control study to use
+        scm_options : dict, optional
+            Options to provide to the fit method of the synthetic control
+            study, valid options are any valid option that the `scm_type`
+            takes, by default {}
+        max_workers : Optional[int], optional
+            Maximum number of processes to use, if not provided then will use
+            all available, by default None
+        verbose : bool, optional
+            Whether or not to output progress, by default True
+        """
+        paths, gaps = list(), list()
+        n_tests = len(dataprep.controls_identifier)
+        with futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
+            to_do = list()
+            for treated, controls in self.placebo_iter(dataprep.controls_identifier):
+                _dataprep = copy.copy(dataprep)
+                _dataprep.treatment_identifier = treated
+                _dataprep.controls_identifier = controls
+                to_do.append(
+                    executor.submit(
+                        self._single_placebo,
+                        dataprep=_dataprep,
+                        scm=scm,
+                        scm_options=scm_options,
+                    )
+                )
+            for idx, future in enumerate(futures.as_completed(to_do), 1):
+                path, gap = future.result()
+                if verbose:
+                    print(f"({idx}/{n_tests}) Completed placebo test for {path.name}")
+                paths.append(path)
+                gaps.append(gap)
+
+        self.paths = pd.concat(paths, axis=1)
+        self.gaps = pd.concat(gaps, axis=1)
+        self.time_optimize_ssr = dataprep.time_optimize_ssr
+
+    @staticmethod
+    def placebo_iter(controls: list[str]) -> tuple[str, list[str]]:
+        """Generates combinations of (treated unit, control units) for the
+        placebo tests.
+
+        Parameters
+        ----------
+        controls : list[str]
+            List of unit labels to use
+
+        Yields
+        ------
+        tuple[str, list[str]]
+            Tuple of (treated unit label, control unit labels)
+
+        :meta private:
+        """
+        for control in controls:
+            yield (control, [c for c in controls if c != control])
+
+    @staticmethod
+    def _single_placebo(
+        dataprep: Dataprep, scm: BaseSynth, scm_options: dict = {}
+    ) -> tuple[pd.Series, pd.Series]:
+        """Run a single placebo test.
+
+        Parameters
+        ----------
+        dataprep : Dataprep
+            :class:`Dataprep` object containing data to model
+        scm : Synth | AugSynth
+            Type of synthetic control study to use
+        scm_options : dict, optional
+            Options to provide to the fit method of the synthetic control
+            study, valid options are any valid option that `scm` takes, by
+            default {}
+
+        Returns
+        -------
+        tuple[pandas.Series, pandas.Series]
+            A time-series of the path of the synthetic control and a
+            time-series of the gap between the treated unit and the synthetic
+            control.
+
+        :meta private:
+        """
+        scm.fit(dataprep=dataprep, **scm_options)
+
+        min_ = int(min(dataprep.foo[dataprep.time_variable]))
+        max_ = int(max(dataprep.foo[dataprep.time_variable]))
+        Z0, Z1 = dataprep.make_outcome_mats(time_period=range(min_, max_))
+        path = (Z0 * scm.W).sum(axis=1).rename(dataprep.treatment_identifier)
+        return path, (path - Z1).rename(dataprep.treatment_identifier)
+
+    def gaps_plot(self, time_period: Optional[IsinArg_t] = None, grid: bool = True):
+        """Plot the gaps between the treated unit and the synthetic control
+        for each placebo test.
+
+        Parameters
+        ----------
+        time_period : Iterable | pandas.Series | dict, optional
+            Time range to plot, if none is supplied then the time range used
+            is the time period over which the optimisation happens, by default
+            None
+        grid : bool, optional
+            Whether or not to plot a grid, by default True
+        Raises
+        ------
+        ValueError
+            if no placebo test has been run yet
+        """
+        if self.gaps is None:
+            raise ValueError("No gaps available; run a placebo test first.")
+        time_period = time_period if time_period is not None else self.time_optimize_ssr
+
+        plt.plot(self.gaps[self.gaps.index.isin(time_period)], color="black", alpha=0.1)
+        plt.grid(grid)
