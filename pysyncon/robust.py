@@ -91,6 +91,8 @@ class RobustSynth(BaseSynth):
         ------
         ValueError
             If neither `threshold` nor `sv_count` are supplied.
+
+        :meta private:
         """
         if not threshold and not sv_count:
             raise ValueError("One of `threshold` or `sv_count` must be supplied.")
