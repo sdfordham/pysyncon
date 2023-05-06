@@ -6,7 +6,7 @@ import pandas as pd
 from scipy.optimize import minimize
 
 from .dataprep import Dataprep
-from .base import BaseSynth
+from .base import BaseSynth, VanillaOptimMixin
 
 
 OptimizerMethod_t = Literal[
@@ -14,7 +14,7 @@ OptimizerMethod_t = Literal[
 ]
 
 
-class Synth(BaseSynth):
+class Synth(BaseSynth, VanillaOptimMixin):
     """Implementation of the synthetic control method due to
     `Abadie, Diamond & Hainmueller <http://dx.doi.org/10.1198/jasa.2009.ap08746>`_.
     """

@@ -5,11 +5,11 @@ import numpy as np
 import pandas as pd
 
 from .dataprep import Dataprep
-from .base import BaseSynth
+from .base import BaseSynth, VanillaOptimMixin
 from .utils import HoldoutSplitter, CrossValidationResult
 
 
-class AugSynth(BaseSynth):
+class AugSynth(BaseSynth, VanillaOptimMixin):
     """Implementation of the augmented synthetic control method due to Ben-
     Michael, Feller & Rothstein.
 
