@@ -56,22 +56,22 @@ class TestRobustBasque(unittest.TestCase):
         self.lambda_ = 0.1
         self.sv_count = 2
         self.weights = {
-            'Aragon': 0.042750725,
-            'Baleares (Islas)': 0.095687916,
-            'Andalucia': 0.05471977,
-            'Canarias': 0.029348893,
-            'Cantabria': 0.131449835,
-            'Castilla Y Leon': 0.00534905,
-            'Castilla-La Mancha': -0.023989253,
-            'Cataluna': 0.172766943,
-            'Comunidad Valenciana': 0.098502043,
-            'Extremadura': -0.024916194,
-            'Galicia': 0.000285705,
-            'Madrid (Comunidad De)': 0.306908016,
-            'Murcia (Region de)': 0.037554988,
-            'Navarra (Comunidad Foral De)': 0.042127484,
-            'Principado De Asturias': 0.144568216,
-            'Rioja (La)': 0.018474723
+            "Aragon": 0.042750725,
+            "Baleares (Islas)": 0.095687916,
+            "Andalucia": 0.05471977,
+            "Canarias": 0.029348893,
+            "Cantabria": 0.131449835,
+            "Castilla Y Leon": 0.00534905,
+            "Castilla-La Mancha": -0.023989253,
+            "Cataluna": 0.172766943,
+            "Comunidad Valenciana": 0.098502043,
+            "Extremadura": -0.024916194,
+            "Galicia": 0.000285705,
+            "Madrid (Comunidad De)": 0.306908016,
+            "Murcia (Region de)": 0.037554988,
+            "Navarra (Comunidad Foral De)": 0.042127484,
+            "Principado De Asturias": 0.144568216,
+            "Rioja (La)": 0.018474723,
         }
 
     def test_weights(self):
