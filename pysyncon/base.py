@@ -221,7 +221,7 @@ class BaseSynth(metaclass=ABCMeta):
         sample_mean = X0.mean(axis=1).rename("sample mean")
 
         return pd.concat([V, treated, synthetic, sample_mean], axis=1).round(round)
-    
+
 
 class VanillaOptimMixin:
     @staticmethod
