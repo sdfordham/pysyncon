@@ -196,7 +196,7 @@ class Synth(BaseSynth, VanillaOptimMixin):
         """
         loss_V = (Z1 - Z0 @ W).T @ (Z1 - Z0 @ W) / len(Z0)
         return loss_V.item()
-    
+
     def summary(self, round: int = 3) -> pd.DataFrame:
         """Generates a ``pandas.DataFrame`` with summary data.
 
