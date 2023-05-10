@@ -1,5 +1,5 @@
 Penalized Synthetic Control Method
-===============================
+==================================
 
 The penalized synthetic control method is due to
 `Abadie & L'Hour <https://www.jmlr.org/papers/volume19/17-777/17-777.pdf>`_.
@@ -8,7 +8,7 @@ This version of the synthetic control adds a penalization term to the loss
 function that has the effect of serving to reduce the interpolation bias.
 
 The :class:`PenalizedSynth` class
-******************************
+*********************************
 
 The :class:`PenalizedSynth <pysyncon.PenalizedSynth>` class implements the penalized
 synthetic control method. The expected way to use the class is to first create a
