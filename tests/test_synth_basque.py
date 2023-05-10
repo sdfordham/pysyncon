@@ -117,6 +117,31 @@ class TestSynthBasque(unittest.TestCase):
                 1970.0: -0.013673715,
             },
         }
+        self.summary = pd.DataFrame(
+            data=[
+                [7.300000e-02, 3.988800e+01, 2.563360e+02, 3.238260e+02],
+                [1.200000e-01, 1.031742e+03, 2.730103e+03, 2.182453e+03],
+                [3.000000e-03, 9.035900e+01, 2.233400e+02, 1.488640e+02],
+                [1.020000e-01, 2.572800e+01, 6.343700e+01, 4.713300e+01],
+                [1.100000e-02, 1.348000e+01, 3.615400e+01, 2.616300e+01],
+                [0.000000e+00, 2.464700e+01, 2.158300e+01, 2.144500e+01],
+                [1.170000e-01, 5.285000e+00, 5.271000e+00, 3.584000e+00],
+                [6.300000e-02, 6.844000e+00, 6.179000e+00, 2.105800e+01],
+                [1.550000e-01, 4.106000e+00, 2.760000e+00, 5.252000e+00],
+                [9.600000e-02, 4.508200e+01, 3.763600e+01, 2.267000e+01],
+                [5.300000e-02, 6.150000e+00, 6.952000e+00, 7.274000e+00],
+                [2.000000e-03, 3.375400e+01, 4.110400e+01, 3.664600e+01],
+                [2.400000e-02, 4.072000e+00, 5.371000e+00, 7.103000e+00],
+                [1.810000e-01, 2.468900e+02, 1.962840e+02, 9.746800e+01]
+            ],
+            columns=['V', 'treated', 'synthetic', 'sample mean'],
+            index=['school.illit', 'school.prim', 'school.med', 'school.high',
+            'school.post.high', 'invest', 'special.1.gdpcap',
+            'special.2.sec.agriculture', 'special.3.sec.energy',
+            'special.4.sec.industry', 'special.5.sec.construction',
+            'special.6.sec.services.venta', 'special.7.sec.services.nonventa',
+            'special.8.popdens']
+        )
 
     def test_weights(self):
         synth = Synth()
@@ -129,6 +154,9 @@ class TestSynthBasque(unittest.TestCase):
         # Allow a tolerance of 2.5%
         pd.testing.assert_series_equal(
             weights, synth.weights(round=9), check_exact=False, atol=0.025
+        )
+        pd.testing.assert_frame_equal(
+            self.summary, synth.summary(), check_exact=False
         )
 
     def test_placebo_weights(self):
