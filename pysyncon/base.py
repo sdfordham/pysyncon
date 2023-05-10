@@ -21,32 +21,6 @@ class BaseSynth(metaclass=ABCMeta):
     def fit(*args, **kwargs) -> None:
         raise NotImplemented
 
-    @staticmethod
-    def calc_loss_V(W: np.ndarray, Z0: np.ndarray, Z1: np.ndarray) -> float:
-        """Calculates the V loss.
-
-        Parameters
-        ----------
-        W : numpy.ndarray, shape (n,)
-            Vector of the control weights
-        Z0 : numpy.ndarray, shape (m, n)
-            Matrix of the time series of the outcome variable with each
-            column corresponding to a control unit and the rows are the time
-            steps.
-        Z1 : numpy.ndarray, shape (m,)
-            Column vector giving the outcome variable values over time for the
-            treated unit
-
-        Returns
-        -------
-        float
-            V loss.
-
-        :meta private:
-        """
-        loss_V = (Z1 - Z0 @ W).T @ (Z1 - Z0 @ W) / len(Z0)
-        return loss_V.item()
-
     def path_plot(
         self,
         time_period: Optional[IsinArg_t] = None,
@@ -191,7 +165,7 @@ class BaseSynth(metaclass=ABCMeta):
         Parameters
         ----------
         round : int, optional
-            Round the weights to given number of places, by default 3
+            Round the numbers to given number of places, by default 3
 
         Returns
         -------
@@ -211,16 +185,13 @@ class BaseSynth(metaclass=ABCMeta):
             raise ValueError("dataprep must be set for summary.")
         if self.W is None:
             raise ValueError("No weight matrix available: fit data first.")
-        if self.V is None:
-            raise ValueError("No V matrix available; fit data first.")
         X0, X1 = self.dataprep.make_covariate_mats()
 
-        V = pd.Series(self.V, index=X1.index, name="V")
         treated = X1.rename("treated")
         synthetic = (X0 * self.W).sum(axis=1).rename("synthetic")
         sample_mean = X0.mean(axis=1).rename("sample mean")
 
-        return pd.concat([V, treated, synthetic, sample_mean], axis=1).round(round)
+        return pd.concat([treated, synthetic, sample_mean], axis=1).round(round)
 
 
 class VanillaOptimMixin:
