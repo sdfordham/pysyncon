@@ -170,3 +170,58 @@ class Synth(BaseSynth, VanillaOptimMixin):
         loss_V = self.calc_loss_V(W=W, Z0=Z0_arr, Z1=Z1_arr)
 
         self.W, self.loss_W, self.V, self.loss_V = W, loss_W, V_mat.diagonal(), loss_V
+
+    @staticmethod
+    def calc_loss_V(W: np.ndarray, Z0: np.ndarray, Z1: np.ndarray) -> float:
+        """Calculates the V loss.
+
+        Parameters
+        ----------
+        W : numpy.ndarray, shape (n,)
+            Vector of the control weights
+        Z0 : numpy.ndarray, shape (m, n)
+            Matrix of the time series of the outcome variable with each
+            column corresponding to a control unit and the rows are the time
+            steps.
+        Z1 : numpy.ndarray, shape (m,)
+            Column vector giving the outcome variable values over time for the
+            treated unit
+
+        Returns
+        -------
+        float
+            V loss.
+
+        :meta private:
+        """
+        loss_V = (Z1 - Z0 @ W).T @ (Z1 - Z0 @ W) / len(Z0)
+        return loss_V.item()
+
+    def summary(self, round: int = 3) -> pd.DataFrame:
+        """Generates a ``pandas.DataFrame`` with summary data.
+
+        Parameters
+        ----------
+        round : int, optional
+            Round the numbers to given number of places, by default 3
+
+        Returns
+        -------
+        pandas.DataFrame
+            Summary data.
+
+        Raises
+        ------
+        ValueError
+            If there is no :class:`Dataprep` object set
+        ValueError
+            If there is no weight matrix available
+        ValueError
+            If there is no V matrix available
+        """
+        if self.V is None:
+            raise ValueError("No V matrix available; fit data first.")
+        summary_ser = super().summary(round=round)
+
+        V = pd.Series(self.V, index=summary_ser.index, name="V")
+        return pd.concat([V, summary_ser], axis=1).round(round)
