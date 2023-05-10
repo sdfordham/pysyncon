@@ -22,63 +22,6 @@ class BaseSynth(metaclass=ABCMeta):
         raise NotImplemented
 
     @staticmethod
-    def w_optimize(
-        V_mat: np.ndarray,
-        X0: np.ndarray,
-        X1: np.ndarray,
-        qp_method: Literal["SLSQP"] = "SLSQP",
-        qp_options: dict = {"maxiter": 1000},
-    ) -> tuple[np.ndarray, float]:
-        """Solves the inner part of the quadratic minimization problem for a
-        given V matrix.
-
-        Parameters
-        ----------
-        V_mat : numpy.ndarray, shape (c, c)
-            V matrix using the notation of the Abadie, Diamond & Hainmueller
-            paper defining.
-        X0 : numpy.ndarray, shape (m, c)
-            Matrix with each column corresponding to a control unit and each
-            row is covariates.
-        X1 : numpy.ndarray, shape (m,)
-            Column vector giving the covariate values for the treated unit.
-        qp_method : str, optional
-            Minimization routine to use in scipy minimize to solve the problem
-            , by default "SLSQP"
-        qp_options : dict, optional
-            Options for scipy minimize, by default {"maxiter": 1000}
-
-        Returns
-        -------
-        tuple[np.ndarray, float]
-            tuple of the optimal weights and the loss
-
-        :meta private:
-        """
-        _, n_c = X0.shape
-
-        P = X0.T @ V_mat @ X0
-        q = -1.0 * X1.T @ V_mat @ X0
-
-        def fun(x):
-            return q.T @ x + 0.5 * x.T @ P @ x
-
-        bounds = Bounds(lb=np.array([0.0] * n_c).T, ub=np.array([1.0] * n_c).T)
-        constraints = LinearConstraint(A=np.array([1.0] * n_c), lb=1.0, ub=1.0)
-
-        x0 = np.array([1 / n_c] * n_c)
-        res = minimize(
-            fun=fun,
-            x0=x0,
-            bounds=bounds,
-            constraints=constraints,
-            method=qp_method,
-            options=qp_options,
-        )
-        W, loss_W = res["x"], res["fun"]
-        return W, loss_W.item()
-
-    @staticmethod
     def calc_loss_V(W: np.ndarray, Z0: np.ndarray, Z1: np.ndarray) -> float:
         """Calculates the V loss.
 
@@ -278,3 +221,62 @@ class BaseSynth(metaclass=ABCMeta):
         sample_mean = X0.mean(axis=1).rename("sample mean")
 
         return pd.concat([V, treated, synthetic, sample_mean], axis=1).round(round)
+
+
+class VanillaOptimMixin:
+    @staticmethod
+    def w_optimize(
+        V_mat: np.ndarray,
+        X0: np.ndarray,
+        X1: np.ndarray,
+        qp_method: Literal["SLSQP"] = "SLSQP",
+        qp_options: dict = {"maxiter": 1000},
+    ) -> tuple[np.ndarray, float]:
+        """Solves the inner part of the quadratic minimization problem for a
+        given V matrix.
+
+        Parameters
+        ----------
+        V_mat : numpy.ndarray, shape (c, c)
+            V matrix using the notation of the Abadie, Diamond & Hainmueller
+            paper defining.
+        X0 : numpy.ndarray, shape (m, c)
+            Matrix with each column corresponding to a control unit and each
+            row is covariates.
+        X1 : numpy.ndarray, shape (m,)
+            Column vector giving the covariate values for the treated unit.
+        qp_method : str, optional
+            Minimization routine to use in scipy minimize to solve the problem
+            , by default "SLSQP"
+        qp_options : dict, optional
+            Options for scipy minimize, by default {"maxiter": 1000}
+
+        Returns
+        -------
+        tuple[np.ndarray, float]
+            tuple of the optimal weights and the loss
+
+        :meta private:
+        """
+        _, n_c = X0.shape
+
+        P = X0.T @ V_mat @ X0
+        q = -1.0 * X1.T @ V_mat @ X0
+
+        def fun(x):
+            return q.T @ x + 0.5 * x.T @ P @ x
+
+        bounds = Bounds(lb=np.array([0.0] * n_c).T, ub=np.array([1.0] * n_c).T)
+        constraints = LinearConstraint(A=np.array([1.0] * n_c), lb=1.0, ub=1.0)
+
+        x0 = np.array([1 / n_c] * n_c)
+        res = minimize(
+            fun=fun,
+            x0=x0,
+            bounds=bounds,
+            constraints=constraints,
+            method=qp_method,
+            options=qp_options,
+        )
+        W, loss_W = res["x"], res["fun"]
+        return W, loss_W.item()

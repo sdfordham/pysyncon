@@ -11,4 +11,5 @@ tests.
    Synthetic Control Method <synth>
    Augmented Synthetic Control Method <augsynth>
    Robust Synthetic Control Method <robust>
+   Penalized Synthetic Control Method <penalized>
    Placebo Tests <placebo>
