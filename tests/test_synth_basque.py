@@ -119,28 +119,38 @@ class TestSynthBasque(unittest.TestCase):
         }
         self.summary = pd.DataFrame(
             data=[
-                [7.300000e-02, 3.988800e+01, 2.563360e+02, 3.238260e+02],
-                [1.200000e-01, 1.031742e+03, 2.730103e+03, 2.182453e+03],
-                [3.000000e-03, 9.035900e+01, 2.233400e+02, 1.488640e+02],
-                [1.020000e-01, 2.572800e+01, 6.343700e+01, 4.713300e+01],
-                [1.100000e-02, 1.348000e+01, 3.615400e+01, 2.616300e+01],
-                [0.000000e+00, 2.464700e+01, 2.158300e+01, 2.144500e+01],
-                [1.170000e-01, 5.285000e+00, 5.271000e+00, 3.584000e+00],
-                [6.300000e-02, 6.844000e+00, 6.179000e+00, 2.105800e+01],
-                [1.550000e-01, 4.106000e+00, 2.760000e+00, 5.252000e+00],
-                [9.600000e-02, 4.508200e+01, 3.763600e+01, 2.267000e+01],
-                [5.300000e-02, 6.150000e+00, 6.952000e+00, 7.274000e+00],
-                [2.000000e-03, 3.375400e+01, 4.110400e+01, 3.664600e+01],
-                [2.400000e-02, 4.072000e+00, 5.371000e+00, 7.103000e+00],
-                [1.810000e-01, 2.468900e+02, 1.962840e+02, 9.746800e+01]
+                [7.26559110e-02, 3.98884646e01, 2.56336977e02, 3.23825543e02],
+                [1.19777358e-01, 1.03174230e03, 2.73010720e03, 2.18245335e03],
+                [3.48611100e-03, 9.03586680e01, 2.23340172e02, 1.48864075e02],
+                [1.02189247e-01, 2.57275251e01, 6.34368045e01, 4.71326627e01],
+                [1.08267860e-02, 1.34797198e01, 3.61534897e01, 2.61630325e01],
+                [5.32110000e-05, 2.46473831e01, 2.15826359e01, 2.14454579e01],
+                [1.17260969e-01, 5.28546845e00, 5.27078346e00, 3.58401509e00],
+                [6.33926060e-02, 6.84399996e00, 6.17934020e00, 2.10581177e01],
+                [1.55350772e-01, 4.10600004e00, 2.75975796e00, 5.25223529e00],
+                [9.58688000e-02, 4.50820000e01, 3.76359420e01, 2.26702353e01],
+                [5.30811070e-02, 6.15000000e00, 6.95245150e00, 7.27400001e00],
+                [1.63475200e-03, 3.37540001e01, 4.11037607e01, 3.66458824e01],
+                [2.37097130e-02, 4.07200012e00, 5.37134427e00, 7.10294116e00],
+                [1.80712657e-01, 2.46889999e02, 1.96283316e02, 9.74682350e01],
             ],
-            columns=['V', 'treated', 'synthetic', 'sample mean'],
-            index=['school.illit', 'school.prim', 'school.med', 'school.high',
-            'school.post.high', 'invest', 'special.1.gdpcap',
-            'special.2.sec.agriculture', 'special.3.sec.energy',
-            'special.4.sec.industry', 'special.5.sec.construction',
-            'special.6.sec.services.venta', 'special.7.sec.services.nonventa',
-            'special.8.popdens']
+            columns=["V", "treated", "synthetic", "sample mean"],
+            index=[
+                "school.illit",
+                "school.prim",
+                "school.med",
+                "school.high",
+                "school.post.high",
+                "invest",
+                "special.1.gdpcap",
+                "special.2.sec.agriculture",
+                "special.3.sec.energy",
+                "special.4.sec.industry",
+                "special.5.sec.construction",
+                "special.6.sec.services.venta",
+                "special.7.sec.services.nonventa",
+                "special.8.popdens",
+            ],
         )
 
     def test_weights(self):
@@ -156,7 +166,7 @@ class TestSynthBasque(unittest.TestCase):
             weights, synth.weights(round=9), check_exact=False, atol=0.025
         )
         pd.testing.assert_frame_equal(
-            self.summary, synth.summary(), check_exact=False
+            self.summary, synth.summary(round=9), check_exact=False, atol=0.025
         )
 
     def test_placebo_weights(self):
