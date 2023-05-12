@@ -242,9 +242,10 @@ class PlaceboTest:
 
         min_ = int(min(dataprep.foo[dataprep.time_variable]))
         max_ = int(max(dataprep.foo[dataprep.time_variable]))
-        Z0, Z1 = dataprep.make_outcome_mats(time_period=range(min_, max_))
-        path = (Z0 * scm.W).sum(axis=1).rename(dataprep.treatment_identifier)
-        return path, (path - Z1).rename(dataprep.treatment_identifier)
+
+        synthetic = scm._synthetic(time_period=range(min_, max_))
+        gaps = scm._gaps(time_period=range(min_, max_))
+        return synthetic.rename(dataprep.treatment_identifier), gaps.rename(dataprep.treatment_identifier)
 
     def gaps_plot(self, time_period: Optional[IsinArg_t] = None, grid: bool = True):
         """Plot the gaps between the treated unit and the synthetic control

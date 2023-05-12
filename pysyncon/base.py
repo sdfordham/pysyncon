@@ -21,6 +21,25 @@ class BaseSynth(metaclass=ABCMeta):
     def fit(*args, **kwargs) -> None:
         raise NotImplemented
 
+    def _synthetic(self, time_period: Optional[IsinArg_t] = None) -> pd.Series:
+        """Assemble the synthetic unit using the calculated weight matrix.
+
+        Parameters
+        ----------
+        time_period : Iterable | pandas.Series | dict, optional
+            Time range to plot, if none is supplied then the time range used
+            is the time period over which the optimisation happens, by default
+            None
+
+        Returns
+        -------
+        pd.Series
+            Time series of the synthetic unit.
+        """
+        Z0, _ = self.dataprep.make_outcome_mats(time_period=time_period)
+        ts_synthetic = (Z0 * self.W).sum(axis=1)
+        return ts_synthetic
+        
     def path_plot(
         self,
         time_period: Optional[IsinArg_t] = None,
@@ -56,7 +75,7 @@ class BaseSynth(metaclass=ABCMeta):
             raise ValueError("No weight matrix available; fit data first.")
 
         Z0, Z1 = self.dataprep.make_outcome_mats(time_period=time_period)
-        ts_synthetic = (Z0 * self.W).sum(axis=1)
+        ts_synthetic = self._synthetic(time_period=time_period)
 
         plt.plot(Z1, color="black", linewidth=1, label=Z1.name)
         plt.plot(
@@ -73,6 +92,29 @@ class BaseSynth(metaclass=ABCMeta):
         plt.grid(grid)
         plt.show()
 
+    def _gaps(self, time_period: Optional[IsinArg_t] = None) -> pd.Series:
+        """Calculate the gaps (difference between factual 
+        and estimated conterfactual)
+
+        Parameters
+        ----------
+        time_period : Iterable | pandas.Series | dict, optional
+            Time range to plot, if none is supplied then the time range used
+            is the time period over which the optimisation happens, default
+            None
+
+        Returns
+        -------
+        pd.Series
+            Series containing the gaps
+
+        :meta private:
+        """
+        _, Z1 = self.dataprep.make_outcome_mats(time_period=time_period)
+        ts_synthetic = self._synthetic(time_period=time_period)
+        ts_gap = Z1 - ts_synthetic
+        return ts_gap
+    
     def gaps_plot(
         self,
         time_period: Optional[IsinArg_t] = None,
@@ -107,10 +149,7 @@ class BaseSynth(metaclass=ABCMeta):
         if self.W is None:
             raise ValueError("No weight matrix available; fit data first.")
 
-        Z0, Z1 = self.dataprep.make_outcome_mats(time_period=time_period)
-        ts_synthetic = (Z0 * self.W).sum(axis=1)
-        ts_gap = Z1 - ts_synthetic
-
+        ts_gap = self._gaps(time_period=time_period)
         plt.plot(ts_gap, color="black", linewidth=1)
         plt.ylabel(self.dataprep.dependent)
         plt.hlines(
