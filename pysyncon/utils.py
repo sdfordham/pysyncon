@@ -315,3 +315,40 @@ class PlaceboTest:
             plt.axvline(x=treatment_time, ymin=0.05, ymax=0.95, linestyle="dashed")
         plt.grid(grid)
         plt.show()
+
+    def pvalue(self, treatment_time: int) -> float:
+        """Calculate p-value of Abadie et al's version of Fisher's
+        exact hypothesis test for no effect of treatment null. See also
+        Firpo & Possebom 2017.
+
+        Parameters
+        ----------
+        treatment_time : int, optional
+            If supplied, plot a vertical line at the time period that the
+            treatment time occurred, by default None
+
+        Returns
+        -------
+        float
+            p-value for null hypothesis of no effect of treatment
+
+        Raises
+        ------
+        ValueError
+            if no placebo test has been run yet
+        """
+        if self.gaps is None or self.treated_gap is None:
+            raise ValueError("Run a placebo test first.")
+
+        all_ = pd.concat([self.gaps, self.treated_gap], axis=1)
+
+        denom = all_.loc[:treatment_time].pow(2).sum(axis=0)
+        num = all_.loc[treatment_time:].pow(2).sum(axis=0)
+
+        t, _ = self.gaps.shape
+        t0, _ = self.gaps.loc[:treatment_time].shape
+
+        rmspe = (num / (t - t0)) / (denom / t0)
+        return sum(
+            rmspe.drop(index=self.treated_gap.name) >= rmspe.loc[self.treated_gap.name]
+        ) / len(rmspe)
