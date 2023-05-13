@@ -39,7 +39,7 @@ class BaseSynth(metaclass=ABCMeta):
         Z0, _ = self.dataprep.make_outcome_mats(time_period=time_period)
         ts_synthetic = (Z0 * self.W).sum(axis=1)
         return ts_synthetic
-        
+
     def path_plot(
         self,
         time_period: Optional[IsinArg_t] = None,
@@ -93,7 +93,7 @@ class BaseSynth(metaclass=ABCMeta):
         plt.show()
 
     def _gaps(self, time_period: Optional[IsinArg_t] = None) -> pd.Series:
-        """Calculate the gaps (difference between factual 
+        """Calculate the gaps (difference between factual
         and estimated conterfactual)
 
         Parameters
@@ -114,7 +114,7 @@ class BaseSynth(metaclass=ABCMeta):
         ts_synthetic = self._synthetic(time_period=time_period)
         ts_gap = Z1 - ts_synthetic
         return ts_gap
-    
+
     def gaps_plot(
         self,
         time_period: Optional[IsinArg_t] = None,
