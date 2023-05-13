@@ -152,6 +152,8 @@ class TestSynthBasque(unittest.TestCase):
                 "special.8.popdens",
             ],
         )
+        self.treatment_time = 1975
+        self.pvalue = 0.16666666666666666
 
     def test_weights(self):
         synth = Synth()
@@ -191,4 +193,9 @@ class TestSynthBasque(unittest.TestCase):
             placebo_test.gaps[regions].loc[years],
             check_exact=False,
             atol=0.025,
+        )
+        self.assertAlmostEqual(
+            self.pvalue,
+            placebo_test.pvalue(treatment_time=self.treatment_time),
+            places=3,
         )
