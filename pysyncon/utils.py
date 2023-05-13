@@ -134,7 +134,9 @@ class PlaceboTest:
 
     def __init__(self) -> None:
         self.paths: Optional[pd.DataFrame] = None
+        self.treated_path: Optional[pd.DataFrame] = None
         self.gaps: Optional[pd.DataFrame] = None
+        self.treated_gap: Optional[pd.DataFrame] = None
         self.time_optimize_ssr: Optional[IsinArg_t] = None
 
     def fit(
@@ -184,13 +186,19 @@ class PlaceboTest:
             for idx, future in enumerate(futures.as_completed(to_do), 1):
                 path, gap = future.result()
                 if verbose:
-                    print(f"({idx}/{n_tests}) Completed placebo test for {path.name}")
+                    print(f"({idx}/{n_tests}) Completed placebo test for {path.name}.")
                 paths.append(path)
                 gaps.append(gap)
 
         self.paths = pd.concat(paths, axis=1)
         self.gaps = pd.concat(gaps, axis=1)
         self.time_optimize_ssr = dataprep.time_optimize_ssr
+
+        print(f"Calculating treated unit gaps.")
+        self.treated_path, self.treated_gap = self._single_placebo(
+            dataprep=dataprep, scm=scm, scm_options=scm_options
+        )
+        print("Done.")
 
     @staticmethod
     def placebo_iter(controls: list[str]) -> tuple[str, list[str]]:
@@ -242,11 +250,21 @@ class PlaceboTest:
 
         min_ = int(min(dataprep.foo[dataprep.time_variable]))
         max_ = int(max(dataprep.foo[dataprep.time_variable]))
-        Z0, Z1 = dataprep.make_outcome_mats(time_period=range(min_, max_))
-        path = (Z0 * scm.W).sum(axis=1).rename(dataprep.treatment_identifier)
-        return path, (path - Z1).rename(dataprep.treatment_identifier)
 
-    def gaps_plot(self, time_period: Optional[IsinArg_t] = None, grid: bool = True):
+        synthetic = scm._synthetic(time_period=range(min_, max_))
+        gaps = scm._gaps(time_period=range(min_, max_))
+        return synthetic.rename(dataprep.treatment_identifier), gaps.rename(
+            dataprep.treatment_identifier
+        )
+
+    def gaps_plot(
+        self,
+        time_period: Optional[IsinArg_t] = None,
+        grid: bool = True,
+        treatment_time: Optional[int] = None,
+        mspe_threshold: Optional[float] = None,
+        exclude_units: Optional[list] = None,
+    ):
         """Plot the gaps between the treated unit and the synthetic control
         for each placebo test.
 
@@ -258,14 +276,79 @@ class PlaceboTest:
             None
         grid : bool, optional
             Whether or not to plot a grid, by default True
+        treatment_time : int, optional
+            If supplied, plot a vertical line at the time period that the
+            treatment time occurred, by default None
+        mspe_threshold : float, optional
+            Remove any non-treated units whose MSPE pre-treatment is <=
+            mspe_threshold x the MSPE of the treated unit pre-treatment.
+            This serves to exclude any non-treated units whose synthetic control
+            had a poor pre-treatment match to the actual relative to how the
+            actual treated unit matched pre-treatment.
+
         Raises
         ------
         ValueError
             if no placebo test has been run yet
+        ValueError
+            if `mspe_threshold` is supplied but `treatment_year` is not.
         """
         if self.gaps is None:
             raise ValueError("No gaps available; run a placebo test first.")
         time_period = time_period if time_period is not None else self.time_optimize_ssr
 
-        plt.plot(self.gaps[self.gaps.index.isin(time_period)], color="black", alpha=0.1)
+        gaps = self.gaps.drop(columns=exclude_units) if exclude_units else self.gaps
+
+        if mspe_threshold:
+            if not treatment_time:
+                raise ValueError("Need `treatment_time` to use `mspe_threshold`.")
+            pre_mspe = gaps.loc[:treatment_time].pow(2).sum(axis=0)
+            pre_mspe_treated = self.treated_gap.loc[:treatment_time].pow(2).sum(axis=0)
+            keep = pre_mspe[pre_mspe < mspe_threshold * pre_mspe_treated].index
+            placebo_gaps = gaps[gaps.index.isin(time_period)][keep]
+        else:
+            placebo_gaps = gaps[gaps.index.isin(time_period)]
+
+        plt.plot(placebo_gaps, color="black", alpha=0.1)
+        plt.plot(self.treated_gap, color="black", alpha=1.0)
+        if treatment_time:
+            plt.axvline(x=treatment_time, ymin=0.05, ymax=0.95, linestyle="dashed")
         plt.grid(grid)
+        plt.show()
+
+    def pvalue(self, treatment_time: int) -> float:
+        """Calculate p-value of Abadie et al's version of Fisher's
+        exact hypothesis test for no effect of treatment null. See also
+        Firpo & Possebom 2017.
+
+        Parameters
+        ----------
+        treatment_time : int, optional
+            If supplied, plot a vertical line at the time period that the
+            treatment time occurred, by default None
+
+        Returns
+        -------
+        float
+            p-value for null hypothesis of no effect of treatment
+
+        Raises
+        ------
+        ValueError
+            if no placebo test has been run yet
+        """
+        if self.gaps is None or self.treated_gap is None:
+            raise ValueError("Run a placebo test first.")
+
+        all_ = pd.concat([self.gaps, self.treated_gap], axis=1)
+
+        denom = all_.loc[:treatment_time].pow(2).sum(axis=0)
+        num = all_.loc[treatment_time:].pow(2).sum(axis=0)
+
+        t, _ = self.gaps.shape
+        t0, _ = self.gaps.loc[:treatment_time].shape
+
+        rmspe = (num / (t - t0)) / (denom / t0)
+        return sum(
+            rmspe.drop(index=self.treated_gap.name) >= rmspe.loc[self.treated_gap.name]
+        ) / len(rmspe)
