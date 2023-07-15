@@ -24,6 +24,6 @@ python -m pip install pysyncon
 
 Documentation is available on [github-pages](https://sdfordham.github.io/pysyncon/). In the examples folder are notebooks reproducing the weights from:
 
-- The Economic Costs of Conflict: A Case Study of the Basque Country, Alberto Abadie and Javier Gardeazabal; The American Economic Review Vol. 93, No. 1 (Mar., 2003), pp. 113-132.
-- The worked example 'Prison construction and Black male incarceration' from the last chapter of 'Causal Inference: The Mixtape' by Scott Cunningham.
-- Comparative Politics and the Synthetic Control Method, Alberto Abadie, Alexis Diamond and Jens Hainmueller; American Journal of Political Science Vol. 59, No. 2 (April 2015), pp. 495-510.
+- The Economic Costs of Conflict: A Case Study of the Basque Country, Alberto Abadie and Javier Gardeazabal; The American Economic Review Vol. 93, No. 1 (Mar., 2003), pp. 113-132. ([notebook here](examples/basque.ipynb))
+- The worked example 'Prison construction and Black male incarceration' from the last chapter of 'Causal Inference: The Mixtape' by Scott Cunningham. ([notebook here](examples/texas.ipynb))
+- Comparative Politics and the Synthetic Control Method, Alberto Abadie, Alexis Diamond and Jens Hainmueller; American Journal of Political Science Vol. 59, No. 2 (April 2015), pp. 495-510. ([notebook here](examples/germany.ipynb))
