@@ -201,10 +201,10 @@ class BaseSynth(metaclass=ABCMeta):
     def summary(self, round: int = 3) -> pd.DataFrame:
         """Generates a ``pandas.DataFrame`` with summary data. The
         first column will show the mean value of each predictor over the time
-        period `time_predictors_prior` for the treated unit and the second
+        period ``time_predictors_prior`` for the treated unit and the second
         column the case of the synthetic unit and finally there will be a
-        column `sample mean` that shows the mean value of each predictor
-        over the time period `time_predictors_prior` across all the control
+        column 'sample mean' that shows the mean value of each predictor
+        over the time period ``time_predictors_prior`` across all the control
         units, i.e. this will be the same as a synthetic control where all
         the weights are equal.
 
