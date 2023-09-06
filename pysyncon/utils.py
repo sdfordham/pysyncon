@@ -323,9 +323,8 @@ class PlaceboTest:
 
         Parameters
         ----------
-        treatment_time : int, optional
-            If supplied, plot a vertical line at the time period that the
-            treatment time occurred, by default None
+        treatment_time : int
+            The time period that the treatment time occurred
 
         Returns
         -------
