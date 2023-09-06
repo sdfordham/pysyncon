@@ -198,7 +198,14 @@ class Synth(BaseSynth, VanillaOptimMixin):
         return loss_V.item()
 
     def summary(self, round: int = 3) -> pd.DataFrame:
-        """Generates a ``pandas.DataFrame`` with summary data.
+        """Generates a ``pandas.DataFrame`` with summary data. In particular,
+        it will show the values of the V matrix for each predictor, then the
+        next column will show the mean value of each predictor over the time
+        period `time_predictors_prior` for the treated unit and the synthetic
+        unit and finally there will be a column `sample mean` that shows the
+        mean value of each predictor over the time period
+        `time_predictors_prior` across all the control units, i.e. this will
+        be the same as a synthetic control where all the weights are equal.
 
         Parameters
         ----------
