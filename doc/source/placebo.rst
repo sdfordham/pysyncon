@@ -10,7 +10,7 @@ reproducing the weights from that paper in the package repository
 `here <https://github.com/sdfordham/pysyncon/tree/main/examples/basque.ipynb>`_
 
 The :class:`PlaceboTest` class
-************************
+******************************
 
 .. autoclass:: pysyncon.utils.PlaceboTest
    :members:
