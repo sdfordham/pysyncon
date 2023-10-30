@@ -1,9 +1,20 @@
 Synthetic Control Method
 ========================
 
+Overview
+********
+
 The synthetic control method is due to
 `Abadie, Diamond & Hainmueller <http://dx.doi.org/10.1198/jasa.2009.ap08746>`_.
-This method constructs a vector of non-negative weights
+This method constructs a weighted combination of the control units that
+most resembles the selected characteristics of the treated unit in a time period
+prior to the treatment time. This so-constructed "synthetic control unit" can then be
+compared with the treated unit to investigate the causal effect of the treatment.
+
+Details
+*******
+
+In particular, this method constructs a vector of non-negative weights
 :math:`w = (w_1, w_2, \dots, w_k)` whose sum is 1 and :math:`k` is the number
 of control units that minimizes
 
