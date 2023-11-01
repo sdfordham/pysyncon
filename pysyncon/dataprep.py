@@ -20,37 +20,39 @@ class Dataprep:
     Parameters
     ----------
     foo : pandas.DataFrame
-        Panel data where the columns are predictor/outcome variables and
-        each row is a time-step for some unit
+        A pandas DataFrame containing the panel data where the columns are
+        predictor/outcome variables and each row is a time-step for some unit
     predictors : Axes
-        Columns of ``foo`` to use as predictors
+        The columns of ``foo`` to use as predictors
     predictors_op : "mean" | "std" | "median"
-        The statistical operation to use on the predictors
+        The statistical operation to use on the predictors - the time range that
+        the operation is applied to is ``time_predictors_prior``
     dependent : Any
-        Column of ``foo`` to use as the dependent variable.
+        The column of ``foo`` to use as the dependent variable
     unit_variable : Any
-        Column of ``foo`` that gives the unit labels
+        The column of ``foo`` that contains the unit labels
     time_variable : Any
-        Column of ``foo`` that gives the time variable
+        The column of ``foo`` that contains the time period
     treatment_identifier : Any
-        The unit label indicating the treated unit
+        The unit label that denotes the treated unit
     controls_identifier : Iterable
-        The unit labels indicating the control units
-    time_predictors_prior : Iterable | pandas.Series | dict
-        The time range over which to average the predictors
-    time_optimize_ssr : Iterable | pandas.Series | dict
+        The unit labels denoting the control units
+    time_predictors_prior : Iterable
+        The time range over which to apply the statistical operation to the
+        predictors (see ``predictors_op`` argument)
+    time_optimize_ssr : Iterable
         The time range over which the loss function should be minimised
     special_predictors : Iterable[SpecialPredictor_t], optional
         An iterable of special predictors which are additional predictors
-        that should be averaged over a custom time period and using a possibly
-        different statistical operator. In particular a special operator
+        that should be averaged over a custom time period and an indicated
+        statistical operator. In particular, a special predictor
         consists of a triple of:
 
-            - column: the column of ``foo`` to use,
-            - time-range: the time range to apply the operator over, should
+            - ``column``: the column of ``foo`` containing the predictor to use,
+            - ``time-range``: the time range to apply ``operator`` over - it should
               have the same type as ``time_predictors_prior`` or ``time_optimize_ssr``
-            - operator: the operator to apply, should be the same type as
-              ``predictors_op``
+            - ``operator``: the statistical operator to apply to ``column`` - it should
+              have the same type as ``predictors_op``
 
         by default None
 
