@@ -199,12 +199,20 @@ class BaseSynth(metaclass=ABCMeta):
         return weights_ser.round(round)
 
     def summary(self, round: int = 3) -> pd.DataFrame:
-        """Generates a ``pandas.DataFrame`` with summary data.
+        """Generates a ``pandas.DataFrame`` with summary data. The
+        first column will show the mean value of each predictor over the time
+        period ``time_predictors_prior`` for the treated unit and the second
+        column the case of the synthetic unit and finally there will be a
+        column 'sample mean' that shows the mean value of each predictor
+        over the time period ``time_predictors_prior`` across all the control
+        units, i.e. this will be the same as a synthetic control where all
+        the weights are equal.
 
         Parameters
         ----------
         round : int, optional
-            Round the numbers to given number of places, by default 3
+            Round the table values to the given number of places, by
+            default 3
 
         Returns
         -------
@@ -217,8 +225,6 @@ class BaseSynth(metaclass=ABCMeta):
             If there is no :class:`Dataprep` object set
         ValueError
             If there is no weight matrix available
-        ValueError
-            If there is no V matrix available
         """
         if self.dataprep is None:
             raise ValueError("dataprep must be set for summary.")
