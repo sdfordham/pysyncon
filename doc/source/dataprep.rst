@@ -13,8 +13,7 @@ the label denoting the treated unit, the time period to carry out the optimisati
 procedure over and the time period to apply the statistical operation to the
 predictors. See below for further details about each individual argument, and also see
 the `examples folder <https://github.com/sdfordham/pysyncon/tree/main/examples>`_
-of the repository to see how this class is set up in the context of three real
-research contexts.
+of the repository to see how this class is set up in three real research contexts.
 
 The principal difference between the function signature here and the one in
 the ``R`` ``synth`` package is that whereas there are two arguments `unit.variable`

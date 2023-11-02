@@ -2,10 +2,12 @@ Penalized Synthetic Control Method
 ==================================
 
 The penalized synthetic control method is due to
-`Abadie & L'Hour <https://www.jmlr.org/papers/volume19/17-777/17-777.pdf>`_.
+`Abadie & L'Hour <https://economics.mit.edu/sites/default/files/publications/A%20Penalized%20Synthetic%20Control%20Estimator%20for%20Disagg.pdf>`_.
 
-This version of the synthetic control adds a penalization term to the loss
-function that has the effect of serving to reduce the interpolation bias.
+This version of the synthetic control method adds a penalization term to the loss
+function that has the effect of serving to reduce the interpolation bias. It does this
+by penalizing pairwise discrepancies in any unit contributing to the synthetic control
+and the treated unit.
 
 The :class:`PenalizedSynth` class
 *********************************
