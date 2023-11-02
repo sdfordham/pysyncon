@@ -22,11 +22,7 @@ class TestUtils(unittest.TestCase):
                     self.assertIsInstance(df_, pd.DataFrame)
                     pd.testing.assert_frame_equal(
                         df_,
-                        df.drop(
-                            index=df.index[
-                                iter_len : iter_len + holdout,
-                            ]
-                        ),
+                        df.drop(index=df.index[iter_len : iter_len + holdout,]),
                     )
 
                     self.assertIsInstance(ser_, pd.Series)
@@ -38,9 +34,7 @@ class TestUtils(unittest.TestCase):
                     self.assertIsInstance(df_h, pd.DataFrame)
                     pd.testing.assert_frame_equal(
                         df_h,
-                        df.iloc[
-                            iter_len : iter_len + holdout,
-                        ],
+                        df.iloc[iter_len : iter_len + holdout,],
                     )
 
                     self.assertIsInstance(ser_h, pd.Series)
