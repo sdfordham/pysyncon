@@ -1,11 +1,15 @@
 Robust Synthetic Control Method
 ===============================
 
-The robust synthetic control method is due to
+The Robust Synthetic Control Method is due to
 `Amjad, Shah & Shen <https://www.jmlr.org/papers/volume19/17-777/17-777.pdf>`_.
 
-This method denoises the data matrix of the control units by
-applying a threshold to the singular values of the matrix.
+This method de-noises the data matrix of the control units by
+applying a threshold to the singular values of the observation matrix
+and then fits a linear model using ridge regression of the de-noised control
+post-treatment outcomes against pre-treatment outcomes. Similarly to the
+:doc:`Ridge Agumented Synthetic Control Method <augsynth>` the weights here
+may be negative or larger than 1.
 
 The :class:`RobustSynth` class
 ******************************
