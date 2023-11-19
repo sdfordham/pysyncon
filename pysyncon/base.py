@@ -94,7 +94,7 @@ class BaseSynth(metaclass=ABCMeta):
 
     def _gaps(self, time_period: Optional[IsinArg_t] = None) -> pd.Series:
         """Calculate the gaps (difference between factual
-        and estimated conterfactual)
+        and estimated counterfactual)
 
         Parameters
         ----------
@@ -237,6 +237,34 @@ class BaseSynth(metaclass=ABCMeta):
         sample_mean = X0.mean(axis=1).rename("sample mean")
 
         return pd.concat([treated, synthetic, sample_mean], axis=1).round(round)
+
+    def att(self, time_period: IsinArg_t) -> dict[str, float]:
+        """Computes the average treatment effect on the treated unit (ATT) and
+        the standard error to the value over the chosen time-period.
+
+        Parameters
+        ----------
+        time_period : Iterable | pandas.Series | dict, optional
+            Time period to compute the ATT over.
+
+        Returns
+        -------
+        dict
+            A dictionary with the ATT value and the standard error to the ATT.
+
+        Raises
+        ------
+        ValueError
+            If there is no weight matrix available
+        """
+        if self.W is None:
+            raise ValueError("No weight matrix available; fit data first.")
+        gaps = self._gaps(time_period=time_period)
+
+        att = np.mean(gaps)
+        se = np.std(gaps, ddof=1) / np.sqrt(len(time_period))
+
+        return {"att": att.item(), "se": se.item()}
 
 
 class VanillaOptimMixin:
