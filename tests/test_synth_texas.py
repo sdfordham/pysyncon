@@ -137,7 +137,7 @@ class TestSynthTexas(unittest.TestCase):
             "Wisconsin": 0.0,
             "Wyoming": 0.0,
         }
-        self.att = {'att': 20339.375838131393, 'se': 3190.4946788704715}
+        self.att = {"att": 20339.375838131393, "se": 3190.4946788704715}
         self.att_time_period = range(1993, 2001)
 
     def test_weights(self):
@@ -163,9 +163,9 @@ class TestSynthTexas(unittest.TestCase):
         synth_att = synth.att(time_period=self.att_time_period)
 
         # Allow a tolerance of 2.5%
-        att_perc_delta = abs(1.0 - self.att['att'] / synth_att['att'])
+        att_perc_delta = abs(1.0 - self.att["att"] / synth_att["att"])
         self.assertLessEqual(att_perc_delta, 0.025)
-        
+
         # Allow a tolerance of 2.5%
-        se_perc_delta = abs(1.0 - self.att['se'] / synth_att['se'])
+        se_perc_delta = abs(1.0 - self.att["se"] / synth_att["se"])
         self.assertLessEqual(se_perc_delta, 0.025)
