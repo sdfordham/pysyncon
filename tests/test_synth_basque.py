@@ -154,6 +154,8 @@ class TestSynthBasque(unittest.TestCase):
         )
         self.treatment_time = 1975
         self.pvalue = 0.16666666666666666
+        self.att = {'att': -0.6995647842110987, 'se': 0.07078092130438395}
+        self.att_time_period = range(1975, 1998)
 
     def test_weights(self):
         synth = Synth()
@@ -199,3 +201,20 @@ class TestSynthBasque(unittest.TestCase):
             placebo_test.pvalue(treatment_time=self.treatment_time),
             places=3,
         )
+
+    def test_att(self):
+        synth = Synth()
+        synth.fit(
+            dataprep=self.dataprep,
+            optim_method=self.optim_method,
+            optim_initial=self.optim_initial,
+        )
+        synth_att = synth.att(time_period=self.att_time_period)
+
+        # Allow a tolerance of 2.5%
+        att_perc_delta = abs(1.0 - self.att['att'] / synth_att['att'])
+        self.assertLessEqual(att_perc_delta, 0.025)
+        
+        # Allow a tolerance of 2.5%
+        se_perc_delta = abs(1.0 - self.att['se'] / synth_att['se'])
+        self.assertLessEqual(se_perc_delta, 0.025)
