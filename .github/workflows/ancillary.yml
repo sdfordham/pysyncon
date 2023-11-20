@@ -1,8 +1,6 @@
 name: Lint and code coverage
 
 on:
-  push:
-    branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
 
