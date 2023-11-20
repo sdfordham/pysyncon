@@ -129,3 +129,8 @@ class TestSynth(unittest.TestCase):
         synth.V = None
         # No V matrix available
         self.assertRaises(ValueError, synth.summary)
+
+    def test_att(self):
+        synth = pysyncon.Synth()
+        # No weight matrix set
+        self.assertRaises(ValueError, synth.att, range(1))
