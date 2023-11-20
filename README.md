@@ -1,6 +1,6 @@
 
 
-# pysyncon ![](https://img.shields.io/badge/python-3.8+-blue.svg) ![build](https://github.com/sdfordham/pysyncon/actions/workflows/main.yml/badge.svg)
+# pysyncon ![](https://img.shields.io/badge/python-3.8+-blue.svg) [![codecov](https://codecov.io/gh/sdfordham/pysyncon/graph/badge.svg?token=hmi7xHQ4OT)](https://codecov.io/gh/sdfordham/pysyncon)
 
 A python module for the synthetic control method that provides implementations of:
 
