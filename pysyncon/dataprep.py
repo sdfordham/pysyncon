@@ -268,3 +268,24 @@ class Dataprep:
         )
         Z0, Z1 = Z[list(self.controls_identifier)], Z[self.treatment_identifier]
         return Z0, Z1
+
+    def __str__(self) -> str:
+        str_rep = (
+            "Dataprep\n"
+            f"Treated unit: {self.treatment_identifier}\n"
+            f"Dependent variable: {self.dependent}\n"
+            f"Control units: {', '.join(self.controls_identifier)}\n"
+            f"Time range in data: {min(self.foo[self.time_variable])}"
+            f" - {max(self.foo[self.time_variable])}\n"
+            f"Time range for loss minimization: {self.time_optimize_ssr}\n"
+            f"Time range for predictors: {self.time_predictors_prior}\n"
+            f"Predictors: {', '.join(self.predictors)}\n"
+        )
+
+        if self.special_predictors:
+            str_special_pred = ''
+            for predictor, time_range, op in self.special_predictors:
+                rep = f"    `{predictor}` over `{time_range}` using `{op}`\n"
+                str_special_pred = str_special_pred + rep
+            str_rep = str_rep + f"Special predictors:\n" + str_special_pred
+        return str_rep
