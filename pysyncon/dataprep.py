@@ -283,7 +283,7 @@ class Dataprep:
         )
 
         if self.special_predictors:
-            str_special_pred = ''
+            str_special_pred = ""
             for predictor, time_range, op in self.special_predictors:
                 rep = f"    `{predictor}` over `{time_range}` using `{op}`\n"
                 str_special_pred = str_special_pred + rep
