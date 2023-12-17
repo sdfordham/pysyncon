@@ -31,6 +31,30 @@ class TestDataprep(unittest.TestCase):
             ("predictor2", [1, 2], "median"),
             ("predictor2", [1, 2], "std"),
         ]
+        self.str_no_special = (
+            "Dataprep\n"
+            "Treated unit: 1\n"
+            "Dependent variable: dependent\n"
+            "Control units: 2, 3\n"
+            "Time range in data: 1 - 4\n"
+            "Time range for loss minimization: [1, 2, 3]\n"
+            "Time range for predictors: [2, 3]\n"
+            "Predictors: predictor1\n"
+        )
+        self.str_special = (
+            "Dataprep\n"
+            "Treated unit: 1\n"
+            "Dependent variable: dependent\n"
+            "Control units: 2, 3\n"
+            "Time range in data: 1 - 4\n"
+            "Time range for loss minimization: [1, 2, 3]\n"
+            "Time range for predictors: [2, 3]\n"
+            "Predictors: predictor1\n"
+            "Special predictors:\n"
+            "    `predictor1` over `[2]` using `mean`\n"
+            "    `predictor2` over `[1, 2]` using `median`\n"
+            "    `predictor2` over `[1, 2]` using `std`\n"
+        )
 
     def test_init_arg_foo(self):
         kwargs = {
@@ -322,3 +346,36 @@ class TestDataprep(unittest.TestCase):
                 .rename(control),
                 Z0[control],
             )
+
+
+    def test_str(self):
+        kwargs_no_special = {
+            "foo": self.foo,
+            "predictors": self.predictors,
+            "predictors_op": self.predictors_op,
+            "dependent": self.dependent,
+            "unit_variable": self.unit_variable,
+            "time_variable": self.time_variable,
+            "treatment_identifier": self.treatment_identifier,
+            "controls_identifier": self.controls_identifier,
+            "time_predictors_prior": self.time_predictors_prior,
+            "time_optimize_ssr": self.time_optimize_ssr
+        }
+        dataprep = Dataprep(**kwargs_no_special)
+        self.assertEqual(self.str_no_special, str(dataprep))
+
+        kwargs_special = {
+            "foo": self.foo,
+            "predictors": self.predictors,
+            "predictors_op": self.predictors_op,
+            "dependent": self.dependent,
+            "unit_variable": self.unit_variable,
+            "time_variable": self.time_variable,
+            "treatment_identifier": self.treatment_identifier,
+            "controls_identifier": self.controls_identifier,
+            "time_predictors_prior": self.time_predictors_prior,
+            "time_optimize_ssr": self.time_optimize_ssr,
+            "special_predictors": self.special_predictors,
+        }
+        dataprep = Dataprep(**kwargs_special)
+        self.assertEqual(self.str_special, str(dataprep))
