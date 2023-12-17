@@ -347,7 +347,6 @@ class TestDataprep(unittest.TestCase):
                 Z0[control],
             )
 
-
     def test_str(self):
         kwargs_no_special = {
             "foo": self.foo,
@@ -359,7 +358,7 @@ class TestDataprep(unittest.TestCase):
             "treatment_identifier": self.treatment_identifier,
             "controls_identifier": self.controls_identifier,
             "time_predictors_prior": self.time_predictors_prior,
-            "time_optimize_ssr": self.time_optimize_ssr
+            "time_optimize_ssr": self.time_optimize_ssr,
         }
         dataprep = Dataprep(**kwargs_no_special)
         self.assertEqual(self.str_no_special, str(dataprep))
