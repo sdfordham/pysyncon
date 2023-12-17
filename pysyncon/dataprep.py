@@ -274,12 +274,12 @@ class Dataprep:
             "Dataprep\n"
             f"Treated unit: {self.treatment_identifier}\n"
             f"Dependent variable: {self.dependent}\n"
-            f"Control units: {', '.join(self.controls_identifier)}\n"
+            f"Control units: {', '.join([str(c) for c in self.controls_identifier])}\n"
             f"Time range in data: {min(self.foo[self.time_variable])}"
             f" - {max(self.foo[self.time_variable])}\n"
             f"Time range for loss minimization: {self.time_optimize_ssr}\n"
             f"Time range for predictors: {self.time_predictors_prior}\n"
-            f"Predictors: {', '.join(self.predictors)}\n"
+            f"Predictors: {', '.join([str(p) for p in self.predictors])}\n"
         )
 
         if self.special_predictors:
