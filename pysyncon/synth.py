@@ -141,7 +141,7 @@ class Synth(BaseSynth, VanillaOptimMixin):
             x0 = [1 / n_r] * n_r
         elif optim_initial == "ols":
             X_arr = np.hstack([X0_arr, X1_arr.reshape(-1, 1)])
-            X_arr = np.hstack([np.array([1] * X_arr.shape[1], ndmin=2).T, X_arr.T])
+            X_arr = np.hstack([np.full((X_arr.shape[1], 1), 1), X_arr.T])
             Z_arr = np.hstack([Z0_arr, Z1_arr.reshape(-1, 1)])
 
             try:

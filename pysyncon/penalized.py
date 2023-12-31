@@ -44,13 +44,13 @@ class PenalizedOptimMixin:
         def fun(x):
             return (X1 - X0 @ x).T @ (X1 - X0 @ x) + lambda_ * (r.T @ x)
 
-        bounds = Bounds(lb=np.array([0.0] * n_c).T, ub=np.array([1.0] * n_c).T)
-        constraints = LinearConstraint(A=np.array([1.0] * n_c), lb=1.0, ub=1.0)
+        bounds = Bounds(lb=np.full(n_c, 0.0), ub=np.full(n_c, 1.0))
+        constraints = LinearConstraint(A=np.full(n_c, 1.0), lb=1.0, ub=1.0)
 
         if initial:
             x0 = initial
         else:
-            x0 = np.array([1 / n_c] * n_c)
+            x0 = np.full(n_c, 1 / n_c)
 
         res = minimize(fun=fun, x0=x0, bounds=bounds, constraints=constraints)
         W, loss_W = res["x"], res["fun"]
