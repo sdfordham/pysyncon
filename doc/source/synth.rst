@@ -4,8 +4,8 @@ Synthetic Control Method
 Overview
 ********
 
-The synthetic control method is due to
-`Abadie, Diamond & Hainmueller <http://dx.doi.org/10.1198/jasa.2009.ap08746>`_.
+The synthetic control method is due to Abadie and Gardeazabal :cite:`basque2003`
+(also see Abadie, Diamond and Hainmueller :cite:`california2007` :cite:`germany2015`).
 This method constructs a weighted combination of the control units that
 most resembles the selected characteristics of the treated unit in a time period
 prior to the treatment time. This so-constructed "synthetic control unit" can then be

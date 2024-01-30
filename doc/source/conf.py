@@ -14,5 +14,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.mathjax",
     "sphinx.ext.githubpages",
+    "sphinxcontrib.bibtex",
 ]
 html_theme = "alabaster"
+bibtex_bibfiles = ["biblio.bib"]
