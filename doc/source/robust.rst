@@ -1,8 +1,7 @@
 Robust Synthetic Control Method
 ===============================
 
-The Robust Synthetic Control Method is due to
-`Amjad, Shah & Shen <https://www.jmlr.org/papers/volume19/17-777/17-777.pdf>`_.
+The Robust Synthetic Control Method is due to Amjad, Shah & Shen :cite:`robust2018`.
 
 This method de-noises the data matrix of the control units by
 applying a threshold to the singular values of the observation matrix

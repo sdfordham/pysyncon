@@ -28,6 +28,7 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install -r requirements-dev.txt
         python -m pip install sphinx
+        python -m pip install sphinxcontrib-bibtex
     - name: Build html
       run: sphinx-build -b html ./doc/source/ ./doc/build/
     - name: Setup Pages

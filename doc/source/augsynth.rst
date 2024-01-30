@@ -2,9 +2,8 @@
 Augmented Synthetic Control Method
 ==================================
 
-The *Augmented Synthetic Control Method* is due to
-`Ben-Michael, Feller & Rothstein <http://doi.org/10.3386/w28885>`_ and adapts
-the :doc:`Synthetic Control Method <synth>` in an
+The *Augmented Synthetic Control Method* is due to Ben-Michael, Feller & Rothstein
+:cite:`augsynth2021` and adapts the :doc:`Synthetic Control Method <synth>` in an
 effort to adjust for poor pre-treatment fit.
 
 The authors do this by adjusting the Synthetic Control Method estimate by adding
