@@ -50,27 +50,29 @@ class TestPenalizedBasque(unittest.TestCase):
                 "Navarra (Comunidad Foral De)",
                 "Principado De Asturias",
                 "Rioja (La)",
+                "Spain (Espana)",
             ],
             time_optimize_ssr=range(1960, 1970),
         )
         self.lambda_ = 0.01
         self.weights = {
             "Aragon": 0.0,
-            "Baleares (Islas)": 0.21680004,
+            "Baleares (Islas)": 0.0,
             "Andalucia": 0.0,
             "Canarias": 0.0,
-            "Cantabria": 0.0,
+            "Cantabria": 0.241,
             "Castilla Y Leon": 0.0,
             "Castilla-La Mancha": 0.0,
-            "Cataluna": 0.636479454,
+            "Cataluna": 0.759,
             "Comunidad Valenciana": 0.0,
             "Extremadura": 0.0,
             "Galicia": 0.0,
-            "Madrid (Comunidad De)": 0.146720506,
+            "Madrid (Comunidad De)": 0.0,
             "Murcia (Region de)": 0.0,
             "Navarra (Comunidad Foral De)": 0.0,
             "Principado De Asturias": 0.0,
             "Rioja (La)": 0.0,
+            "Spain (Espana)": 0.0,
         }
 
     def test_weights(self):
