@@ -24,12 +24,13 @@ class PenalizedOptimMixin:
         Parameters
         ----------
         V_mat : numpy.ndarray, shape (c, c)
-            V matrix using the notation of the Abadie, Diamond & Hainmueller
-            paper.
-        X0 : numpy.ndarray, shape (m, c)
+            The V matrix (using the notation of the Abadie, Diamond &
+            Hainmueller paper, this matrix is denoted by Γ in the Abadie and
+            L'Hour paper).
+        X0 : numpy.ndarray, shape (c, m)
             Matrix with each column corresponding to a control unit and each
             row is covariates.
-        X1 : numpy.ndarray, shape (m,)
+        X1 : numpy.ndarray, shape (c,)
             Column vector giving the covariate values for the treated unit.
         lambda_ : float,
             Regularization parameter.
