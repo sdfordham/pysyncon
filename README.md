@@ -7,7 +7,7 @@ A python module for the synthetic control method that provides implementations o
 - Synthetic Control Method (Abadie & Gardeazabal 2003)
 - Robust Synthetic Control Method (Amjad, Shah & Shen 2018)
 - Augmented Synthetic Control Method (Ben-Michael, Feller & Rothstein 2021)
-- ~~Penalized Synthetic Control Method (Abadie & L'Hour 2021)~~ (the implementation of this method is flawed, and in the process of being corrected.)
+- Penalized Synthetic Control Method (Abadie & L'Hour 2021)
 
 The package also provides methods for performing placebo tests with the above.
 
