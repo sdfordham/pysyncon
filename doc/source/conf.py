@@ -5,7 +5,7 @@ import os
 sys.path.insert(0, os.path.abspath("../../"))
 
 project = "pysyncon"
-copyright = "2023, Stiofáin Fordham"
+copyright = "2024, Stiofáin Fordham"
 author = "Stiofáin Fordham"
 release = "1.3.0"
 
