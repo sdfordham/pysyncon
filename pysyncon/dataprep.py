@@ -147,7 +147,7 @@ class Dataprep:
             if isinstance(self.treatment_identifier, (list, tuple)):
                 if control in treatment_identifier:
                     raise ValueError(
-                        "{control} in both treatment_identifier and controls_identifier."
+                        f"{control} in both treatment_identifier and controls_identifier."
                     )
             else:
                 if control == treatment_identifier:
