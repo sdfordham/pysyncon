@@ -38,6 +38,11 @@ class RobustSynth(BaseSynth):
             Keep this many of the largest singular values when
             reducing the outcome matrix
         """
+        if (
+            isinstance(dataprep.treatment_identifier, (list, tuple))
+            and len(dataprep.treatment_identifier) > 1
+        ):
+            raise ValueError("RobustSynth requires exactly one treated unit.")
         self.dataprep = dataprep
         time_period_min = dataprep.foo[dataprep.time_variable].astype("int").min()
         time_period_max = dataprep.foo[dataprep.time_variable].astype("int").max()

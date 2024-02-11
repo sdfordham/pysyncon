@@ -33,6 +33,11 @@ class AugSynth(BaseSynth, VanillaOptimMixin):
             Ridge parameter to use. If not supplied, then it is obtained by
             cross-validation, by default None
         """
+        if (
+            isinstance(dataprep.treatment_identifier, (list, tuple))
+            and len(dataprep.treatment_identifier) > 1
+        ):
+            raise ValueError("AugSynth requires exactly one treated unit.")
         self.dataprep = dataprep
         Z0, Z1 = self.dataprep.make_covariate_mats()
         X0, X1 = self.dataprep.make_outcome_mats()
