@@ -276,7 +276,7 @@ class Dataprep:
 
     def make_outcome_mats(
         self, time_period: Optional[IsinArg_t] = None
-    ) -> tuple[pd.DataFrame, pd.Series]:
+    ) -> tuple[pd.DataFrame, Union[pd.Series, pd.DataFrame]]:
         """Generates the time-series matrices to use as input to the fit
         method of the synthetic control computation.
 
@@ -288,7 +288,7 @@ class Dataprep:
 
         Returns
         -------
-        tuple[pd.DataFrame, pd.Series]
+        tuple[pd.DataFrame, Union[pd.Series, pd.DataFrame]]
             Returns the matrices Z0, Z1 (using the notation of the Abadie,
             Diamond & Hainmueller paper).
 
