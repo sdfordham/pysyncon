@@ -97,8 +97,8 @@ class Dataprep:
         dependent: Any,
         unit_variable: Any,
         time_variable: Any,
-        treatment_identifier: Any,
-        controls_identifier: Iterable,
+        treatment_identifier: Union[Any, list, tuple],
+        controls_identifier: Union[list, tuple],
         time_predictors_prior: IsinArg_t,
         time_optimize_ssr: IsinArg_t,
         special_predictors: Optional[Iterable[SpecialPredictor_t]] = None,
@@ -128,19 +128,31 @@ class Dataprep:
             raise ValueError(f"time_variable {time_variable} not in foo columns.")
         self.time_variable = time_variable
 
-        uniq_ident = foo[unit_variable].unique()
-        if treatment_identifier not in uniq_ident:
-            raise ValueError(
-                f'treatment_identifier {treatment_identifier} not found in foo["{unit_variable}"].'
-            )
+        if isinstance(treatment_identifier, (list, tuple)):
+            for treated in treatment_identifier:
+                if treated not in foo[unit_variable].values:
+                    raise ValueError(
+                        f'treatment_identifier {treated} not found in foo["{unit_variable}"].'
+                    )
+        else:
+            if treatment_identifier not in foo[unit_variable].values:
+                raise ValueError(
+                    f'treatment_identifier {treatment_identifier} not found in foo["{unit_variable}"].'
+                )
         self.treatment_identifier = treatment_identifier
 
-        if not isinstance(controls_identifier, Iterable):
-            raise TypeError("controls_identifier should be an Iterable")
+        if not isinstance(controls_identifier, (list, tuple)):
+            raise TypeError("controls_identifier should be an list or tuple")
         for control in controls_identifier:
-            if control == treatment_identifier:
-                raise ValueError("treatment_identifier in controls_identifier.")
-            if control not in uniq_ident:
+            if isinstance(self.treatment_identifier, (list, tuple)):
+                if control in treatment_identifier:
+                    raise ValueError(
+                        "{control} in both treatment_identifier and controls_identifier."
+                    )
+            else:
+                if control == treatment_identifier:
+                    raise ValueError("treatment_identifier in controls_identifier.")
+            if control not in foo[unit_variable].values:
                 raise ValueError(
                     f'controls_identifier {control} not found in foo["{unit_variable}"].'
                 )
