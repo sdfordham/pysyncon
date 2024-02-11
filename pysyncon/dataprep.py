@@ -139,7 +139,13 @@ class Dataprep:
                 raise ValueError(
                     f'treatment_identifier {treatment_identifier} not found in foo["{unit_variable}"].'
                 )
-        self.treatment_identifier = treatment_identifier
+        if (
+            isinstance(treatment_identifier, (list, tuple))
+            and len(treatment_identifier) == 1
+        ):
+            self.treatment_identifier = treatment_identifier[0]
+        else:
+            self.treatment_identifier = treatment_identifier
 
         if not isinstance(controls_identifier, (list, tuple)):
             raise TypeError("controls_identifier should be an list or tuple")
@@ -178,7 +184,9 @@ class Dataprep:
                     )
         self.special_predictors = special_predictors
 
-    def make_covariate_mats(self) -> tuple[pd.DataFrame, pd.Series]:
+    def make_covariate_mats(
+        self,
+    ) -> tuple[pd.DataFrame, Union[pd.Series, pd.DataFrame]]:
         """Generate the covariate matrices to use as input to the fit method
         of the synthetic control computation.
 
@@ -234,22 +242,35 @@ class Dataprep:
         X0 = pd.concat([X0_nonspecial, X0_special], axis=0)
 
         X1_special = list()
-        for predictor, time_period, op in self.special_predictors:
-            mask = (self.foo[self.unit_variable] == self.treatment_identifier) & (
-                self.foo[self.time_variable].isin(time_period)
-            )
-            if op == "mean":
-                X1_special.append(self.foo[mask][predictor].mean())
-            elif op == "std":
-                X1_special.append(self.foo[mask][predictor].std())
-            elif op == "median":
-                X1_special.append(self.foo[mask][predictor].median())
-            else:
-                raise ValueError(f"Invalid predictors_op: {self.predictors_op}")
+        if isinstance(self.treatment_identifier, (list, tuple)):
+            for treated in self.treatment_identifier:
+                this_treated = list()
+                for predictor, time_period, op in self.special_predictors:
+                    mask = (self.foo[self.unit_variable] == treated) & (
+                        self.foo[self.time_variable].isin(time_period)
+                    )
+                    this_treated.append(self.foo[mask][predictor].agg(op))
+                X1_special.append(this_treated)
+            X1_special = pd.DataFrame(
+                X1_special, columns=X0_special_columns, index=self.treatment_identifier
+            ).T
+        else:
+            for predictor, time_period, op in self.special_predictors:
+                mask = (self.foo[self.unit_variable] == self.treatment_identifier) & (
+                    self.foo[self.time_variable].isin(time_period)
+                )
+                if op == "mean":
+                    X1_special.append(self.foo[mask][predictor].mean())
+                elif op == "std":
+                    X1_special.append(self.foo[mask][predictor].std())
+                elif op == "median":
+                    X1_special.append(self.foo[mask][predictor].median())
+                else:
+                    raise ValueError(f"Invalid predictors_op: {self.predictors_op}")
 
-        X1_special = pd.Series(X1_special, index=X0_special_columns).rename(
-            self.treatment_identifier
-        )
+            X1_special = pd.Series(X1_special, index=X0_special_columns).rename(
+                self.treatment_identifier
+            )
         X1 = pd.concat([X1_nonspecial, X1_special], axis=0)
         return X0, X1
 
