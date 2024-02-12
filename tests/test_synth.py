@@ -78,7 +78,7 @@ class TestSynth(unittest.TestCase):
 
     def test_X0_X1_fit(self):
         synth = pysyncon.Synth()
-        
+
         # Neither dataprep nor matrices set
         self.assertRaises(ValueError, synth.fit)
 
@@ -95,7 +95,7 @@ class TestSynth(unittest.TestCase):
         Z0 = pd.DataFrame(np.random.rand(5, 5))
         Z1 = pd.DataFrame(np.random.rand(5, 1))
         self.assertRaises(TypeError, synth.fit, X0=X0, X1=X1, Z0=Z0, Z1=Z1)
-    
+
     @patch("pysyncon.base.plt")
     def test_path_plot(self, mock_plt: Mock):
         kwargs = {

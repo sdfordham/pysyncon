@@ -79,7 +79,7 @@ class TestPenalizedSynth(unittest.TestCase):
 
     def test_X0_X1_fit(self):
         pen = pysyncon.PenalizedSynth()
-        
+
         # X1 needs to be pd.Series
         X0 = pd.DataFrame(np.random.rand(5, 5))
         X1 = pd.DataFrame(np.random.rand(5, 2))
