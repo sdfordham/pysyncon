@@ -23,7 +23,9 @@ class TestDataprep(unittest.TestCase):
         self.unit_variable = "name"
         self.time_variable = "time"
         self.treatment_identifier = 1
+        self.treatment_identifier_list = [1, 2]
         self.controls_identifier = [2, 3]
+        self.controls_identifier_alt = [3]
         self.time_predictors_prior = [2, 3]
         self.time_optimize_ssr = [1, 2, 3]
         self.special_predictors = [
@@ -282,6 +284,45 @@ class TestDataprep(unittest.TestCase):
                     self.foo[mask][predictor].agg(op), X0.loc[column_name, control]
                 )
 
+    def test_make_covariate_mats_list_single(self):
+        kwargs = {
+            "foo": self.foo,
+            "predictors": self.predictors,
+            "predictors_op": self.predictors_op,
+            "dependent": self.dependent,
+            "unit_variable": self.unit_variable,
+            "time_variable": self.time_variable,
+            "time_predictors_prior": self.time_predictors_prior,
+            "time_optimize_ssr": self.time_optimize_ssr,
+            "special_predictors": self.special_predictors,
+        }
+        dataprep = Dataprep(
+            treatment_identifier=self.treatment_identifier,
+            controls_identifier=self.controls_identifier,
+            **kwargs,
+        )
+        X0, X1 = dataprep.make_covariate_mats()
+        self.assertIsInstance(X0, pd.DataFrame)
+        self.assertIsInstance(X1, pd.Series)
+
+        dataprep = Dataprep(
+            treatment_identifier=[self.treatment_identifier],
+            controls_identifier=self.controls_identifier,
+            **kwargs,
+        )
+        X0, X1 = dataprep.make_covariate_mats()
+        self.assertIsInstance(X0, pd.DataFrame)
+        self.assertIsInstance(X1, pd.Series)
+
+        dataprep = Dataprep(
+            treatment_identifier=self.treatment_identifier_list,
+            controls_identifier=self.controls_identifier_alt,
+            **kwargs,
+        )
+        X0, X1 = dataprep.make_covariate_mats()
+        self.assertIsInstance(X0, pd.DataFrame)
+        self.assertIsInstance(X1, pd.DataFrame)
+
     def test_make_outcome_mats(self):
         kwargs = {
             "foo": self.foo,
@@ -346,6 +387,45 @@ class TestDataprep(unittest.TestCase):
                 .rename(control),
                 Z0[control],
             )
+
+    def test_make_outcome_mats_list_single(self):
+        kwargs = {
+            "foo": self.foo,
+            "predictors": self.predictors,
+            "predictors_op": self.predictors_op,
+            "dependent": self.dependent,
+            "unit_variable": self.unit_variable,
+            "time_variable": self.time_variable,
+            "time_predictors_prior": self.time_predictors_prior,
+            "time_optimize_ssr": self.time_optimize_ssr,
+            "special_predictors": self.special_predictors,
+        }
+        dataprep = Dataprep(
+            treatment_identifier=self.treatment_identifier,
+            controls_identifier=self.controls_identifier,
+            **kwargs,
+        )
+        Z0, Z1 = dataprep.make_outcome_mats()
+        self.assertIsInstance(Z0, pd.DataFrame)
+        self.assertIsInstance(Z1, pd.Series)
+
+        dataprep = Dataprep(
+            treatment_identifier=[self.treatment_identifier],
+            controls_identifier=self.controls_identifier,
+            **kwargs,
+        )
+        Z0, Z1 = dataprep.make_outcome_mats()
+        self.assertIsInstance(Z0, pd.DataFrame)
+        self.assertIsInstance(Z1, pd.Series)
+
+        dataprep = Dataprep(
+            treatment_identifier=self.treatment_identifier_list,
+            controls_identifier=self.controls_identifier_alt,
+            **kwargs,
+        )
+        Z0, Z1 = dataprep.make_outcome_mats()
+        self.assertIsInstance(Z0, pd.DataFrame)
+        self.assertIsInstance(Z1, pd.DataFrame)
 
     def test_str(self):
         kwargs_no_special = {
