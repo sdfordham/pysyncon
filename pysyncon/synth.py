@@ -116,7 +116,7 @@ class Synth(BaseSynth, VanillaOptimMixin):
                 isinstance(dataprep.treatment_identifier, (list, tuple))
                 and len(dataprep.treatment_identifier) > 1
             ):
-                raise TypeError("Synth requires exactly one treated unit.")
+                raise ValueError("Synth requires exactly one treated unit.")
             self.dataprep = dataprep
             X0, X1 = dataprep.make_covariate_mats()
             Z0, Z1 = dataprep.make_outcome_mats()
