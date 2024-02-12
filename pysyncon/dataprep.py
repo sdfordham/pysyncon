@@ -222,14 +222,7 @@ class Dataprep:
                 mask = (self.foo[self.unit_variable] == control) & (
                     self.foo[self.time_variable].isin(time_period)
                 )
-                if op == "mean":
-                    this_control.append(self.foo[mask][predictor].mean())
-                elif op == "std":
-                    this_control.append(self.foo[mask][predictor].std())
-                elif op == "median":
-                    this_control.append(self.foo[mask][predictor].median())
-                else:
-                    raise ValueError(f"Invalid predictors_op: {self.predictors_op}")
+                this_control.append(self.foo[mask][predictor].agg(op))
             X0_special.append(this_control)
 
         X0_special_columns = list()
@@ -259,14 +252,7 @@ class Dataprep:
                 mask = (self.foo[self.unit_variable] == self.treatment_identifier) & (
                     self.foo[self.time_variable].isin(time_period)
                 )
-                if op == "mean":
-                    X1_special.append(self.foo[mask][predictor].mean())
-                elif op == "std":
-                    X1_special.append(self.foo[mask][predictor].std())
-                elif op == "median":
-                    X1_special.append(self.foo[mask][predictor].median())
-                else:
-                    raise ValueError(f"Invalid predictors_op: {self.predictors_op}")
+                X1_special.append(self.foo[mask][predictor].agg(op))
 
             X1_special = pd.Series(X1_special, index=X0_special_columns).rename(
                 self.treatment_identifier
