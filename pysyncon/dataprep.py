@@ -97,8 +97,8 @@ class Dataprep:
         dependent: Any,
         unit_variable: Any,
         time_variable: Any,
-        treatment_identifier: Any,
-        controls_identifier: Iterable,
+        treatment_identifier: Union[Any, list, tuple],
+        controls_identifier: Union[list, tuple],
         time_predictors_prior: IsinArg_t,
         time_optimize_ssr: IsinArg_t,
         special_predictors: Optional[Iterable[SpecialPredictor_t]] = None,
@@ -128,19 +128,37 @@ class Dataprep:
             raise ValueError(f"time_variable {time_variable} not in foo columns.")
         self.time_variable = time_variable
 
-        uniq_ident = foo[unit_variable].unique()
-        if treatment_identifier not in uniq_ident:
-            raise ValueError(
-                f'treatment_identifier {treatment_identifier} not found in foo["{unit_variable}"].'
-            )
-        self.treatment_identifier = treatment_identifier
+        if isinstance(treatment_identifier, (list, tuple)):
+            for treated in treatment_identifier:
+                if treated not in foo[unit_variable].values:
+                    raise ValueError(
+                        f'treatment_identifier {treated} not found in foo["{unit_variable}"].'
+                    )
+        else:
+            if treatment_identifier not in foo[unit_variable].values:
+                raise ValueError(
+                    f'treatment_identifier {treatment_identifier} not found in foo["{unit_variable}"].'
+                )
+        if (
+            isinstance(treatment_identifier, (list, tuple))
+            and len(treatment_identifier) == 1
+        ):
+            self.treatment_identifier = treatment_identifier[0]
+        else:
+            self.treatment_identifier = treatment_identifier
 
-        if not isinstance(controls_identifier, Iterable):
-            raise TypeError("controls_identifier should be an Iterable")
+        if not isinstance(controls_identifier, (list, tuple)):
+            raise TypeError("controls_identifier should be an list or tuple")
         for control in controls_identifier:
-            if control == treatment_identifier:
-                raise ValueError("treatment_identifier in controls_identifier.")
-            if control not in uniq_ident:
+            if isinstance(self.treatment_identifier, (list, tuple)):
+                if control in treatment_identifier:
+                    raise ValueError(
+                        f"{control} in both treatment_identifier and controls_identifier."
+                    )
+            else:
+                if control == treatment_identifier:
+                    raise ValueError("treatment_identifier in controls_identifier.")
+            if control not in foo[unit_variable].values:
                 raise ValueError(
                     f'controls_identifier {control} not found in foo["{unit_variable}"].'
                 )
@@ -166,7 +184,9 @@ class Dataprep:
                     )
         self.special_predictors = special_predictors
 
-    def make_covariate_mats(self) -> tuple[pd.DataFrame, pd.Series]:
+    def make_covariate_mats(
+        self,
+    ) -> tuple[pd.DataFrame, Union[pd.Series, pd.DataFrame]]:
         """Generate the covariate matrices to use as input to the fit method
         of the synthetic control computation.
 
@@ -202,14 +222,7 @@ class Dataprep:
                 mask = (self.foo[self.unit_variable] == control) & (
                     self.foo[self.time_variable].isin(time_period)
                 )
-                if op == "mean":
-                    this_control.append(self.foo[mask][predictor].mean())
-                elif op == "std":
-                    this_control.append(self.foo[mask][predictor].std())
-                elif op == "median":
-                    this_control.append(self.foo[mask][predictor].median())
-                else:
-                    raise ValueError(f"Invalid predictors_op: {self.predictors_op}")
+                this_control.append(self.foo[mask][predictor].agg(op))
             X0_special.append(this_control)
 
         X0_special_columns = list()
@@ -222,28 +235,34 @@ class Dataprep:
         X0 = pd.concat([X0_nonspecial, X0_special], axis=0)
 
         X1_special = list()
-        for predictor, time_period, op in self.special_predictors:
-            mask = (self.foo[self.unit_variable] == self.treatment_identifier) & (
-                self.foo[self.time_variable].isin(time_period)
-            )
-            if op == "mean":
-                X1_special.append(self.foo[mask][predictor].mean())
-            elif op == "std":
-                X1_special.append(self.foo[mask][predictor].std())
-            elif op == "median":
-                X1_special.append(self.foo[mask][predictor].median())
-            else:
-                raise ValueError(f"Invalid predictors_op: {self.predictors_op}")
+        if isinstance(self.treatment_identifier, (list, tuple)):
+            for treated in self.treatment_identifier:
+                this_treated = list()
+                for predictor, time_period, op in self.special_predictors:
+                    mask = (self.foo[self.unit_variable] == treated) & (
+                        self.foo[self.time_variable].isin(time_period)
+                    )
+                    this_treated.append(self.foo[mask][predictor].agg(op))
+                X1_special.append(this_treated)
+            X1_special = pd.DataFrame(
+                X1_special, columns=X0_special_columns, index=self.treatment_identifier
+            ).T
+        else:
+            for predictor, time_period, op in self.special_predictors:
+                mask = (self.foo[self.unit_variable] == self.treatment_identifier) & (
+                    self.foo[self.time_variable].isin(time_period)
+                )
+                X1_special.append(self.foo[mask][predictor].agg(op))
 
-        X1_special = pd.Series(X1_special, index=X0_special_columns).rename(
-            self.treatment_identifier
-        )
+            X1_special = pd.Series(X1_special, index=X0_special_columns).rename(
+                self.treatment_identifier
+            )
         X1 = pd.concat([X1_nonspecial, X1_special], axis=0)
         return X0, X1
 
     def make_outcome_mats(
         self, time_period: Optional[IsinArg_t] = None
-    ) -> tuple[pd.DataFrame, pd.Series]:
+    ) -> tuple[pd.DataFrame, Union[pd.Series, pd.DataFrame]]:
         """Generates the time-series matrices to use as input to the fit
         method of the synthetic control computation.
 
@@ -255,7 +274,7 @@ class Dataprep:
 
         Returns
         -------
-        tuple[pd.DataFrame, pd.Series]
+        tuple[pd.DataFrame, Union[pd.Series, pd.DataFrame]]
             Returns the matrices Z0, Z1 (using the notation of the Abadie,
             Diamond & Hainmueller paper).
 

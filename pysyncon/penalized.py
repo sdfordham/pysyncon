@@ -101,7 +101,7 @@ class PenalizedSynth(BaseSynth, PenalizedOptimMixin):
         X0 : pd.DataFrame, shape (c, m), optional
             Matrix with each column corresponding to a control unit and each
             row is a covariate value, by default None.
-        X1 : pandas.Series | pandas.DataFrame, shape (c, 1), optional
+        X1 : pandas.Series, shape (c, 1), optional
             Column vector giving the covariate values for the treated unit, by
             default None.
         lambda_ : float, optional
@@ -124,11 +124,18 @@ class PenalizedSynth(BaseSynth, PenalizedOptimMixin):
             supplied.
         """
         if dataprep:
+            if (
+                isinstance(dataprep.treatment_identifier, (list, tuple))
+                and len(dataprep.treatment_identifier) > 1
+            ):
+                raise ValueError("PenalizedSynth requires exactly one treated unit.")
             self.dataprep = dataprep
             X0, X1 = dataprep.make_covariate_mats()
         else:
             if X0 is None or X1 is None:
                 raise ValueError("dataprep must be set or (X0, X1) must all be set.")
+            if not isinstance(X1, pd.Series):
+                raise TypeError("X1 must be of type `pandas.Series`.")
         self.lambda_ = lambda_
 
         X = pd.concat([X0, X1], axis=1)

@@ -8,45 +8,122 @@ import pysyncon
 
 class TestSynth(unittest.TestCase):
     def setUp(self):
-        self.dataprep = pysyncon.Dataprep(
-            foo=pd.DataFrame(
-                {
-                    "time": [1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4],
-                    "name": [1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3],
-                    "dependent": np.random.random(12),
-                    "predictor1": np.random.random(12),
-                    "predictor2": np.random.random(12),
-                }
-            ),
-            predictors=["predictor1"],
-            predictors_op="mean",
-            dependent="dependent",
-            unit_variable="name",
-            time_variable="time",
-            treatment_identifier=1,
-            controls_identifier=[2, 3],
-            time_predictors_prior=[2, 3],
-            time_optimize_ssr=[1, 2, 3],
-            special_predictors=[
-                ("predictor1", [2], "mean"),
-                ("predictor2", [1, 2], "median"),
-                ("predictor2", [1, 2], "std"),
-            ],
+        self.foo = pd.DataFrame(
+            {
+                "time": [1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4],
+                "name": [1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3],
+                "dependent": np.random.random(12),
+                "predictor1": np.random.random(12),
+                "predictor2": np.random.random(12),
+            }
         )
+        self.predictors = ["predictor1"]
+        self.predictors_op = "mean"
+        self.dependent = "dependent"
+        self.unit_variable = "name"
+        self.time_variable = "time"
+        self.treatment_identifier = 1
+        self.treatment_identifier_list = [1, 2]
+        self.controls_identifier = [2, 3]
+        self.controls_identifier_alt = [3]
+        self.time_predictors_prior = [2, 3]
+        self.time_optimize_ssr = [1, 2, 3]
+        self.special_predictors = [
+            ("predictor1", [2], "mean"),
+            ("predictor2", [1, 2], "median"),
+            ("predictor2", [1, 2], "std"),
+        ]
+
+    def test_fit_treated(self):
+        kwargs = {
+            "foo": self.foo,
+            "predictors": self.predictors,
+            "predictors_op": self.predictors_op,
+            "dependent": self.dependent,
+            "unit_variable": self.unit_variable,
+            "time_variable": self.time_variable,
+            "time_predictors_prior": self.time_predictors_prior,
+            "time_optimize_ssr": self.time_optimize_ssr,
+            "special_predictors": self.special_predictors,
+        }
+        dataprep = pysyncon.Dataprep(
+            treatment_identifier=self.treatment_identifier_list,
+            controls_identifier=self.controls_identifier_alt,
+            **kwargs,
+        )
+        synth = pysyncon.Synth()
+        self.assertRaises(ValueError, synth.fit, dataprep)
+
+        dataprep = pysyncon.Dataprep(
+            treatment_identifier=self.treatment_identifier,
+            controls_identifier=self.controls_identifier,
+            **kwargs,
+        )
+        synth = pysyncon.Synth()
+        try:
+            synth.fit(dataprep)
+        except Exception as e:
+            self.fail(f"Synth fit with single treated failed: {e}.")
+
+        dataprep = pysyncon.Dataprep(
+            treatment_identifier=[self.treatment_identifier],
+            controls_identifier=self.controls_identifier,
+            **kwargs,
+        )
+        synth = pysyncon.Synth()
+        try:
+            synth.fit(dataprep)
+        except Exception as e:
+            self.fail(f"Synth fit with single treated in list failed: {e}.")
+
+    def test_X0_X1_fit(self):
+        synth = pysyncon.Synth()
+
+        # Neither dataprep nor matrices set
+        self.assertRaises(ValueError, synth.fit)
+
+        # X1 needs to be pd.Series
+        X0 = pd.DataFrame(np.random.rand(5, 5))
+        X1 = pd.DataFrame(np.random.rand(5, 2))
+        Z0 = pd.DataFrame(np.random.rand(5, 5))
+        Z1 = pd.DataFrame(np.random.rand(5, 2))
+        self.assertRaises(TypeError, synth.fit, X0=X0, X1=X1, Z0=Z0, Z1=Z1)
+
+        # X1 needs to be pd.Series
+        X0 = pd.DataFrame(np.random.rand(5, 5))
+        X1 = pd.DataFrame(np.random.rand(5, 1))
+        Z0 = pd.DataFrame(np.random.rand(5, 5))
+        Z1 = pd.DataFrame(np.random.rand(5, 1))
+        self.assertRaises(TypeError, synth.fit, X0=X0, X1=X1, Z0=Z0, Z1=Z1)
 
     @patch("pysyncon.base.plt")
     def test_path_plot(self, mock_plt: Mock):
+        kwargs = {
+            "foo": self.foo,
+            "predictors": self.predictors,
+            "predictors_op": self.predictors_op,
+            "dependent": self.dependent,
+            "unit_variable": self.unit_variable,
+            "time_variable": self.time_variable,
+            "treatment_identifier": self.treatment_identifier,
+            "controls_identifier": self.controls_identifier,
+            "time_predictors_prior": self.time_predictors_prior,
+            "time_optimize_ssr": self.time_optimize_ssr,
+            "special_predictors": self.special_predictors,
+        }
+
+        dataprep = pysyncon.Dataprep(**kwargs)
         synth = pysyncon.Synth()
         # No weight matrix set
         self.assertRaises(ValueError, synth.path_plot)
 
-        X0, X1 = self.dataprep.make_covariate_mats()
-        Z0, Z1 = self.dataprep.make_outcome_mats()
+        X0, X1 = dataprep.make_covariate_mats()
+        Z0, Z1 = dataprep.make_outcome_mats()
         synth.fit(X0=X0, X1=X1, Z0=Z0, Z1=Z1)
         # No Dataprep object available
         self.assertRaises(ValueError, synth.path_plot)
 
-        synth.fit(dataprep=self.dataprep)
+        synth.fit(dataprep=dataprep)
         synth.path_plot()
 
         self.assertEqual(mock_plt.plot.call_count, 2)
@@ -55,7 +132,7 @@ class TestSynth(unittest.TestCase):
         _, first_call_kwargs = first_call
         self.assertEqual(first_call_kwargs["color"], "black")
         self.assertEqual(first_call_kwargs["linewidth"], 1)
-        self.assertEqual(first_call_kwargs["label"], self.dataprep.treatment_identifier)
+        self.assertEqual(first_call_kwargs["label"], dataprep.treatment_identifier)
 
         _, second_call_kwargs = second_call
         self.assertEqual(second_call_kwargs["color"], "black")
@@ -79,17 +156,32 @@ class TestSynth(unittest.TestCase):
 
     @patch("pysyncon.base.plt")
     def test_gaps_plot(self, mock_plt: Mock):
+        kwargs = {
+            "foo": self.foo,
+            "predictors": self.predictors,
+            "predictors_op": self.predictors_op,
+            "dependent": self.dependent,
+            "unit_variable": self.unit_variable,
+            "time_variable": self.time_variable,
+            "treatment_identifier": self.treatment_identifier,
+            "controls_identifier": self.controls_identifier,
+            "time_predictors_prior": self.time_predictors_prior,
+            "time_optimize_ssr": self.time_optimize_ssr,
+            "special_predictors": self.special_predictors,
+        }
+
+        dataprep = pysyncon.Dataprep(**kwargs)
         synth = pysyncon.Synth()
         # No weight matrix set
         self.assertRaises(ValueError, synth.gaps_plot)
 
-        X0, X1 = self.dataprep.make_covariate_mats()
-        Z0, Z1 = self.dataprep.make_outcome_mats()
+        X0, X1 = dataprep.make_covariate_mats()
+        Z0, Z1 = dataprep.make_outcome_mats()
         synth.fit(X0=X0, X1=X1, Z0=Z0, Z1=Z1)
         # No Dataprep object available
         self.assertRaises(ValueError, synth.gaps_plot)
 
-        synth.fit(dataprep=self.dataprep)
+        synth.fit(dataprep=dataprep)
         synth.gaps_plot()
 
         self.assertEqual(mock_plt.plot.call_count, 1)
@@ -117,11 +209,26 @@ class TestSynth(unittest.TestCase):
         self.assertRaises(ValueError, synth.weights)
 
     def test_summary(self):
+        kwargs = {
+            "foo": self.foo,
+            "predictors": self.predictors,
+            "predictors_op": self.predictors_op,
+            "dependent": self.dependent,
+            "unit_variable": self.unit_variable,
+            "time_variable": self.time_variable,
+            "treatment_identifier": self.treatment_identifier,
+            "controls_identifier": self.controls_identifier,
+            "time_predictors_prior": self.time_predictors_prior,
+            "time_optimize_ssr": self.time_optimize_ssr,
+            "special_predictors": self.special_predictors,
+        }
+
+        dataprep = pysyncon.Dataprep(**kwargs)
         synth = pysyncon.Synth()
         # No weight matrix set
         self.assertRaises(ValueError, synth.summary)
-        X0, X1 = self.dataprep.make_covariate_mats()
-        Z0, Z1 = self.dataprep.make_outcome_mats()
+        X0, X1 = dataprep.make_covariate_mats()
+        Z0, Z1 = dataprep.make_outcome_mats()
         synth.fit(X0=X0, X1=X1, Z0=Z0, Z1=Z1)
         # No Dataprep object available
         self.assertRaises(ValueError, synth.summary)

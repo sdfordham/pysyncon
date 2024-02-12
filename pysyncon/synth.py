@@ -50,7 +50,7 @@ class Synth(BaseSynth, VanillaOptimMixin):
         X0 : pd.DataFrame, shape (m, c), optional
             Matrix with each column corresponding to a control unit and each
             row is covariates, by default None.
-        X1 : pandas.Series | pandas.DataFrame, shape (m, 1), optional
+        X1 : pandas.Series, shape (m, 1), optional
             Column vector giving the covariate values for the treated unit, by
             default None.
         Z0 : pandas.DataFrame, shape (n, c), optional
@@ -58,7 +58,7 @@ class Synth(BaseSynth, VanillaOptimMixin):
             column corresponding to a control unit and the rows are the time
             steps; the columns correspond with the columns of X0, by default
             None.
-        Z1 : pandas.Series | pandas.DataFrame, shape (n, 1), optional
+        Z1 : pandas.Series, shape (n, 1), optional
             Column vector giving the outcome variable values over time for the
             treated unit, by default None.
         custom_V : numpy.ndarray, shape (c, c), optional
@@ -104,12 +104,19 @@ class Synth(BaseSynth, VanillaOptimMixin):
         ValueError
             if neither a Dataprep object nor all of (X0, X1, Z0, Z1) are
             supplied.
+        TypeError
+            if (X1, Z1) are not of type `pandas.Series`.
         ValueError
             if `optim_initial=ols` there is collinearity in the data.
         ValueError
             if `optim_initial` is not one of `'equal'` or `'ols'`.
         """
         if dataprep:
+            if (
+                isinstance(dataprep.treatment_identifier, (list, tuple))
+                and len(dataprep.treatment_identifier) > 1
+            ):
+                raise ValueError("Synth requires exactly one treated unit.")
             self.dataprep = dataprep
             X0, X1 = dataprep.make_covariate_mats()
             Z0, Z1 = dataprep.make_outcome_mats()
@@ -118,6 +125,8 @@ class Synth(BaseSynth, VanillaOptimMixin):
                 raise ValueError(
                     "dataprep must be set or (X0, X1, Z0, Z1) must all be set."
                 )
+            if not isinstance(X1, pd.Series) or not isinstance(Z1, pd.Series):
+                raise TypeError("X1 and Z1 must be of type `pandas.Series`.")
 
         X = pd.concat([X0, X1], axis=1)
         X_scaled = X.divide(X.std(axis=1), axis=0)
