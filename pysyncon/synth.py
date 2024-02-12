@@ -126,7 +126,7 @@ class Synth(BaseSynth, VanillaOptimMixin):
                     "dataprep must be set or (X0, X1, Z0, Z1) must all be set."
                 )
             if not isinstance(X1, pd.Series) or not isinstance(Z1, pd.Series):
-                raise ValueError("X1 and Z1 must be of type `pandas.Series`.")
+                raise TypeError("X1 and Z1 must be of type `pandas.Series`.")
 
         X = pd.concat([X0, X1], axis=1)
         X_scaled = X.divide(X.std(axis=1), axis=0)
