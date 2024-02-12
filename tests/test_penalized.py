@@ -77,6 +77,19 @@ class TestPenalizedSynth(unittest.TestCase):
         except Exception as e:
             self.fail(f"PenalizedSynth fit with single treated in list failed: {e}.")
 
+    def test_X0_X1_fit(self):
+        pen = pysyncon.PenalizedSynth()
+        
+        # X1 needs to be pd.Series
+        X0 = pd.DataFrame(np.random.rand(5, 5))
+        X1 = pd.DataFrame(np.random.rand(5, 2))
+        self.assertRaises(TypeError, pen.fit, X0=X0, X1=X1)
+
+        # X1 needs to be pd.Series
+        X0 = pd.DataFrame(np.random.rand(5, 5))
+        X1 = pd.DataFrame(np.random.rand(5, 1))
+        self.assertRaises(TypeError, pen.fit, X0=X0, X1=X1)
+
     def test_fit_no_data(self):
         pen = pysyncon.PenalizedSynth()
         self.assertRaises(ValueError, pen.fit)
