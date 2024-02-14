@@ -3,3 +3,4 @@ from .synth import Synth
 from .augsynth import AugSynth
 from .robust import RobustSynth
 from .penalized import PenalizedSynth
+from .design import ExperimentalDesign
