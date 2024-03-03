@@ -156,6 +156,9 @@ class TestSynthBasque(unittest.TestCase):
         self.pvalue = 0.16666666666666666
         self.att = {"att": -0.6995647842110987, "se": 0.07078092130438395}
         self.att_time_period = range(1975, 1998)
+        self.mspe = 0.008864544955047298
+        self.mape = 0.016928135318837897
+        self.mae = 0.08777554288632104
 
     def test_weights(self):
         synth = Synth()
@@ -218,3 +221,19 @@ class TestSynthBasque(unittest.TestCase):
         # Allow a tolerance of 2.5%
         se_perc_delta = abs(1.0 - self.att["se"] / synth_att["se"])
         self.assertLessEqual(se_perc_delta, 0.025)
+
+    def test_metric_values(self):
+        synth = Synth()
+        synth.fit(
+            dataprep=self.dataprep,
+            optim_method=self.optim_method,
+            optim_initial=self.optim_initial,
+        )
+
+        # Allow a tolerance of 2.5%
+        mspe_perc_delta = abs(1.0 - self.mspe / synth.mspe())
+        self.assertLessEqual(mspe_perc_delta, 0.025)
+        mape_perc_delta = abs(1.0 - self.mape / synth.mape())
+        self.assertLessEqual(mape_perc_delta, 0.025)
+        mae_perc_delta = abs(1.0 - self.mae / synth.mae())
+        self.assertLessEqual(mae_perc_delta, 0.025)

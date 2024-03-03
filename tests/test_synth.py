@@ -241,3 +241,38 @@ class TestSynth(unittest.TestCase):
         synth = pysyncon.Synth()
         # No weight matrix set
         self.assertRaises(ValueError, synth.att, range(1))
+
+    def test_metrics(self):
+        kwargs = {
+            "foo": self.foo,
+            "predictors": self.predictors,
+            "predictors_op": self.predictors_op,
+            "dependent": self.dependent,
+            "unit_variable": self.unit_variable,
+            "time_variable": self.time_variable,
+            "treatment_identifier": self.treatment_identifier,
+            "controls_identifier": self.controls_identifier,
+            "time_predictors_prior": self.time_predictors_prior,
+            "time_optimize_ssr": self.time_optimize_ssr,
+            "special_predictors": self.special_predictors,
+        }
+
+        dataprep = pysyncon.Dataprep(**kwargs)
+        synth = pysyncon.Synth()
+
+        X0, X1 = dataprep.make_covariate_mats()
+        Z0, Z1 = dataprep.make_outcome_mats()
+        synth.fit(X0=X0, X1=X1, Z0=Z0, Z1=Z1)
+        # No Dataprep object available
+        self.assertRaises(ValueError, synth.mspe)
+        self.assertRaises(ValueError, synth.mape)
+        self.assertRaises(ValueError, synth.mae)
+
+        del synth
+
+        synth = pysyncon.Synth()
+        synth.dataprep = dataprep
+        # No weights availble/fit not run available
+        self.assertRaises(ValueError, synth.mspe)
+        self.assertRaises(ValueError, synth.mape)
+        self.assertRaises(ValueError, synth.mae)
