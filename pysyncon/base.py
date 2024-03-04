@@ -266,6 +266,96 @@ class BaseSynth(metaclass=ABCMeta):
 
         return {"att": att.item(), "se": se.item()}
 
+    def mspe(self) -> float:
+        """Returns the mean square prediction error in the fit of
+        the synthetic control versus the treated unit over the
+        optimization time-period.
+
+        Returns
+        -------
+        float
+            Mean square prediction Error
+
+        Raises
+        ------
+        ValueError
+            If no dataprep is set when the fit method is run
+        ValueError
+            If the fit method has not been run (no weights available.)
+        """
+        if self.W is None:
+            raise ValueError("No weight matrix available; fit data first.")
+        if self.dataprep is None:
+            raise ValueError("dataprep must be set for mspe.")
+
+        _, Z1 = self.dataprep.make_outcome_mats(
+            time_period=self.dataprep.time_optimize_ssr
+        )
+        ts_synthetic = self._synthetic(time_period=self.dataprep.time_optimize_ssr)
+
+        n = len(ts_synthetic)
+        return (1 / n) * (Z1 - ts_synthetic).pow(2).sum().item()
+
+    def mape(self) -> float:
+        """Returns the mean absolute percentage error in the fit of
+        the synthetic control versus the treated unit over the
+        optimization time-period.
+
+        Returns
+        -------
+        float
+            Mean absolute percentage error
+
+        Raises
+        ------
+        ValueError
+            If no dataprep is set when the fit method is run
+        ValueError
+            If the fit method has not been run (no weights available.)
+        """
+        if self.W is None:
+            raise ValueError("No weight matrix available; fit data first.")
+        if self.dataprep is None:
+            raise ValueError("dataprep must be set for mape.")
+
+        _, Z1 = self.dataprep.make_outcome_mats(
+            time_period=self.dataprep.time_optimize_ssr
+        )
+        ts_synthetic = self._synthetic(time_period=self.dataprep.time_optimize_ssr)
+
+        n = len(ts_synthetic)
+        return (1 / n) * ((Z1 - ts_synthetic) / ts_synthetic).abs().sum().item()
+
+    def mae(self) -> float:
+        """Returns the mean absolute error in the fit of
+        the synthetic control versus the treated unit over the
+        optimization time-period.
+
+        Returns
+        -------
+        float
+            Mean absolute error
+
+        Raises
+        ------
+        ValueError
+            If no dataprep is set when the fit method is run
+        ValueError
+            If the fit method has not been run (no weights available.)
+        """
+        if self.W is None:
+            raise ValueError("No weight matrix available; fit data first.")
+        if self.dataprep is None:
+            raise ValueError("dataprep must be set for mae.")
+
+        _, Z1 = self.dataprep.make_outcome_mats(
+            time_period=self.dataprep.time_optimize_ssr
+        )
+        ts_synthetic = self._synthetic(time_period=self.dataprep.time_optimize_ssr)
+
+        n = len(ts_synthetic)
+        return (1 / n) * (Z1 - ts_synthetic).abs().sum().item()
+
 
 class VanillaOptimMixin:
     @staticmethod
