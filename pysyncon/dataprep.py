@@ -11,6 +11,8 @@ SpecialPredictor_t = Tuple[
     Any, Union[pd.Series, pd.DataFrame, Sequence, Mapping], PredictorsOp_t
 ]
 
+AGG_OP = ["mean", "std", "median", "sum", "count", "max", "min", "var"]
+
 
 class Dataprep:
     """Helper class that takes in the panel data and all necessary information
@@ -24,7 +26,7 @@ class Dataprep:
         predictor/outcome variables and each row is a time-step for some unit
     predictors : Axes
         The columns of ``foo`` to use as predictors
-    predictors_op : "mean" | "std" | "median"
+    predictors_op : "mean" | "std" | "median" | "sum" | "count" | "max" | "min" | "var"
         The statistical operation to use on the predictors - the time range that
         the operation is applied to is ``time_predictors_prior``
     dependent : Any
@@ -63,7 +65,8 @@ class Dataprep:
     ValueError
         if ``predictor`` is not a column of ``foo``
     ValueError
-        if ``predictor_op`` is not one of "mean", "std", "median"
+        if ``predictor_op`` is not one of "mean", "std", "median",
+        "sum", "count", "max", "min" or "var".
     ValueError
         if ``dependent`` is not a column of ``foo``
     ValueError
@@ -112,8 +115,9 @@ class Dataprep:
                 raise ValueError(f"predictor {predictor} not in foo columns.")
         self.predictors = predictors
 
-        if predictors_op not in ("mean", "std", "median"):
-            raise ValueError("predictors_op must be one of mean, std, median.")
+        if predictors_op not in AGG_OP:
+            agg_op_str = ", ".join([f'"{o}"' for o in AGG_OP])
+            raise ValueError(f"predictors_op must be one of {agg_op_str}.")
         self.predictors_op = predictors_op
 
         if dependent not in foo.columns:
@@ -130,11 +134,13 @@ class Dataprep:
 
         if isinstance(treatment_identifier, (list, tuple)):
             for treated in treatment_identifier:
+                # This throws FutureWarning (see https://stackoverflow.com/a/46721064/11594901)
                 if treated not in foo[unit_variable].values:
                     raise ValueError(
                         f'treatment_identifier {treated} not found in foo["{unit_variable}"].'
                     )
         else:
+            # This throws FutureWarning (see https://stackoverflow.com/a/46721064/11594901)
             if treatment_identifier not in foo[unit_variable].values:
                 raise ValueError(
                     f'treatment_identifier {treatment_identifier} not found in foo["{unit_variable}"].'
@@ -195,11 +201,6 @@ class Dataprep:
         tuple[pandas.DataFrame, pandas.Series]
             Returns the matrices X0, X1 (using the notation of the Abadie,
             Diamond & Hainmueller paper).
-
-        Raises
-        ------
-        ValueError
-            if predictors_op is not one of "mean", "std", "median"
 
         :meta private:
         """
