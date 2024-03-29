@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 
 from pysyncon import Dataprep
+from pysyncon.dataprep import AGG_OP
 
 
 class TestDataprep(unittest.TestCase):
@@ -276,7 +277,7 @@ class TestDataprep(unittest.TestCase):
         }
 
         # Non-special
-        for op in ("mean", "std", "median"):
+        for op in AGG_OP:
             dataprep = Dataprep(predictors_op=op, **kwargs)
             X0, X1 = dataprep.make_covariate_mats()
 
