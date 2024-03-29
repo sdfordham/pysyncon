@@ -5,13 +5,12 @@ import pandas as pd
 from pandas._typing import Axes
 
 
-PredictorsOp_t = Literal["mean", "std", "median"]
+AGG_OP = ("mean", "std", "median", "sum", "count", "max", "min", "var")
+PredictorsOp_t = Literal["mean", "std", "median", "sum", "count", "max", "min", "var"]
 IsinArg_t = Union[Iterable, pd.Series, dict]
 SpecialPredictor_t = Tuple[
     Any, Union[pd.Series, pd.DataFrame, Sequence, Mapping], PredictorsOp_t
 ]
-
-AGG_OP = ["mean", "std", "median", "sum", "count", "max", "min", "var"]
 
 
 class Dataprep:
@@ -89,7 +88,7 @@ class Dataprep:
         of foo
     ValueError
         if one of the operators in an element of ``special_predictors`` is not
-        one of "mean", "std", "median"
+        one of "mean", "std", "median", "sum", "count", "max", "min" or "var".
     """
 
     def __init__(
@@ -184,9 +183,10 @@ class Dataprep:
                     raise ValueError(
                         f"{predictor} in special_predictors not in foo columns."
                     )
-                if op not in ("mean", "std", "median"):
+                if op not in AGG_OP:
+                    agg_op_str = ", ".join([f'"{o}"' for o in AGG_OP])
                     raise ValueError(
-                        f"{op} in special_predictors must be one of mean, std, median."
+                        f"{op} in special_predictors must be one of {agg_op_str}."
                     )
         self.special_predictors = special_predictors
 
