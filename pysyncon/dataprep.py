@@ -5,13 +5,12 @@ import pandas as pd
 from pandas._typing import Axes
 
 
-PredictorsOp_t = Literal["mean", "std", "median"]
+AGG_OP = ("mean", "std", "median", "sum", "count", "max", "min", "var")
+PredictorsOp_t = Literal["mean", "std", "median", "sum", "count", "max", "min", "var"]
 IsinArg_t = Union[Iterable, pd.Series, dict]
 SpecialPredictor_t = Tuple[
     Any, Union[pd.Series, pd.DataFrame, Sequence, Mapping], PredictorsOp_t
 ]
-
-AGG_OP = ["mean", "std", "median", "sum", "count", "max", "min", "var"]
 
 
 class Dataprep:
