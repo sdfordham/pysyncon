@@ -127,9 +127,7 @@ class CrossValidationResult:
 class PlaceboTest:
     """Class that carries out placebo tests by running a synthetic control
     study using each possible control unit as the treated unit and the
-    remaining control units as controls. See
-    `Abadie & Gardeazabal <https://www.aeaweb.org/articles?id=10.1257/000282803321455188>`_
-    for more details.
+    remaining control units as controls. See :cite:`germany2015` for more details.
     """
 
     def __init__(self) -> None:
@@ -280,8 +278,8 @@ class PlaceboTest:
             If supplied, plot a vertical line at the time period that the
             treatment time occurred, by default None
         mspe_threshold : float, optional
-            Remove any non-treated units whose MSPE pre-treatment is <=
-            mspe_threshold x the MSPE of the treated unit pre-treatment.
+            Remove any non-treated units whose MSPE pre-treatment is :math:`>`
+            mspe_threshold :math:`\\times` the MSPE of the treated unit pre-treatment.
             This serves to exclude any non-treated units whose synthetic control
             had a poor pre-treatment match to the actual relative to how the
             actual treated unit matched pre-treatment.
@@ -318,8 +316,8 @@ class PlaceboTest:
 
     def pvalue(self, treatment_time: int) -> float:
         """Calculate p-value of Abadie et al's version of Fisher's
-        exact hypothesis test for no effect of treatment null. See also
-        Firpo & Possebom 2017.
+        exact hypothesis test for no effect of treatment null, see also
+        section 2.2. of :cite:`fp2018`.
 
         Parameters
         ----------
