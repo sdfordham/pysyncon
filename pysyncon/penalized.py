@@ -19,7 +19,8 @@ class PenalizedOptimMixin:
         qp_method: Literal["SLSQP"] = "SLSQP",
         qp_options: dict = {"maxiter": 1000},
     ) -> tuple[np.ndarray, float]:
-        """Solves the weight optimisation problem in the penalized setting.
+        """Solves the weight optimisation problem in the penalized setting,
+        see Abadie & L'Hour :cite:`penalized2021`.
 
         Parameters
         ----------
@@ -76,7 +77,7 @@ class PenalizedOptimMixin:
 
 class PenalizedSynth(BaseSynth, PenalizedOptimMixin):
     """Implementation of the penalized synthetic control method due to
-    Abadie & L'Hourblack.
+    Abadie & L'Hour :cite:`penalized2021`.
     """
 
     def __init__(self) -> None:
