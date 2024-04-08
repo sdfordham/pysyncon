@@ -9,7 +9,7 @@ from .base import BaseSynth
 
 class RobustSynth(BaseSynth):
     """Implementation of the robust synthetic control method due to
-    `Amjad, Shah & Shen <https://www.jmlr.org/papers/volume19/17-777/17-777.pdf>`_.
+    Amjad, Shah & Shen :cite:`robust2018`.
     """
 
     def __init__(self) -> None:
@@ -72,14 +72,14 @@ class RobustSynth(BaseSynth):
         threshold: Optional[float] = None,
         sv_count: Optional[int] = None,
     ) -> np.ndarray:
-        """Calculate the M_hat matrix from the paper by carrying out
-        an SVD of the outcome matrix and remove the specified number
+        """Calculate the :math:`\hat{M}` matrix from the paper (see :cite:`robust2018`) by
+        carrying out an SVD of the outcome matrix and remove the specified number
         of singular values.
 
         Parameters
         ----------
         Y : np.ndarray
-            The outcome matrix (Y matrix in the notation of the paper).
+            The outcome matrix (:math:`Y` matrix in the notation of the paper).
         threshold : Optional[float], optional
             Remove singular values that are less that `threshold`,
             either this must be specified or `sv_count`, by default None
@@ -90,7 +90,7 @@ class RobustSynth(BaseSynth):
         Returns
         -------
         np.ndarray
-            The M_hat matrix from the paper.
+            The :math:`\hat{M}` matrix from the paper (see :cite:`robust2018`).
 
         Raises
         ------

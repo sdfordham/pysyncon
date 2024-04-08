@@ -199,8 +199,8 @@ class Dataprep:
         Returns
         -------
         tuple[pandas.DataFrame, pandas.Series]
-            Returns the matrices X0, X1 (using the notation of the Abadie,
-            Diamond & Hainmueller paper).
+            Returns the matrices :math:`X_0`, :math:`X_1` (using the notation of Abadie
+            & Gardeazabal :cite:`basque2003`).
 
         :meta private:
         """
@@ -264,7 +264,7 @@ class Dataprep:
     def make_outcome_mats(
         self, time_period: Optional[IsinArg_t] = None
     ) -> tuple[pd.DataFrame, Union[pd.Series, pd.DataFrame]]:
-        """Generates the time-series matrices to use as input to the fit
+        """Generates the time-series (outcome) matrices to use as input to the fit
         method of the synthetic control computation.
 
         Parameters
@@ -276,8 +276,8 @@ class Dataprep:
         Returns
         -------
         tuple[pd.DataFrame, Union[pd.Series, pd.DataFrame]]
-            Returns the matrices Z0, Z1 (using the notation of the Abadie,
-            Diamond & Hainmueller paper).
+            Returns the matrices :math:`Z_0`, :math:`Z_1` (using the notation
+            of Abadie & Gardeazabal :cite:`basque2003`).
 
         :meta private:
         """

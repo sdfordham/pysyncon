@@ -11,7 +11,7 @@ from .utils import HoldoutSplitter, CrossValidationResult
 
 class AugSynth(BaseSynth, VanillaOptimMixin):
     """Implementation of the augmented synthetic control method due to Ben-
-    Michael, Feller & Rothstein.
+    Michael, Feller & Rothstein :cite:`augsynth2021`.
 
     The implementation follows the augsynth R package with the option
     `progfunc="Ridge"`.

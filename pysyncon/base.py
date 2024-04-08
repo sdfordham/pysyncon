@@ -122,7 +122,7 @@ class BaseSynth(metaclass=ABCMeta):
         grid: bool = True,
     ) -> None:
         """Plots the gap between the treated unit and the synthetic unit over
-        time. The fit method needs to be run with a Dataprep
+        time. The fit method needs to be run with a :class:`Dataprep`
         object for this method to be available.
 
         Parameters
@@ -367,7 +367,7 @@ class VanillaOptimMixin:
         qp_options: dict = {"maxiter": 1000},
     ) -> tuple[np.ndarray, float]:
         """Solves the inner part of the quadratic minimization problem for a
-        given V matrix.
+        given V matrix (see Abadie and Gardeazabal :cite:`basque2003`).
 
         Parameters
         ----------
@@ -395,10 +395,10 @@ class VanillaOptimMixin:
         _, n_c = X0.shape
 
         P = X0.T @ V_mat @ X0
-        q = -1.0 * X1.T @ V_mat @ X0
+        q = X1.T @ V_mat @ X0
 
         def fun(x):
-            return q.T @ x + 0.5 * x.T @ P @ x
+            return 0.5 * x.T @ P @ x - q.T @ x
 
         bounds = Bounds(lb=np.full(n_c, 0.0), ub=np.full(n_c, 1.0))
         constraints = LinearConstraint(A=np.full(n_c, 1.0), lb=1.0, ub=1.0)
