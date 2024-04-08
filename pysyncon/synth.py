@@ -16,7 +16,7 @@ OptimizerMethod_t = Literal[
 
 class Synth(BaseSynth, VanillaOptimMixin):
     """Implementation of the synthetic control method due to
-    `Abadie, Diamond & Hainmueller <http://dx.doi.org/10.1198/jasa.2009.ap08746>`_.
+    Abadie & Gardeazabal :cite:`basque2003`.
     """
 
     def __init__(self) -> None:
@@ -38,10 +38,9 @@ class Synth(BaseSynth, VanillaOptimMixin):
         optim_options: dict = {"maxiter": 1000},
     ) -> None:
         """Fit the model/calculate the weights. Either a :class:`Dataprep` object
-        should be provided or otherwise matrices (X0, X1, Z0, Z1)
-        should be provided (using the same notation as the
-        `Abadie, Diamond & Hainmueller <http://dx.doi.org/10.1198/jasa.2009.ap08746>`_
-        paper).
+        should be provided or otherwise matrices (:math:`X_0`, :math:`X_1`, :math:`Z_0`,
+        :math:`Z_1`) should be provided (using the notation of Abadie &
+        Gardeazabal :cite:`basque2003`).
 
         Parameters
         ----------
@@ -102,12 +101,12 @@ class Synth(BaseSynth, VanillaOptimMixin):
         Raises
         ------
         ValueError
-            if neither a Dataprep object nor all of (X0, X1, Z0, Z1) are
-            supplied.
+            if neither a `Dataprep` object nor all of (:math:`X_0`, :math:`X_1`,
+            :math:`Z_0`, :math:`Z_1`) are supplied.
         TypeError
-            if (X1, Z1) are not of type `pandas.Series`.
+            if (:math:`X1`, :math:`Z1`) are not of type `pandas.Series`.
         ValueError
-            if `optim_initial=ols` there is collinearity in the data.
+            if `optim_initial=ols` and there is collinearity in the data.
         ValueError
             if `optim_initial` is not one of `'equal'` or `'ols'`.
         """
