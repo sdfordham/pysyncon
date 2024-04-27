@@ -60,7 +60,7 @@ class LinearFactorModel:
         n_unobservable: int,
         n_periods_pre: int,
         n_periods_post: int,
-    ) -> tuple[pd.DataFrame, pd.Series, pd.DataFrame, pd.Series]:
+    ) -> Tuple[pd.DataFrame, pd.Series, pd.DataFrame, pd.Series]:
         """Generate the matrices (:math:`X_0`, :math:`X_1`, :math:`Z_0`,
         :math:`Z_1`) that can be used as input to a synthetic control
         method (using the notation of Abadie & Gardeazabal :cite:`basque2003`).
