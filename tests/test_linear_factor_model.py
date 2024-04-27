@@ -20,10 +20,12 @@ class TestLinearFactorModel(unittest.TestCase):
             n_observable=self.n_observable,
             n_unobservable=self.n_unobservable,
             n_periods_pre=self.n_periods_pre,
-            n_periods_post=self.n_periods_post
+            n_periods_post=self.n_periods_post,
         )
 
         self.assertEqual(X0.shape, (self.n_observable, self.n_units - 1))
         self.assertEqual(X1.shape, (self.n_observable,))
-        self.assertEqual(Z0.shape, (self.n_periods_pre + self.n_periods_post, self.n_units - 1))
+        self.assertEqual(
+            Z0.shape, (self.n_periods_pre + self.n_periods_post, self.n_units - 1)
+        )
         self.assertEqual(Z1.shape, (self.n_periods_pre + self.n_periods_post,))
