@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -9,12 +9,12 @@ class LinearFactorModel:
 
     def __init__(
         self,
-        observed_dist: tuple[int] = (0, 1),
-        observed_params_dist: tuple[int] = (0, 10),
-        unobserved_dist: tuple[int] = (0, 1),
-        unobserved_params_dist: tuple[int] = (0, 10),
-        effect_dist: tuple[int] = (0, 20),
-        shocks_dist: tuple[int] = (0, 1),
+        observed_dist: Tuple[int] = (0, 1),
+        observed_params_dist: Tuple[int] = (0, 10),
+        unobserved_dist: Tuple[int] = (0, 1),
+        unobserved_params_dist: Tuple[int] = (0, 10),
+        effect_dist: Tuple[int] = (0, 20),
+        shocks_dist: Tuple[int] = (0, 1),
         seed: Optional[int] = None,
         rng: Optional[np.random.Generator] = None,
     ) -> None:
@@ -87,7 +87,7 @@ class LinearFactorModel:
             a pandas DataFrame of shape (n_observable, n_units - 1), :math:`Z_1`
             a pandas Series of shape (n_observable, 1).
         """
-        rng = self.rng if self.rng else np.random.default_rng(seed=self.seed)
+        rng = self.rng(self.seed) if self.rng else np.random.default_rng(seed=self.seed)
 
         n_periods = n_periods_pre + n_periods_post
 
