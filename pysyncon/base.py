@@ -21,22 +21,21 @@ class BaseSynth(metaclass=ABCMeta):
     def fit(*args, **kwargs) -> None:
         raise NotImplemented
 
-    def _synthetic(self, time_period: Optional[IsinArg_t] = None) -> pd.Series:
+    def _synthetic(self, Z0: pd.DataFrame) -> pd.Series:
         """Assemble the synthetic unit using the calculated weight matrix.
 
         Parameters
         ----------
-        time_period : Iterable | pandas.Series | dict, optional
-            Time range to plot, if none is supplied then the time range used
-            is the time period over which the optimisation happens, by default
-            None
+        Z0 : pandas.DataFrame, shape (n, c)
+            A matrix of the time series of the outcome variable with each
+            column corresponding to a control unit and the rows are the time
+            steps
 
         Returns
         -------
         pd.Series
             Time series of the synthetic unit.
         """
-        Z0, _ = self.dataprep.make_outcome_mats(time_period=time_period)
         ts_synthetic = (Z0 * self.W).sum(axis=1)
         return ts_synthetic
 
@@ -45,10 +44,11 @@ class BaseSynth(metaclass=ABCMeta):
         time_period: Optional[IsinArg_t] = None,
         treatment_time: Optional[int] = None,
         grid: bool = True,
+        Z0: Optional[pd.DataFrame] = None,
+        Z1: Optional[pd.Series] = None,
     ) -> None:
         """Plot the outcome variable over time for the treated unit and the
-        synthetic control. The fit method needs to be run with a :class:`Dataprep`
-        object for this method to be available.
+        synthetic control.
 
         Parameters
         ----------
@@ -61,22 +61,28 @@ class BaseSynth(metaclass=ABCMeta):
             treatment time occurred, by default None
         grid : bool, optional
             Whether or not to plot a grid, by default True
+        Z0 : pandas.DataFrame, shape (n, c), optional
+            The matrix of the time series of the outcome variable for the control units.
+            If no dataprep is set, then this must be supplied along with Z1, by default None.
+        Z1 : pandas.Series, shape (n, 1), optional
+            The matrix of the time series of the outcome variable for the treated unit.
+            If no dataprep is set, then this must be supplied along with Z0, by default None.
 
         Raises
         ------
         ValueError
             If there is no weight matrix available
         ValueError
-            If there is no :class:`Dataprep` object set
+            If there is no :class:`Dataprep` object set or (Z0, Z1) is not supplied
         """
-        if self.dataprep is None:
-            raise ValueError("dataprep must be set for automatic plots.")
+        if self.dataprep is not None:
+            Z0, Z1 = self.dataprep.make_outcome_mats(time_period=time_period)
+        elif Z0 is None or Z1 is None:
+            raise ValueError("dataprep must be set or (Z0, Z1) must be set for plots.")
         if self.W is None:
             raise ValueError("No weight matrix available; fit data first.")
 
-        Z0, Z1 = self.dataprep.make_outcome_mats(time_period=time_period)
-        ts_synthetic = self._synthetic(time_period=time_period)
-
+        ts_synthetic = self._synthetic(Z0=Z0)
         plt.plot(Z1, color="black", linewidth=1, label=Z1.name)
         plt.plot(
             ts_synthetic,
@@ -85,23 +91,27 @@ class BaseSynth(metaclass=ABCMeta):
             linestyle="dashed",
             label="Synthetic",
         )
-        plt.ylabel(self.dataprep.dependent)
+        if self.dataprep is not None:
+            plt.ylabel(self.dataprep.dependent)
         if treatment_time:
             plt.axvline(x=treatment_time, ymin=0.05, ymax=0.95, linestyle="dashed")
         plt.legend()
         plt.grid(grid)
         plt.show()
 
-    def _gaps(self, time_period: Optional[IsinArg_t] = None) -> pd.Series:
+    def _gaps(self, Z0: pd.DataFrame, Z1: pd.Series) -> pd.Series:
         """Calculate the gaps (difference between factual
         and estimated counterfactual)
 
         Parameters
         ----------
-        time_period : Iterable | pandas.Series | dict, optional
-            Time range to plot, if none is supplied then the time range used
-            is the time period over which the optimisation happens, default
-            None
+        Z0 : pandas.DataFrame, shape (n, c)
+            A matrix of the time series of the outcome variable with each
+            column corresponding to a control unit and the rows are the time
+            steps
+        Z1 : pandas.DataFrame, shape (n, 1)
+            A matrix of the time series of the outcome variable for the treated
+            unit and the rows are the time steps
 
         Returns
         -------
@@ -110,8 +120,7 @@ class BaseSynth(metaclass=ABCMeta):
 
         :meta private:
         """
-        _, Z1 = self.dataprep.make_outcome_mats(time_period=time_period)
-        ts_synthetic = self._synthetic(time_period=time_period)
+        ts_synthetic = self._synthetic(Z0=Z0)
         ts_gap = Z1 - ts_synthetic
         return ts_gap
 
@@ -120,10 +129,11 @@ class BaseSynth(metaclass=ABCMeta):
         time_period: Optional[IsinArg_t] = None,
         treatment_time: Optional[int] = None,
         grid: bool = True,
+        Z0: Optional[pd.DataFrame] = None,
+        Z1: Optional[pd.Series] = None,
     ) -> None:
         """Plots the gap between the treated unit and the synthetic unit over
-        time. The fit method needs to be run with a :class:`Dataprep`
-        object for this method to be available.
+        time.
 
         Parameters
         ----------
@@ -136,22 +146,31 @@ class BaseSynth(metaclass=ABCMeta):
             treatment time occurred, by default None
         grid : bool, optional
             Whether or not to plot a grid, by default True
+        Z0 : pandas.DataFrame, shape (n, c), optional
+            The matrix of the time series of the outcome variable for the control units.
+            If no dataprep is set, then this must be supplied along with Z1, by default None.
+        Z1 : pandas.Series, shape (n, 1), optional
+            The matrix of the time series of the outcome variable for the treated unit.
+            If no dataprep is set, then this must be supplied along with Z0, by default None.
 
         Raises
         ------
         ValueError
-            If there is no :class:`Dataprep` object set
-        ValueError
             If there is no weight matrix available
+        ValueError
+            If there is no :class:`Dataprep` object set or (Z0, Z1) is not supplied
         """
-        if self.dataprep is None:
-            raise ValueError("dataprep must be set for automatic plots.")
+        if self.dataprep is not None:
+            Z0, Z1 = self.dataprep.make_outcome_mats(time_period=time_period)
+        elif Z0 is None or Z1 is None:
+            raise ValueError("dataprep must be set or (Z0, Z1) must be set for plots.")
         if self.W is None:
             raise ValueError("No weight matrix available; fit data first.")
 
-        ts_gap = self._gaps(time_period=time_period)
+        ts_gap = self._gaps(Z0=Z0, Z1=Z1)
         plt.plot(ts_gap, color="black", linewidth=1)
-        plt.ylabel(self.dataprep.dependent)
+        if self.dataprep is not None:
+            plt.ylabel(self.dataprep.dependent)
         plt.hlines(
             y=0,
             xmin=min(ts_gap.index),
@@ -198,7 +217,12 @@ class BaseSynth(metaclass=ABCMeta):
         )
         return weights_ser.round(round)
 
-    def summary(self, round: int = 3) -> pd.DataFrame:
+    def summary(
+        self,
+        round: int = 3,
+        X0: Optional[pd.DataFrame] = None,
+        X1: Optional[pd.Series] = None,
+    ) -> pd.DataFrame:
         """Generates a ``pandas.DataFrame`` with summary data. The
         first column will show the mean value of each predictor over the time
         period ``time_predictors_prior`` for the treated unit and the second
@@ -213,6 +237,14 @@ class BaseSynth(metaclass=ABCMeta):
         round : int, optional
             Round the table values to the given number of places, by
             default 3
+        X0 : pd.DataFrame, shape (n_cov, n_controls), optional
+            Matrix with each column corresponding to a control unit and each
+            row is a covariate. If no dataprep is set, then this must be
+            supplied along with X1, by default None.
+        X1 : pandas.Series, shape (n_cov, 1), optional
+            Column vector giving the covariate values for the treated unit.
+            If no dataprep is set, then this must be supplied along with Z1,
+            by default None.
 
         Returns
         -------
@@ -222,15 +254,18 @@ class BaseSynth(metaclass=ABCMeta):
         Raises
         ------
         ValueError
-            If there is no :class:`Dataprep` object set
-        ValueError
             If there is no weight matrix available
+        ValueError
+            If there is no :class:`Dataprep` object set or (Z0, Z1) is not supplied
         """
-        if self.dataprep is None:
-            raise ValueError("dataprep must be set for summary.")
         if self.W is None:
             raise ValueError("No weight matrix available: fit data first.")
-        X0, X1 = self.dataprep.make_covariate_mats()
+        if self.dataprep is not None:
+            X0, X1 = self.dataprep.make_covariate_mats()
+        elif X0 is None or X1 is None:
+            raise ValueError(
+                "dataprep must be set or (X0, X1) must be set for summary."
+            )
 
         treated = X1.rename("treated")
         synthetic = (X0 * self.W).sum(axis=1).rename("synthetic")
@@ -238,7 +273,12 @@ class BaseSynth(metaclass=ABCMeta):
 
         return pd.concat([treated, synthetic, sample_mean], axis=1).round(round)
 
-    def att(self, time_period: IsinArg_t) -> dict[str, float]:
+    def att(
+        self,
+        time_period: IsinArg_t,
+        Z0: Optional[pd.DataFrame] = None,
+        Z1: Optional[pd.Series] = None,
+    ) -> dict[str, float]:
         """Computes the average treatment effect on the treated unit (ATT) and
         the standard error to the value over the chosen time-period.
 
@@ -246,6 +286,12 @@ class BaseSynth(metaclass=ABCMeta):
         ----------
         time_period : Iterable | pandas.Series | dict, optional
             Time period to compute the ATT over.
+        Z0 : pandas.DataFrame, shape (n, c), optional
+            The matrix of the time series of the outcome variable for the control units.
+            If no dataprep is set, then this must be supplied along with Z1, by default None.
+        Z1 : pandas.Series, shape (n, 1), optional
+            The matrix of the time series of the outcome variable for the treated unit.
+            If no dataprep is set, then this must be supplied along with Z0, by default None.
 
         Returns
         -------
@@ -256,20 +302,38 @@ class BaseSynth(metaclass=ABCMeta):
         ------
         ValueError
             If there is no weight matrix available
+        ValueError
+            If there is no :class:`Dataprep` object set or (Z0, Z1) is not supplied
         """
         if self.W is None:
             raise ValueError("No weight matrix available; fit data first.")
-        gaps = self._gaps(time_period=time_period)
-
+        if self.dataprep is not None:
+            Z0, Z1 = self.dataprep.make_outcome_mats(time_period=time_period)
+            gaps = self._gaps(Z0=Z0, Z1=Z1)
+        if Z0 is not None and Z1 is not None:
+            gaps = self._gaps(Z0=Z0.loc[time_period, :], Z1=Z1.loc[time_period])
+        else:
+            raise ValueError("dataprep must be set or (Z0, Z1) must be set for plots.")
         att = np.mean(gaps)
         se = np.std(gaps, ddof=1) / np.sqrt(len(time_period))
 
         return {"att": att.item(), "se": se.item()}
 
-    def mspe(self) -> float:
+    def mspe(
+        self, Z0: Optional[pd.DataFrame] = None, Z1: Optional[pd.Series] = None
+    ) -> float:
         """Returns the mean square prediction error in the fit of
         the synthetic control versus the treated unit over the
         optimization time-period.
+
+        Parameters
+        ----------
+        Z0 : pandas.DataFrame, shape (n, c), optional
+            The matrix of the time series of the outcome variable for the control units.
+            If no dataprep is set, then this must be supplied along with Z1, by default None.
+        Z1 : pandas.Series, shape (n, 1), optional
+            The matrix of the time series of the outcome variable for the treated unit.
+            If no dataprep is set, then this must be supplied along with Z0, by default None.
 
         Returns
         -------
@@ -279,27 +343,38 @@ class BaseSynth(metaclass=ABCMeta):
         Raises
         ------
         ValueError
-            If no dataprep is set when the fit method is run
-        ValueError
             If the fit method has not been run (no weights available.)
+        ValueError
+            If there is no :class:`Dataprep` object set or (Z0, Z1) is not supplied
         """
         if self.W is None:
             raise ValueError("No weight matrix available; fit data first.")
-        if self.dataprep is None:
-            raise ValueError("dataprep must be set for mspe.")
-
-        _, Z1 = self.dataprep.make_outcome_mats(
-            time_period=self.dataprep.time_optimize_ssr
-        )
-        ts_synthetic = self._synthetic(time_period=self.dataprep.time_optimize_ssr)
+        if self.dataprep is not None:
+            Z0, Z1 = self.dataprep.make_outcome_mats(
+                time_period=self.dataprep.time_optimize_ssr
+            )
+        if Z0 is None or Z1 is None:
+            raise ValueError("dataprep must be set or (Z0, Z1) must be set for plots.")
+        ts_synthetic = self._synthetic(Z0=Z0)
 
         n = len(ts_synthetic)
         return (1 / n) * (Z1 - ts_synthetic).pow(2).sum().item()
 
-    def mape(self) -> float:
+    def mape(
+        self, Z0: Optional[pd.DataFrame] = None, Z1: Optional[pd.Series] = None
+    ) -> float:
         """Returns the mean absolute percentage error in the fit of
         the synthetic control versus the treated unit over the
         optimization time-period.
+
+        Parameters
+        ----------
+        Z0 : pandas.DataFrame, shape (n, c), optional
+            The matrix of the time series of the outcome variable for the control units.
+            If no dataprep is set, then this must be supplied along with Z1, by default None.
+        Z1 : pandas.Series, shape (n, 1), optional
+            The matrix of the time series of the outcome variable for the treated unit.
+            If no dataprep is set, then this must be supplied along with Z0, by default None.
 
         Returns
         -------
@@ -309,27 +384,38 @@ class BaseSynth(metaclass=ABCMeta):
         Raises
         ------
         ValueError
-            If no dataprep is set when the fit method is run
-        ValueError
             If the fit method has not been run (no weights available.)
+        ValueError
+            If there is no :class:`Dataprep` object set or (Z0, Z1) is not supplied
         """
         if self.W is None:
             raise ValueError("No weight matrix available; fit data first.")
-        if self.dataprep is None:
-            raise ValueError("dataprep must be set for mape.")
-
-        _, Z1 = self.dataprep.make_outcome_mats(
-            time_period=self.dataprep.time_optimize_ssr
-        )
-        ts_synthetic = self._synthetic(time_period=self.dataprep.time_optimize_ssr)
+        if self.dataprep is not None:
+            Z0, Z1 = self.dataprep.make_outcome_mats(
+                time_period=self.dataprep.time_optimize_ssr
+            )
+        if Z0 is None or Z1 is None:
+            raise ValueError("dataprep must be set or (Z0, Z1) must be set for plots.")
+        ts_synthetic = self._synthetic(Z0=Z0)
 
         n = len(ts_synthetic)
         return (1 / n) * ((Z1 - ts_synthetic) / ts_synthetic).abs().sum().item()
 
-    def mae(self) -> float:
+    def mae(
+        self, Z0: Optional[pd.DataFrame] = None, Z1: Optional[pd.Series] = None
+    ) -> float:
         """Returns the mean absolute error in the fit of
         the synthetic control versus the treated unit over the
         optimization time-period.
+
+        Parameters
+        ----------
+        Z0 : pandas.DataFrame, shape (n, c), optional
+            The matrix of the time series of the outcome variable for the control units.
+            If no dataprep is set, then this must be supplied along with Z1, by default None.
+        Z1 : pandas.Series, shape (n, 1), optional
+            The matrix of the time series of the outcome variable for the treated unit.
+            If no dataprep is set, then this must be supplied along with Z0, by default None.
 
         Returns
         -------
@@ -339,19 +425,19 @@ class BaseSynth(metaclass=ABCMeta):
         Raises
         ------
         ValueError
-            If no dataprep is set when the fit method is run
-        ValueError
             If the fit method has not been run (no weights available.)
+        ValueError
+            If there is no :class:`Dataprep` object set or (Z0, Z1) is not supplied
         """
         if self.W is None:
             raise ValueError("No weight matrix available; fit data first.")
-        if self.dataprep is None:
-            raise ValueError("dataprep must be set for mae.")
-
-        _, Z1 = self.dataprep.make_outcome_mats(
-            time_period=self.dataprep.time_optimize_ssr
-        )
-        ts_synthetic = self._synthetic(time_period=self.dataprep.time_optimize_ssr)
+        if self.dataprep is not None:
+            Z0, Z1 = self.dataprep.make_outcome_mats(
+                time_period=self.dataprep.time_optimize_ssr
+            )
+        if Z0 is None or Z1 is None:
+            raise ValueError("dataprep must be set or (Z0, Z1) must be set for plots.")
+        ts_synthetic = self._synthetic(Z0=Z0)
 
         n = len(ts_synthetic)
         return (1 / n) * (Z1 - ts_synthetic).abs().sum().item()
