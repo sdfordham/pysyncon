@@ -249,8 +249,9 @@ class PlaceboTest:
         min_ = int(min(dataprep.foo[dataprep.time_variable]))
         max_ = int(max(dataprep.foo[dataprep.time_variable]))
 
-        synthetic = scm._synthetic(time_period=range(min_, max_))
-        gaps = scm._gaps(time_period=range(min_, max_))
+        Z0, Z1 = dataprep.make_outcome_mats(time_period=range(min_, max_))
+        synthetic = scm._synthetic(Z0=Z0)
+        gaps = scm._gaps(Z0=Z0, Z1=Z1)
         return synthetic.rename(dataprep.treatment_identifier), gaps.rename(
             dataprep.treatment_identifier
         )

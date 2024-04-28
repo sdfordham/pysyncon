@@ -205,7 +205,12 @@ class Synth(BaseSynth, VanillaOptimMixin):
         loss_V = (Z1 - Z0 @ W).T @ (Z1 - Z0 @ W) / len(Z0)
         return loss_V.item()
 
-    def summary(self, round: int = 3) -> pd.DataFrame:
+    def summary(
+        self,
+        round: int = 3,
+        X0: Optional[pd.DataFrame] = None,
+        X1: Optional[pd.Series] = None,
+    ) -> pd.DataFrame:
         """Generates a ``pandas.DataFrame`` with summary data. In particular,
         it will show the values of the V matrix for each predictor, then the
         next column will show the mean value of each predictor over the time
@@ -219,6 +224,14 @@ class Synth(BaseSynth, VanillaOptimMixin):
         ----------
         round : int, optional
             Round the numbers to given number of places, by default 3
+        X0 : pd.DataFrame, shape (n_cov, n_controls), optional
+            Matrix with each column corresponding to a control unit and each
+            row is a covariate. If no dataprep is set, then this must be
+            supplied along with X1, by default None.
+        X1 : pandas.Series, shape (n_cov, 1), optional
+            Column vector giving the covariate values for the treated unit.
+            If no dataprep is set, then this must be supplied along with Z1,
+            by default None.
 
         Returns
         -------
@@ -228,15 +241,15 @@ class Synth(BaseSynth, VanillaOptimMixin):
         Raises
         ------
         ValueError
-            If there is no :class:`Dataprep` object set
+            If there is no V matrix available
+        ValueError
+            If there is no :class:`Dataprep` object set or (Z0, Z1) is not supplied
         ValueError
             If there is no weight matrix available
-        ValueError
-            If there is no V matrix available
         """
         if self.V is None:
             raise ValueError("No V matrix available; fit data first.")
-        summary_ser = super().summary(round=round)
+        summary_ser = super().summary(round=round, X0=X0, X1=X1)
 
         V = pd.Series(self.V, index=summary_ser.index, name="V")
         return pd.concat([V, summary_ser], axis=1).round(round)
