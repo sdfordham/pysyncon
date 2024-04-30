@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Optional, Literal
+from typing import Optional, Literal, Sequence
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
@@ -16,6 +16,7 @@ class BaseSynth(metaclass=ABCMeta):
     def __init__(self) -> None:
         self.dataprep: Optional[Dataprep] = None
         self.W: Optional[np.ndarray] = None
+        self.W_names: Optional[Sequence] = None
 
     @abstractmethod
     def fit(*args, **kwargs) -> None:
@@ -207,7 +208,7 @@ class BaseSynth(metaclass=ABCMeta):
         if self.W is None:
             raise ValueError("No weight matrix available; fit data first.")
         if self.dataprep is None:
-            weights_ser = pd.Series(self.W, name="weights")
+            weights_ser = pd.Series(self.W, index=self.W_names, name="weights")
         else:
             weights_ser = pd.Series(
                 self.W, index=list(self.dataprep.controls_identifier), name="weights"
