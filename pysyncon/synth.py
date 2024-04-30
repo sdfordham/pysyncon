@@ -178,6 +178,7 @@ class Synth(BaseSynth, VanillaOptimMixin):
         loss_V = self.calc_loss_V(W=W, Z0=Z0_arr, Z1=Z1_arr)
 
         self.W, self.loss_W, self.V, self.loss_V = W, loss_W, V_mat.diagonal(), loss_V
+        self.W_names = Z0.columns
 
     @staticmethod
     def calc_loss_V(W: np.ndarray, Z0: np.ndarray, Z1: np.ndarray) -> float:
