@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Optional, Any
 
 import numpy as np
@@ -18,13 +19,13 @@ class ConformalInference:
         Z1: pd.Series,
         pre_periods: list,
         post_periods: list,
-        max_iter: int = 10,
+        max_iter: int = 20,
         tol: float = 0.1,
         q: int = 2,
         step_sz: Optional[float] = None,
         step_sz_div: float = 20.0,
         verbose: bool = True,
-        **scm_fit_args,
+        scm_fit_args: dict = {},
     ) -> pd.DataFrame:
         if not isinstance(alpha, float):
             raise TypeError("`alpha` must be a float")
@@ -54,7 +55,12 @@ class ConformalInference:
 
         gaps = scm._gaps(Z0=Z0, Z1=Z1)
         att = np.mean(gaps.loc[post_periods])
-        att_std = np.std(gaps.loc[post_periods])
+
+        if len(post_periods) > 1:
+            att_std = np.std(gaps.loc[post_periods])
+        else:
+            att_std = gaps.loc[post_periods].item() / 2.0
+
         if step_sz is None:
             step_sz = 2.5 * att_std / step_sz_div
 
@@ -82,13 +88,29 @@ class ConformalInference:
             left = right = x0
             p_value = _compute_p_value(x0)
             if p_value < alpha:
-                while _compute_p_value(right) < alpha:
+                it = 0
+                right_p_value = p_value
+                while right_p_value < alpha and it < max_iter:
                     left = right
                     right = right + step_sz
+                    it = it + 1
+                    right_p_value = _compute_p_value(right)
+                if right_p_value < alpha and it == max_iter:
+                    raise Exception(
+                        "Exceeded `max_iter` iterations without locating lower CI cut-off."
+                    )
             else:
-                while _compute_p_value(left) >= alpha:
-                    right = left
+                it = 0
+                left_p_value = p_value
+                while left_p_value >= alpha and it < max_iter:
                     left = left - step_sz
+                    right = left
+                    it = it + 1
+                    left_p_value = _compute_p_value(left)
+                if left_p_value >= alpha and it == max_iter:
+                    raise Exception(
+                        "Exceeded `max_iter` iterations without locating lower CI cut-off."
+                    )
 
             # Binary search the interval [left, right]
             it = 0
@@ -111,13 +133,29 @@ class ConformalInference:
             left = right = x0
             p_value = _compute_p_value(x0)
             if p_value > alpha:
-                while _compute_p_value(right) > alpha:
+                it = 0
+                right_p_value = p_value
+                while right_p_value > alpha and it < max_iter:
                     left = right
                     right = right + step_sz
+                    it = it + 1
+                    right_p_value = _compute_p_value(right)
+                if right_p_value > alpha and it == max_iter:
+                    raise Exception(
+                        "Exceeded `max_iter` iterations without locating upper CI cut-off."
+                    )
             else:
-                while _compute_p_value(left) <= alpha:
-                    right = left
+                it = 0
+                left_p_value = p_value
+                while left_p_value <= alpha and it < max_iter:
                     left = left - step_sz
+                    right = left
+                    it = it + 1
+                    left_p_value = _compute_p_value(left)
+                if left_p_value <= alpha and it == max_iter:
+                    raise Exception(
+                        "Exceeded `max_iter` iterations without locating upper CI cut-off."
+                    )
 
             # Binary search the interval [left, right]
             it = 0
@@ -133,12 +171,12 @@ class ConformalInference:
             conf_interval[post_period] = (lower_ci, upper_ci)
             if verbose:
                 print(
-                    f"Time-period: {post_period}, {100 * (1 - alpha)}% CI: "
-                    f"[{round(lower_ci, 3)}, {round(upper_ci, 3)}]"
+                    f"Time-period: {post_period}, "
+                    f"{100 * (1 - alpha)}% CI: [{round(lower_ci, 3)}, {round(upper_ci, 3)}]"
                 )
 
         df_ci = pd.DataFrame.from_dict(
-            conf_interval, orient="index", columns=["lower", "upper"]
+            conf_interval, orient="index", columns=["lower_ci", "upper_ci"]
         )
         df_ci = pd.concat([gaps.loc[post_periods].rename("value"), df_ci], axis=1)
         df_ci.index.name = "time"
