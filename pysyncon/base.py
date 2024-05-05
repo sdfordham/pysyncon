@@ -314,7 +314,7 @@ class BaseSynth(metaclass=ABCMeta):
         if Z0 is not None and Z1 is not None:
             gaps = self._gaps(Z0=Z0.loc[time_period, :], Z1=Z1.loc[time_period])
         else:
-            raise ValueError("dataprep must be set or (Z0, Z1) must be set for plots.")
+            raise ValueError("dataprep must be set or (Z0, Z1) must be set for att.")
         att = np.mean(gaps)
         se = np.std(gaps, ddof=1) / np.sqrt(len(time_period))
 
