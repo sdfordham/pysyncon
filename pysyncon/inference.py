@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Optional, Any
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -65,7 +65,13 @@ class ConformalInference:
             step_sz = 2.5 * att_std / step_sz_div
 
         conf_interval = dict()
-        for post_period in post_periods:
+        n_periods = len(post_periods)
+        for idx, post_period in enumerate(post_periods, 1):
+            if verbose:
+                print(
+                    f"({idx}/{n_periods}) Calculating confidence interval "
+                    f"for time-period t={post_period}..."
+                )
             new_time_range = pre_periods + [post_period]
             Z0_new, Z1_new = Z0.loc[new_time_range], Z1.loc[new_time_range]
             Z1_post_orig = Z1_new.loc[post_period].item()
@@ -171,8 +177,7 @@ class ConformalInference:
             conf_interval[post_period] = (lower_ci, upper_ci)
             if verbose:
                 print(
-                    f"Time-period: {post_period}, "
-                    f"{100 * (1 - alpha)}% CI: [{round(lower_ci, 3)}, {round(upper_ci, 3)}]"
+                    f"\t{100 * (1 - alpha)}% CI: [{round(lower_ci, 3)}, {round(upper_ci, 3)}]"
                 )
 
         df_ci = pd.DataFrame.from_dict(

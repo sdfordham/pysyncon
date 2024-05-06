@@ -256,32 +256,41 @@ class Synth(BaseSynth, VanillaOptimMixin):
         V = pd.Series(self.V, index=summary_ser.index, name="V")
         return pd.concat([V, summary_ser], axis=1).round(round)
 
-    def confidence_interval(self,
-            alpha: float,
-            time_periods: list,
-            pre_periods: Optional[list] = None,
-            dataprep: Optional[Dataprep] = None,
-            X0: Optional[pd.DataFrame] = None,
-            X1: Optional[pd.Series] = None,
-            Z0: Optional[pd.DataFrame] = None,
-            Z1: Optional[pd.Series] = None,
-            custom_V: Optional[np.ndarray] = None,
-            optim_method: OptimizerMethod_t = None,
-            optim_initial: Literal["equal", "ols"] = None,
-            optim_options: dict = None,
-            method: Literal["conformal"] = "conformal",
-            max_iter: int = 10,
-            tol: float = 0.1,
-            q: int = 2,
-            step_sz: Optional[float] = None,
-            step_sz_div: float = 20.0,
-            verbose: bool = True,) -> None:
+    def confidence_interval(
+        self,
+        alpha: float,
+        time_periods: list,
+        pre_periods: Optional[list] = None,
+        dataprep: Optional[Dataprep] = None,
+        X0: Optional[pd.DataFrame] = None,
+        X1: Optional[pd.Series] = None,
+        Z0: Optional[pd.DataFrame] = None,
+        Z1: Optional[pd.Series] = None,
+        custom_V: Optional[np.ndarray] = None,
+        optim_method: OptimizerMethod_t = None,
+        optim_initial: Literal["equal", "ols"] = None,
+        optim_options: dict = None,
+        method: Literal["conformal"] = "conformal",
+        max_iter: int = 20,
+        tol: float = 0.1,
+        q: int = 2,
+        step_sz: Optional[float] = None,
+        step_sz_div: float = 20.0,
+        verbose: bool = True,
+    ) -> None:
         if method == "conformal":
             if dataprep is not None:
                 X0, X1 = dataprep.make_covariate_mats()
-                Z0, Z1 = dataprep.make_outcome_mats()
                 if pre_periods is None:
-                    pre_periods = dataprep.time_optimize_ssr
+                    pre_periods = list(dataprep.time_optimize_ssr)
+                all_time_periods = time_periods + list(pre_periods)
+                Z0, Z1 = dataprep.make_outcome_mats(time_period=all_time_periods)
+            elif self.dataprep is not None:
+                X0, X1 = self.dataprep.make_covariate_mats()
+                if pre_periods is None:
+                    pre_periods = list(self.dataprep.time_optimize_ssr)
+                all_time_periods = time_periods + list(pre_periods)
+                Z0, Z1 = self.dataprep.make_outcome_mats(time_period=all_time_periods)
             else:
                 if X0 is None or X1 is None or Z0 is None or Z1 is None:
                     raise ValueError(
@@ -292,8 +301,8 @@ class Synth(BaseSynth, VanillaOptimMixin):
                 if pre_periods is None:
                     raise ValueError("`pre_periods` must be set if not using dataprep.")
 
-            scm_fit_args= {"X0": X0, "X1":X1}
-            if custom_V:
+            scm_fit_args = {"X0": X0, "X1": X1}
+            if custom_V is not None:
                 scm_fit_args["custom_V"] = custom_V
             if optim_method:
                 scm_fit_args["optim_method"] = optim_method
@@ -316,7 +325,7 @@ class Synth(BaseSynth, VanillaOptimMixin):
                 q=q,
                 step_sz=step_sz,
                 step_sz_div=step_sz_div,
-                verbose=verbose
+                verbose=verbose,
             )
             return df_cis
         else:

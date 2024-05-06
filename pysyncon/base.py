@@ -25,7 +25,7 @@ class BaseSynth(metaclass=ABCMeta):
     @abstractmethod
     def confidence_interval(*args, **kwargs) -> None:
         raise NotImplementedError
-    
+
     def _synthetic(self, Z0: pd.DataFrame) -> pd.Series:
         """Assemble the synthetic unit using the calculated weight matrix.
 
