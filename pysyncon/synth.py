@@ -92,7 +92,7 @@ class Synth(BaseSynth, VanillaOptimMixin):
         optim_options : dict, optional
             options to provide to the outer part of the optimisation, value
             options are any option that can be provided to scipy minimize for
-            the given optimisation method, by default {'maxiter': 1000}.
+            the given optimisation method, by default `{'maxiter': 1000}`.
 
         Returns
         -------
@@ -273,11 +273,126 @@ class Synth(BaseSynth, VanillaOptimMixin):
         method: Literal["conformal"] = "conformal",
         max_iter: int = 20,
         tol: float = 0.1,
-        q: int = 2,
         step_sz: Optional[float] = None,
         step_sz_div: float = 20.0,
         verbose: bool = True,
-    ) -> None:
+    ) -> pd.DataFrame:
+        """Confidence intervals obtained from test-inversion, where
+        the p-values are obtained by adjusted refits of the data
+        following Chernozhukov et al. :cite:`inference2021`.
+
+        Parameters
+        ----------
+        alpha : float
+            The required significance level, e.g. alpha = 0.05 will
+            yield a confidence level of 100 * (1 - alpha) = 95%.
+        time_periods : list
+            The time-periods to calculate confidence intervals for.
+        pre_periods : Optional[list], optional
+            The time-periods to use for the optimization when refitting the
+            data with the adjusted outcomes, optional.
+        dataprep : Optional[Dataprep], optional
+            Dataprep object defining the study data, if this is not supplied
+            then either self.dataprep must be set or else (X0, X1, Z0, Z1) must
+            all be supplied, by default None.
+        X0 : pd.DataFrame, shape (m, c), optional
+            Matrix with each column corresponding to a control unit and each
+            row is covariates, if this is not supplied then either `dataprep` must
+             be supplied or `self.dataprep` must be set by default None.
+        X1 : pandas.Series, shape (m, 1), optional
+            Column vector giving the covariate values for the treated unit, if
+            this is not supplied then either `dataprep` must
+             be supplied or `self.dataprep` must be set by default None.
+        Z0 : pandas.DataFrame, shape (n, c), optional
+            A matrix of the time series of the outcome variable with each
+            column corresponding to a control unit and the rows are the time
+            steps; the columns correspond with the columns of X0, if this
+            is not supplied then either `dataprep` must be supplied or
+            `self.dataprep` must be set by default None.
+        Z1 : pandas.Series, shape (n, 1), optional
+            Column vector giving the outcome variable values over time for the
+            treated unit, if this is not supplied then either `dataprep` must
+             be supplied or `self.dataprep` must be set by default None.
+        custom_V : numpy.ndarray, shape (c, c), optional
+            Provide a V matrix (using the notation of the Abadie, Diamond &
+            Hainmueller paper), the optimisation problem will only then be
+            solved for the weight matrix W. This is the same argument
+            as in the `fit` method, by default None.
+        optim_method : str, optional
+            Optimisation method to use for the outer optimisation, can be
+            any of the valid options for scipy minimize that do not require a
+            jacobian matrix, namely
+
+                - 'Nelder-Mead'
+                - 'Powell'
+                - 'CG'
+                - 'BFGS'
+                - 'L-BFGS-B'
+                - 'TNC'
+                - 'COBYLA'
+                - 'trust-constr'
+
+            This is the same argument as in the `fit` method, by default
+            'Nelder-Mead'.
+        optim_initial : str, optional
+            Starting value for the outer optimisation, possible starting
+            values are
+
+                - 'equal', where the weights are all equal,
+                - 'ols', which uses a starting value obtained for fitting a
+                  regression.
+
+            This is the same argument as in the `fit` method, by default
+            'equal'.
+        optim_options : dict, optional
+            options to provide to the outer part of the optimisation, value
+            options are any option that can be provided to scipy minimize for
+            the given optimisation method. This is the same argument as in
+             the `fit` method, by default `{'maxiter': 1000}`.
+        method : str, optional
+            The type of method to use when computing the confidence intervals,
+            currently only conformal inference (`conformal`) is implemented,
+            by default "conformal".
+        max_iter : int, optional
+            Maximum number of times to re-fit the data when trying to locate
+            the lower/upper cut-off point and when binary searching for the
+            cut-off point, by default 20.
+        tol : float, optional
+            The required tolerance (accuracy) required when calculating the
+            lower/upper cut-off point of the confidence interval. The search
+            will try to obtain this tolerance level but will not exceed `max_iter`
+            iterations trying to achieve that, by default 0.1.
+        step_sz : Optional[float], optional
+            Step size to use when searching for an interval that contains the
+            lower or upper cut-off point of the confidence interval, by default None.
+        step_sz_div : float, optional
+            Alternative way to define step size: it is the fraction that defines
+            step-size in terms of the standard deviation of the att, i.e. if
+            `step_sz_div=20.0` then the step size used will be (att +/- 2.5 * std(att)) / 20.0,
+            by default 20.0.
+        verbose : bool, optional
+            Print output, by default True.
+
+        Returns
+        -------
+        pd.DataFrame
+            A pandas.DataFrame indexed by `post_periods`, with 3 columns: `value` that
+            gives the calculated treatment effect, `lower_ci` that gives the value
+            defining the lower-end of the confidence interval, `upper_ci` that gives
+            the value defining the upper-end of the confidence interval.
+
+        Raises
+        ------
+        ValueError
+            If there is no :class:`Dataprep` object set or (X0, X1, Z0, Z1) is not supplied or
+            `self.dataprep` is not set.
+        TypeError
+            if (:math:`X1`, :math:`Z1`) are not of type `pandas.Series`.
+        ValueError
+            if `dataprep` is not set and `pre-periods` is not set.
+        ValueError
+            if an invalid option for `method` is given, currently only `conformal` is supported.
+        """
         if method == "conformal":
             if dataprep is not None:
                 X0, X1 = dataprep.make_covariate_mats()
@@ -322,7 +437,6 @@ class Synth(BaseSynth, VanillaOptimMixin):
                 scm_fit_args=scm_fit_args,
                 max_iter=max_iter,
                 tol=tol,
-                q=q,
                 step_sz=step_sz,
                 step_sz_div=step_sz_div,
                 verbose=verbose,

@@ -8,6 +8,9 @@ from pysyncon.base import BaseSynth
 
 
 class ConformalInference:
+    """Implementation of the conformal inference method of
+    Chernozhukov et al. :cite:`inference2021`
+    """
     def __init__(self) -> None:
         pass
 
@@ -21,12 +24,91 @@ class ConformalInference:
         post_periods: list,
         max_iter: int = 20,
         tol: float = 0.1,
-        q: int = 2,
         step_sz: Optional[float] = None,
         step_sz_div: float = 20.0,
         verbose: bool = True,
         scm_fit_args: dict = {},
     ) -> pd.DataFrame:
+        """Confidence intervals obtained from test-inversion, where
+        the p-values are obtained by adjusted refits of the data
+        following Chernozhukov et al. :cite:`inference2021`.
+
+        Parameters
+        ----------
+        alpha : float
+            The required significance level, e.g. alpha = 0.05 will
+            yield a confidence level of 100 * (1 - alpha) = 95%.
+        scm : BaseSynth
+            The synth object to calculate the confidence interval for.
+        Z0 : pandas.DataFrame, shape (n, c)
+            A matrix of the time series of the outcome variable with each
+            column corresponding to a control unit and the rows are the time
+            steps.
+        Z1 : pd.Series
+            Column vector giving the outcome variable values over time for the
+            treated unit.
+        pre_periods : list
+            The time-periods to use for the optimization when refitting the
+            data with the adjusted outcomes.
+        post_periods : list
+            The time-periods to calculate confidence intervals for.
+        max_iter : int, optional
+            Maximum number of times to re-fit the data when trying to locate
+            the lower/upper cut-off point and when binary searching for the
+            cut-off point, by default 20
+        tol : float, optional
+            The required tolerance (accuracy) required when calculating the
+            lower/upper cut-off point of the confidence interval. The search
+            will try to obtain this tolerance level but will not exceed `max_iter`
+            iterations trying to achieve that, by default 0.1.
+        step_sz : Optional[float], optional
+            Step size to use when searching for an interval that contains the
+            lower or upper cut-off point of the confidence interval, by default None
+        step_sz_div : float, optional
+            Alternative way to define step size: it is the fraction that defines
+            step-size in terms of the standard deviation of the att, i.e. if
+            `step_sz_div=20.0` then the step size used will be (att +/- 2.5 * std(att)) / 20.0,
+            by default 20.0
+        verbose : bool, optional
+            Print output, by default True
+        scm_fit_args : dict, optional
+            A dictionary defining anything extra that should be provided to the
+            synthetic control object `fit` method when doing the refits, by default {}
+
+        Returns
+        -------
+        pd.DataFrame
+            A pandas.DataFrame indexed by `post_periods`, with 3 columns: `value` that
+            gives the calculated treatment effect, `lower_ci` that gives the value
+            defining the lower-end of the confidence interval, `upper_ci` that gives
+            the value defining the upper-end of the confidence interval.
+
+        Raises
+        ------
+        TypeError
+            if `alpha` is not a float
+        ValueError
+            if `alpha` is not in the open interval (0, 1).
+        TypeError
+            if `max_iter` is not an integer
+        ValueError
+            if `max_iter` is not at least 1
+        TypeError
+            if `tol` is not a float
+        ValueError
+            if `tol` is less than 0.0
+        TypeError
+            if `step_sz` is not a float
+        ValueError
+            if `step_sz` is not greater than 0.0
+        TypeError
+            if `step_sz_div` is not a float
+        ValueError
+            if `step_sz_div` is not greater than 0.0
+        Exception
+            if we haven't located an interval containing the
+            lower/upper cut-off points after `max_iter` refits
+        """
         if not isinstance(alpha, float):
             raise TypeError("`alpha` must be a float")
         elif not 0.0 < alpha < 1.0:
@@ -39,10 +121,6 @@ class ConformalInference:
             raise TypeError("`tol` must be a float")
         elif tol <= 0.0:
             raise ValueError("`tol` must be greater than 0.0")
-        if not isinstance(q, int):
-            raise TypeError("`q` must be an integer")
-        elif q <= 1:
-            raise ValueError("`q` must be at least 1")
         if step_sz:
             if not isinstance(step_sz, float):
                 raise TypeError("`step_sz` should be a float")
@@ -83,7 +161,7 @@ class ConformalInference:
 
                 u_hat = _gaps.loc[new_time_range]
                 u_hat_post = u_hat.loc[post_period]
-                return np.mean(abs(u_hat).pow(q) >= pow(abs(u_hat_post), q))
+                return np.mean(abs(u_hat) >= abs(u_hat_post))
 
             #################
             ## LOWER CI VALUE
