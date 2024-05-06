@@ -398,12 +398,24 @@ class Synth(BaseSynth, VanillaOptimMixin):
                 X0, X1 = dataprep.make_covariate_mats()
                 if pre_periods is None:
                     pre_periods = list(dataprep.time_optimize_ssr)
+                if 1.0 / len(pre_periods) > alpha:
+                    raise ValueError(
+                        "Too few pre-intervention time-periods available for "
+                        f"significance level `alpha`={alpha}, either increase `alpha` "
+                        "or use more pre-intervention time-periods."
+                    )
                 all_time_periods = time_periods + list(pre_periods)
                 Z0, Z1 = dataprep.make_outcome_mats(time_period=all_time_periods)
             elif self.dataprep is not None:
                 X0, X1 = self.dataprep.make_covariate_mats()
                 if pre_periods is None:
                     pre_periods = list(self.dataprep.time_optimize_ssr)
+                if 1.0 / len(pre_periods) > alpha:
+                    raise ValueError(
+                        "Too few pre-intervention time-periods available for "
+                        f"significance level `alpha`={alpha}, either increase `alpha` "
+                        "or use more pre-intervention time-periods."
+                    )
                 all_time_periods = time_periods + list(pre_periods)
                 Z0, Z1 = self.dataprep.make_outcome_mats(time_period=all_time_periods)
             else:
@@ -415,6 +427,12 @@ class Synth(BaseSynth, VanillaOptimMixin):
                     raise TypeError("X1 and Z1 must be of type `pandas.Series`.")
                 if pre_periods is None:
                     raise ValueError("`pre_periods` must be set if not using dataprep.")
+                if 1.0 / len(pre_periods) > alpha:
+                    raise ValueError(
+                        "Too few pre-intervention time-periods available for "
+                        f"significance level `alpha`={alpha}, either increase `alpha` "
+                        "or use more pre-intervention time-periods."
+                    )
 
             scm_fit_args = {"X0": X0, "X1": X1}
             if custom_V is not None:
