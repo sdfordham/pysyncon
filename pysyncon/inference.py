@@ -163,95 +163,24 @@ class ConformalInference:
                 u_hat_post = u_hat.loc[post_period]
                 return np.mean(abs(u_hat) >= abs(u_hat_post))
 
-            #################
-            ## LOWER CI VALUE
-            #################
+            lower_ci =  self._root_search(
+                fn=lambda x: _compute_p_value(x) - alpha,
+                x0=att,
+                direction=-1.0,
+                tol=tol,
+                step_sz=step_sz,
+                max_iter=max_iter
+            )
 
-            # Find an interval containing the cut-off
-            x0 = att - 2.5 * att_std
-            left = right = x0
-            p_value = _compute_p_value(x0)
-            if p_value < alpha:
-                it = 0
-                right_p_value = p_value
-                while right_p_value < alpha and it < max_iter:
-                    left = right
-                    right = right + step_sz
-                    it = it + 1
-                    right_p_value = _compute_p_value(right)
-                if right_p_value < alpha and it == max_iter:
-                    raise Exception(
-                        "Exceeded `max_iter` iterations without locating lower CI cut-off."
-                    )
-            else:
-                it = 0
-                left_p_value = p_value
-                while left_p_value >= alpha and it < max_iter:
-                    left = left - step_sz
-                    right = left
-                    it = it + 1
-                    left_p_value = _compute_p_value(left)
-                if left_p_value >= alpha and it == max_iter:
-                    raise Exception(
-                        "Exceeded `max_iter` iterations without locating lower CI cut-off."
-                    )
+            upper_ci =  self._root_search(
+                fn=lambda x: _compute_p_value(x) - alpha,
+                x0=att,
+                direction=1.0,
+                tol=tol,
+                step_sz=step_sz,
+                max_iter=max_iter
+            )
 
-            # Binary search the interval [left, right]
-            it = 0
-            while right - left > tol and it < max_iter:
-                mid = (left + right) / 2.0
-                p_value_mid = _compute_p_value(mid)
-                if p_value_mid > alpha:
-                    right = mid
-                else:
-                    left = mid
-                it = it + 1
-            lower_ci = (left + right) / 2.0
-
-            #################
-            ## UPPER CI VALUE
-            #################
-
-            # Find an interval containing the cut-off
-            x0 = att + 2.5 * att_std
-            left = right = x0
-            p_value = _compute_p_value(x0)
-            if p_value > alpha:
-                it = 0
-                right_p_value = p_value
-                while right_p_value > alpha and it < max_iter:
-                    left = right
-                    right = right + step_sz
-                    it = it + 1
-                    right_p_value = _compute_p_value(right)
-                if right_p_value > alpha and it == max_iter:
-                    raise Exception(
-                        "Exceeded `max_iter` iterations without locating upper CI cut-off."
-                    )
-            else:
-                it = 0
-                left_p_value = p_value
-                while left_p_value <= alpha and it < max_iter:
-                    left = left - step_sz
-                    right = left
-                    it = it + 1
-                    left_p_value = _compute_p_value(left)
-                if left_p_value <= alpha and it == max_iter:
-                    raise Exception(
-                        "Exceeded `max_iter` iterations without locating upper CI cut-off."
-                    )
-
-            # Binary search the interval [left, right]
-            it = 0
-            while right - left > tol and it < max_iter:
-                mid = (right + left) / 2.0
-                p_value_mid = _compute_p_value(mid)
-                if p_value_mid < alpha:
-                    right = mid
-                else:
-                    left = mid
-                it = it + 1
-            upper_ci = (left + right) / 2.0
             conf_interval[post_period] = (lower_ci, upper_ci)
             if verbose:
                 print(
@@ -264,3 +193,60 @@ class ConformalInference:
         df_ci = pd.concat([gaps.loc[post_periods].rename("value"), df_ci], axis=1)
         df_ci.index.name = "time"
         return df_ci
+
+    def _root_search(self,
+            fn: callable,
+            x0: float,
+            direction: int,
+            tol: float,
+            step_sz: float,
+            max_iter: int,
+            theta: float = 0.75,
+            phi: float = 1.3,
+        ) -> float:
+        """Search for a root
+
+        Parameters
+        ----------
+        fn : callable
+            Function to find a root of
+        x0 : float
+            Starting point
+        direction : int
+            Direction, either -1.0 or +1.0.
+        tol : float
+            Tolerance
+        step_sz : float
+            Step size in the search
+        max_iter : int
+            Maximum number of iterations
+        theta : float, optional
+            Step size reduction factor, by default 0.75
+        phi : float, optional
+            Step size increase factor, by default 1.3
+
+        Returns
+        -------
+        float
+            Root of the function
+
+        Raises
+        ------
+        Exception
+            if `max_iter` iterations exceeded before satisfying tolerance condition.
+        """
+        x, gamma = x0, step_sz
+        y = y_old = fn(x)
+        for _ in range(max_iter):
+            if gamma <= tol:
+                return x
+            y = fn(x + gamma * direction)
+            if 0.0 < y < y_old:
+                x = x + gamma * direction
+                gamma = phi * gamma
+                y_old = y
+            else:
+                gamma = theta * gamma
+        raise Exception(
+            "Exceeded `max_iter` iterations without satisfying tolerance requirement."
+        )
