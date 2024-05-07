@@ -105,9 +105,6 @@ class ConformalInference:
             if `step_sz_div` is not a float
         ValueError
             if `step_sz_div` is not greater than 0.0
-        Exception
-            if we haven't located an interval containing the
-            lower/upper cut-off points after `max_iter` refits
         """
         if not isinstance(alpha, float):
             raise TypeError("`alpha` must be a float")
@@ -239,8 +236,7 @@ class ConformalInference:
         for _ in range(max_iter):
             if gamma <= tol:
                 return x
-            y = fn(x + gamma * direction)    
-            print(f"x={x + gamma * direction}, y={y}, y_old={y_old}, gamma={gamma}")
+            y = fn(x + gamma * direction)
             if y > 0.0:
                 x = x + gamma * direction
                 gamma = phi * gamma
