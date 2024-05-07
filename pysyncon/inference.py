@@ -134,13 +134,12 @@ class ConformalInference:
         gaps = scm._gaps(Z0=Z0, Z1=Z1)
         att = np.mean(gaps.loc[post_periods])
 
-        if len(post_periods) > 1:
-            att_std = np.std(gaps.loc[post_periods])
-        else:
-            att_std = gaps.loc[post_periods].item() / 2.0
-
         if step_sz is None:
-            step_sz = 2.5 * att_std / step_sz_div
+            if len(post_periods) > 1:
+                factor = np.std(gaps.loc[post_periods])
+            else:
+                factor = gaps.loc[post_periods].item() / 2.0
+            step_sz = 2.5 * factor / step_sz_div
 
         conf_interval = dict()
         n_periods = len(post_periods)
@@ -240,8 +239,9 @@ class ConformalInference:
         for _ in range(max_iter):
             if gamma <= tol:
                 return x
-            y = fn(x + gamma * direction)
-            if 0.0 < y < y_old:
+            y = fn(x + gamma * direction)    
+            print(f"x={x + gamma * direction}, y={y}, y_old={y_old}, gamma={gamma}")
+            if y > 0.0:
                 x = x + gamma * direction
                 gamma = phi * gamma
                 y_old = y
