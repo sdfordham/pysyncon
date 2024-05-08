@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Optional
+from typing import Optional, Callable
 
 import numpy as np
 import pandas as pd
@@ -129,8 +129,6 @@ class ConformalInference:
             raise ValueError("`step_sz_div` must be greater than 0.0")
 
         gaps = scm._gaps(Z0=Z0, Z1=Z1)
-        att = np.mean(gaps.loc[post_periods])
-
         if step_sz is None:
             if len(post_periods) > 1:
                 factor = np.std(gaps.loc[post_periods])
@@ -161,7 +159,7 @@ class ConformalInference:
 
             lower_ci =  self._root_search(
                 fn=lambda x: _compute_p_value(x) - alpha,
-                x0=att,
+                x0=gaps.loc[post_period],
                 direction=-1.0,
                 tol=tol,
                 step_sz=step_sz,
@@ -170,7 +168,7 @@ class ConformalInference:
 
             upper_ci =  self._root_search(
                 fn=lambda x: _compute_p_value(x) - alpha,
-                x0=att,
+                x0=gaps.loc[post_period],
                 direction=1.0,
                 tol=tol,
                 step_sz=step_sz,
@@ -191,7 +189,7 @@ class ConformalInference:
         return df_ci
 
     def _root_search(self,
-            fn: callable,
+            fn: Callable,
             x0: float,
             direction: int,
             tol: float,
@@ -217,9 +215,9 @@ class ConformalInference:
         max_iter : int
             Maximum number of iterations
         theta : float, optional
-            Step size reduction factor, by default 0.75
+            Step size reduction factor, should be positive and < 1.0, by default 0.75
         phi : float, optional
-            Step size increase factor, by default 1.3
+            Step size increase factor, should be positive and > 1.0, by default 1.3
 
         Returns
         -------
@@ -230,9 +228,10 @@ class ConformalInference:
         ------
         Exception
             if `max_iter` iterations exceeded before satisfying tolerance condition.
+
+        :meta private:
         """
         x, gamma = x0, step_sz
-        y = y_old = fn(x)
         for _ in range(max_iter):
             if gamma <= tol:
                 return x
@@ -240,7 +239,6 @@ class ConformalInference:
             if y > 0.0:
                 x = x + gamma * direction
                 gamma = phi * gamma
-                y_old = y
             else:
                 gamma = theta * gamma
         raise Exception(
