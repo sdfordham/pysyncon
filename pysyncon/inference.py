@@ -11,6 +11,7 @@ class ConformalInference:
     """Implementation of the conformal inference method of
     Chernozhukov et al. :cite:`inference2021`
     """
+
     def __init__(self) -> None:
         pass
 
@@ -118,7 +119,7 @@ class ConformalInference:
             raise TypeError("`tol` must be a float")
         elif tol <= 0.0:
             raise ValueError("`tol` must be greater than 0.0")
-        if step_sz:
+        if step_sz != None:
             if not isinstance(step_sz, float):
                 raise TypeError("`step_sz` should be a float")
             elif step_sz <= 0.0:
@@ -157,22 +158,22 @@ class ConformalInference:
                 u_hat_post = u_hat.loc[post_period]
                 return np.mean(abs(u_hat) >= abs(u_hat_post))
 
-            lower_ci =  self._root_search(
+            lower_ci = self._root_search(
                 fn=lambda x: _compute_p_value(x) - alpha,
                 x0=gaps.loc[post_period],
                 direction=-1.0,
                 tol=tol,
                 step_sz=step_sz,
-                max_iter=max_iter
+                max_iter=max_iter,
             )
 
-            upper_ci =  self._root_search(
+            upper_ci = self._root_search(
                 fn=lambda x: _compute_p_value(x) - alpha,
                 x0=gaps.loc[post_period],
                 direction=1.0,
                 tol=tol,
                 step_sz=step_sz,
-                max_iter=max_iter
+                max_iter=max_iter,
             )
 
             conf_interval[post_period] = (lower_ci, upper_ci)
@@ -188,16 +189,17 @@ class ConformalInference:
         df_ci.index.name = "time"
         return df_ci
 
-    def _root_search(self,
-            fn: Callable,
-            x0: float,
-            direction: int,
-            tol: float,
-            step_sz: float,
-            max_iter: int,
-            theta: float = 0.75,
-            phi: float = 1.3,
-        ) -> float:
+    def _root_search(
+        self,
+        fn: Callable,
+        x0: float,
+        direction: int,
+        tol: float,
+        step_sz: float,
+        max_iter: int,
+        theta: float = 0.75,
+        phi: float = 1.3,
+    ) -> float:
         """Search for a root
 
         Parameters
