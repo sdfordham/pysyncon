@@ -296,6 +296,15 @@ class TestSynth(unittest.TestCase):
         synth = pysyncon.Synth()
         synth.fit(dataprep=dataprep)
         
+        # Bad option
+        self.assertRaises(
+            ValueError,
+            synth.confidence_interval,
+            alpha=0.5,
+            time_periods=[4],
+            method="foo"
+        )
+
         # With dataprep supplied
         try:
             synth.confidence_interval(
@@ -341,13 +350,37 @@ class TestSynth(unittest.TestCase):
             time_periods=[4]
         )
 
-        # Dataframes supplied instead of series
+        # No pre-periods supplied
         synth.dataprep = None
         X0, X1 = dataprep.make_covariate_mats()
         Z0, Z1 = dataprep.make_outcome_mats(time_period=[1, 2, 3, 4])
+        self.assertRaises(
+            ValueError,
+            synth.confidence_interval,
+            alpha=0.5,
+            time_periods=[4],
+            X0=X0,
+            X1=X1,
+            Z0=Z0,
+            Z1=Z1
+        )
+
+        # Bad alpha value
+        self.assertRaises(
+            ValueError,
+            synth.confidence_interval,
+            alpha=0.05,
+            time_periods=[4],
+            pre_periods=[1, 2, 3],
+            X0=X0,
+            X1=X1,
+            Z0=Z0,
+            Z1=Z1
+        )
+
+        # Dataframes supplied instead of series
         X1 = X1.to_frame()
         Z1 = Z1.to_frame()
-
         self.assertRaises(
             TypeError,
             synth.confidence_interval,
@@ -359,3 +392,5 @@ class TestSynth(unittest.TestCase):
             Z0=Z0,
             Z1=Z1
         )
+
+
