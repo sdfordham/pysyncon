@@ -128,7 +128,9 @@ class ConformalInference:
             raise TypeError("`step_sz_div` must be a float")
         elif step_sz_div <= 0.0:
             raise ValueError("`step_sz_div` must be greater than 0.0")
-
+        if scm.W is None:
+            raise ValueError("No weight matrix available; fit data first.")
+        
         gaps = scm._gaps(Z0=Z0, Z1=Z1)
         if step_sz is None:
             if len(post_periods) > 1:

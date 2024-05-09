@@ -19,8 +19,16 @@ class TestConformalInference(unittest.TestCase):
         self.Z1 = pd.Series(
             data=self.rng.random(size=(30,)), index=range(1, 31), name=0
         )
-        self.pre_periods = range(1, 21)
-        self.post_periods = range(21, 31)
+        self.X0 = pd.DataFrame(
+            data=self.rng.random(size=(4, 10)),
+            index=range(1, 5),
+            columns=range(1, 11),
+        )
+        self.X1 = pd.Series(
+            data=self.rng.random(size=(4,)), index=range(1, 5), name=0
+        )
+        self.pre_periods = list(range(1, 21))
+        self.post_periods = list(range(21, 31))
         self.max_iter = 20
         self.tol = 0.1
         self.step_sz = None
@@ -194,3 +202,99 @@ class TestConformalInference(unittest.TestCase):
                     step_sz_div=case,
                     **kwargs
                 )
+
+    def test_no_weights(self):
+        kwargs = {
+            "alpha": self.alpha,
+            "scm": self.scm,
+            "Z0": self.Z0,
+            "Z1": self.Z1,
+            "pre_periods": self.pre_periods,
+            "post_periods": self.post_periods,
+            "tol": self.tol,
+            "max_iter": self.max_iter,
+            "step_sz": self.step_sz,
+            "verbose": self.verbose,
+        }
+
+        conformal_inf = ConformalInference()
+        self.assertRaises(
+            ValueError,
+            conformal_inf.confidence_intervals,
+            **kwargs
+        )
+
+    def test_step_sz_options(self):
+        self.scm.fit(X0=self.X0, X1=self.X1, Z0=self.Z0, Z1=self.Z1)
+
+        kwargs = {
+            "alpha": self.alpha,
+            "scm": self.scm,
+            "Z0": self.Z0,
+            "Z1": self.Z1,
+            "pre_periods": self.pre_periods,
+            "tol": self.tol,
+            "max_iter": self.max_iter,
+            "step_sz": self.step_sz,
+            "verbose": self.verbose,
+        }
+
+        conformal_inf = ConformalInference()
+        conformal_inf.confidence_intervals(
+            post_periods=self.post_periods,
+            **kwargs
+        )
+        conformal_inf.confidence_intervals(
+            post_periods=[self.post_periods[0]],
+            **kwargs
+        )
+
+    def test_root_search(self):
+        cases_roots_x0 = [
+            ((-1, 3), 0.5),
+            ((-1, 3), 1.0),
+            ((-1, 3), 2.5),
+            ((-1, 400), 0.5),
+            ((-1, 400), 100),
+            ((-1, 400), 399),
+        ]
+        cases_step_sz = [0.1, 1.0]
+
+        ci = ConformalInference()
+        tol = 0.01
+        for case_root_x0 in cases_roots_x0:
+            for case_step_sz in cases_step_sz:
+                case = (case_root_x0, case_step_sz)
+                with self.subTest(case=case):
+                    ((lower, upper), x0) = case_root_x0
+
+                    res = ci._root_search(
+                        fn=lambda x: (lower - x) * (x - upper),
+                        x0=x0,
+                        direction=-1,
+                        tol=tol,
+                        step_sz=case_step_sz,
+                        max_iter=100,
+                    )
+                    self.assertAlmostEqual(lower, res, delta=tol)
+
+                    res = ci._root_search(
+                        fn=lambda x: (lower - x) * (x - upper),
+                        x0=x0,
+                        direction=1,
+                        tol=tol,
+                        step_sz=case_step_sz,
+                        max_iter=100,
+                    )
+                    self.assertAlmostEqual(upper, res, delta=tol)
+
+        self.assertRaises(
+            Exception,
+            ci._root_search,
+            fn=lambda x: (-1 - x) * (x - 400),
+            x0=200,
+            direction=-1,
+            tol=0.01,
+            step_sz=1.0,
+            max_iter=1,
+        )
