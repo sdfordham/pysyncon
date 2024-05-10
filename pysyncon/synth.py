@@ -260,6 +260,7 @@ class Synth(BaseSynth, VanillaOptimMixin):
         self,
         alpha: float,
         time_periods: list,
+        tol: float,
         pre_periods: Optional[list] = None,
         dataprep: Optional[Dataprep] = None,
         X0: Optional[pd.DataFrame] = None,
@@ -271,8 +272,7 @@ class Synth(BaseSynth, VanillaOptimMixin):
         optim_initial: Literal["equal", "ols"] = None,
         optim_options: dict = None,
         method: Literal["conformal"] = "conformal",
-        max_iter: int = 20,
-        tol: float = 0.1,
+        max_iter: int = 50,
         step_sz: Optional[float] = None,
         step_sz_div: float = 20.0,
         verbose: bool = True,
@@ -288,6 +288,11 @@ class Synth(BaseSynth, VanillaOptimMixin):
             yield a confidence level of 100 * (1 - alpha) = 95%.
         time_periods : list
             The time-periods to calculate confidence intervals for.
+        tol : float
+            The required tolerance (accuracy) required when calculating the
+            lower/upper cut-off point of the confidence interval. The search
+            will try to obtain this tolerance level but will not exceed `max_iter`
+            iterations trying to achieve that.
         pre_periods : Optional[list], optional
             The time-periods to use for the optimization when refitting the
             data with the adjusted outcomes, optional.
@@ -357,11 +362,6 @@ class Synth(BaseSynth, VanillaOptimMixin):
             Maximum number of times to re-fit the data when trying to locate
             the lower/upper cut-off point and when binary searching for the
             cut-off point, by default 20.
-        tol : float, optional
-            The required tolerance (accuracy) required when calculating the
-            lower/upper cut-off point of the confidence interval. The search
-            will try to obtain this tolerance level but will not exceed `max_iter`
-            iterations trying to achieve that, by default 0.1.
         step_sz : Optional[float], optional
             Step size to use when searching for an interval that contains the
             lower or upper cut-off point of the confidence interval, by default None.

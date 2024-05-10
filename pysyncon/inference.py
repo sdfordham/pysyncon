@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Optional, Callable
+from typing import Optional, Callable, Literal
 
 import numpy as np
 import pandas as pd
@@ -8,8 +8,8 @@ from pysyncon.base import BaseSynth
 
 
 class ConformalInference:
-    """Implementation of the conformal inference method of
-    Chernozhukov et al. :cite:`inference2021`
+    """Implementation of the conformal inference based confidence intervals
+    following Chernozhukov et al. :cite:`inference2021`
     """
 
     def __init__(self) -> None:
@@ -23,15 +23,15 @@ class ConformalInference:
         Z1: pd.Series,
         pre_periods: list,
         post_periods: list,
-        max_iter: int = 20,
         tol: float = 0.1,
+        max_iter: int = 50,
         step_sz: Optional[float] = None,
         step_sz_div: float = 20.0,
         verbose: bool = True,
         scm_fit_args: dict = {},
     ) -> pd.DataFrame:
         """Confidence intervals obtained from test-inversion, where
-        the p-values are obtained by adjusted refits of the data
+        the p-values are obtained by adjusted re-fits of the data
         following Chernozhukov et al. :cite:`inference2021`.
 
         Parameters
@@ -48,6 +48,11 @@ class ConformalInference:
         Z1 : pd.Series
             Column vector giving the outcome variable values over time for the
             treated unit.
+        tol : float
+            The required tolerance (accuracy) required when calculating the
+            lower/upper cut-off point of the confidence interval. The search
+            will try to obtain this tolerance level but will not exceed `max_iter`
+            iterations trying to achieve that.
         pre_periods : list
             The time-periods to use for the optimization when refitting the
             data with the adjusted outcomes.
@@ -55,13 +60,7 @@ class ConformalInference:
             The time-periods to calculate confidence intervals for.
         max_iter : int, optional
             Maximum number of times to re-fit the data when trying to locate
-            the lower/upper cut-off point and when binary searching for the
-            cut-off point, by default 20
-        tol : float, optional
-            The required tolerance (accuracy) required when calculating the
-            lower/upper cut-off point of the confidence interval. The search
-            will try to obtain this tolerance level but will not exceed `max_iter`
-            iterations trying to achieve that, by default 0.1.
+            the lower/upper cut-off point, by default 50
         step_sz : Optional[float], optional
             Step size to use when searching for an interval that contains the
             lower or upper cut-off point of the confidence interval, by default None
@@ -124,6 +123,8 @@ class ConformalInference:
                 raise TypeError("`step_sz` should be a float")
             elif step_sz <= 0.0:
                 raise ValueError("`step_sz` should be greater than 0.0")
+            elif step_sz <= tol:
+                raise ValueError("`step_sz` must be greater than `tol`.")
         if not isinstance(step_sz_div, float):
             raise TypeError("`step_sz_div` must be a float")
         elif step_sz_div <= 0.0:
@@ -133,12 +134,16 @@ class ConformalInference:
 
         gaps = scm._gaps(Z0=Z0, Z1=Z1)
         if step_sz is None:
+            # Try to guess a step-size
             if len(post_periods) > 1:
                 factor = np.std(gaps.loc[post_periods])
             else:
                 factor = gaps.loc[post_periods].item() / 2.0
             step_sz = 2.5 * factor / step_sz_div
-
+            if step_sz <= tol:
+                # Failed to guess a sensible step-size :(
+                step_sz = 1.1 * tol
+        
         conf_interval = dict()
         n_periods = len(post_periods)
         for idx, post_period in enumerate(post_periods, 1):
@@ -195,7 +200,7 @@ class ConformalInference:
         self,
         fn: Callable,
         x0: float,
-        direction: int,
+        direction: Literal[+1, -1],
         tol: float,
         step_sz: float,
         max_iter: int,
