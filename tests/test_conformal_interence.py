@@ -24,9 +24,7 @@ class TestConformalInference(unittest.TestCase):
             index=range(1, 5),
             columns=range(1, 11),
         )
-        self.X1 = pd.Series(
-            data=self.rng.random(size=(4,)), index=range(1, 5), name=0
-        )
+        self.X1 = pd.Series(data=self.rng.random(size=(4,)), index=range(1, 5), name=0)
         self.pre_periods = list(range(1, 21))
         self.post_periods = list(range(21, 31))
         self.max_iter = 20
@@ -218,11 +216,7 @@ class TestConformalInference(unittest.TestCase):
         }
 
         conformal_inf = ConformalInference()
-        self.assertRaises(
-            ValueError,
-            conformal_inf.confidence_intervals,
-            **kwargs
-        )
+        self.assertRaises(ValueError, conformal_inf.confidence_intervals, **kwargs)
 
     def test_step_sz_options(self):
         self.scm.fit(X0=self.X0, X1=self.X1, Z0=self.Z0, Z1=self.Z1)
@@ -240,13 +234,9 @@ class TestConformalInference(unittest.TestCase):
         }
 
         conformal_inf = ConformalInference()
+        conformal_inf.confidence_intervals(post_periods=self.post_periods, **kwargs)
         conformal_inf.confidence_intervals(
-            post_periods=self.post_periods,
-            **kwargs
-        )
-        conformal_inf.confidence_intervals(
-            post_periods=[self.post_periods[0]],
-            **kwargs
+            post_periods=[self.post_periods[0]], **kwargs
         )
 
     def test_root_search(self):

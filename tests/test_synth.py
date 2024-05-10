@@ -295,59 +295,46 @@ class TestSynth(unittest.TestCase):
         dataprep = pysyncon.Dataprep(**kwargs)
         synth = pysyncon.Synth()
         synth.fit(dataprep=dataprep)
-        
+
         # Bad option
         self.assertRaises(
             ValueError,
             synth.confidence_interval,
             alpha=0.5,
             time_periods=[4],
-            method="foo"
+            method="foo",
         )
 
         # With dataprep supplied
         try:
-            synth.confidence_interval(
-                alpha=0.5,
-                time_periods=[4],
-                dataprep=dataprep
-            )
+            synth.confidence_interval(alpha=0.5, time_periods=[4], dataprep=dataprep)
         except Exception as e:
             self.fail(f"Confidence interval failed: {e}.")
-        
+
         # Too few time periods for alpha value
         self.assertRaises(
             ValueError,
             synth.confidence_interval,
             alpha=0.05,
             time_periods=[4],
-            dataprep=dataprep
+            dataprep=dataprep,
         )
 
         # Without dataprep supplied
         try:
-            synth.confidence_interval(
-                alpha=0.5,
-                time_periods=[4]
-            )
+            synth.confidence_interval(alpha=0.5, time_periods=[4])
         except Exception as e:
             self.fail(f"Confidence interval failed: {e}.")
 
         # Too few time periods for alpha value
         self.assertRaises(
-            ValueError,
-            synth.confidence_interval,
-            alpha=0.05,
-            time_periods=[4]
+            ValueError, synth.confidence_interval, alpha=0.05, time_periods=[4]
         )
 
         # Without dataprep supplied or matrices
         synth.dataprep = None
         self.assertRaises(
-            ValueError,
-            synth.confidence_interval,
-            alpha=0.5,
-            time_periods=[4]
+            ValueError, synth.confidence_interval, alpha=0.5, time_periods=[4]
         )
 
         # No pre-periods supplied
@@ -362,7 +349,7 @@ class TestSynth(unittest.TestCase):
             X0=X0,
             X1=X1,
             Z0=Z0,
-            Z1=Z1
+            Z1=Z1,
         )
 
         # Bad alpha value
@@ -375,8 +362,31 @@ class TestSynth(unittest.TestCase):
             X0=X0,
             X1=X1,
             Z0=Z0,
-            Z1=Z1
+            Z1=Z1,
         )
+
+        # Add fit options
+        _, n_c = X0.shape
+        custom_V = np.full(n_c, 1 / n_c)
+        optim_method = "BFGS"
+        optim_initial = "ols"
+        optim_options = {"max_iter": 1000}
+        try:
+            synth.confidence_interval(
+                alpha=0.5,
+                time_periods=[4],
+                pre_periods=[1, 2, 3],
+                X0=X0,
+                X1=X1,
+                Z0=Z0,
+                Z1=Z1,
+                custom_V=custom_V,
+                optim_method=optim_method,
+                optim_initial=optim_initial,
+                optim_options=optim_options,
+            )
+        except Exception as e:
+            self.fail(f"Confidence interval failed: {e}.")
 
         # Dataframes supplied instead of series
         X1 = X1.to_frame()
@@ -390,7 +400,5 @@ class TestSynth(unittest.TestCase):
             X0=X0,
             X1=X1,
             Z0=Z0,
-            Z1=Z1
+            Z1=Z1,
         )
-
-
