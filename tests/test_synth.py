@@ -308,7 +308,9 @@ class TestSynth(unittest.TestCase):
 
         # With dataprep supplied
         try:
-            synth.confidence_interval(alpha=0.5, time_periods=[4], dataprep=dataprep, tol=0.01)
+            synth.confidence_interval(
+                alpha=0.5, time_periods=[4], dataprep=dataprep, tol=0.01
+            )
         except Exception as e:
             self.fail(f"Confidence interval failed: {e}.")
 
@@ -330,7 +332,11 @@ class TestSynth(unittest.TestCase):
 
         # Too few time periods for alpha value
         self.assertRaises(
-            ValueError, synth.confidence_interval, alpha=0.05, time_periods=[4], tol=0.01
+            ValueError,
+            synth.confidence_interval,
+            alpha=0.05,
+            time_periods=[4],
+            tol=0.01,
         )
 
         # Without dataprep supplied or matrices
