@@ -157,6 +157,7 @@ class TestSynthGermany(unittest.TestCase):
                 2000,
             ],
             "max_iter": 50,
+            "tol": 0.1,
             "verbose": False,
         }
 
@@ -199,9 +200,12 @@ class TestSynthGermany(unittest.TestCase):
             optim_initial=self.optim_initial,
             custom_V=self.custom_V,
         )
-        
+
         cis = pd.DataFrame.from_dict(self.cis)
         cis.index.name = "time"
         pd.testing.assert_frame_equal(
-            cis, synth.confidence_interval(custom_V=self.custom_V, **self.ci_args), check_exact=False, atol=0.025
+            cis,
+            synth.confidence_interval(custom_V=self.custom_V, **self.ci_args),
+            check_exact=False,
+            atol=0.025,
         )

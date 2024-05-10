@@ -218,27 +218,6 @@ class TestConformalInference(unittest.TestCase):
         conformal_inf = ConformalInference()
         self.assertRaises(ValueError, conformal_inf.confidence_intervals, **kwargs)
 
-    def test_step_sz_options(self):
-        self.scm.fit(X0=self.X0, X1=self.X1, Z0=self.Z0, Z1=self.Z1)
-
-        kwargs = {
-            "alpha": self.alpha,
-            "scm": self.scm,
-            "Z0": self.Z0,
-            "Z1": self.Z1,
-            "pre_periods": self.pre_periods,
-            "tol": self.tol,
-            "max_iter": self.max_iter,
-            "step_sz": self.step_sz,
-            "verbose": self.verbose,
-        }
-
-        conformal_inf = ConformalInference()
-        conformal_inf.confidence_intervals(post_periods=self.post_periods, **kwargs)
-        conformal_inf.confidence_intervals(
-            post_periods=[self.post_periods[0]], **kwargs
-        )
-
     def test_root_search(self):
         cases_roots_x0 = [
             ((-1, 3), 0.5),

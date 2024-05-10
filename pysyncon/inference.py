@@ -143,7 +143,7 @@ class ConformalInference:
             if step_sz <= tol:
                 # Failed to guess a sensible step-size :(
                 step_sz = 1.1 * tol
-        
+
         conf_interval = dict()
         n_periods = len(post_periods)
         for idx, post_period in enumerate(post_periods, 1):
