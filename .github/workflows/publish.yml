@@ -1,4 +1,4 @@
-name: Pypi package upload
+name: Build package and upload to PyPI
 
 on:
   release:
@@ -8,14 +8,14 @@ permissions:
   contents: read
 
 jobs:
-  deploy:
+  upload:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set up Python
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v4
       with:
         python-version: '3.x'
     - name: Install dependencies
