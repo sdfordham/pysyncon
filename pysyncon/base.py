@@ -20,7 +20,7 @@ class BaseSynth(metaclass=ABCMeta):
 
     @abstractmethod
     def fit(*args, **kwargs) -> None:
-        raise NotImplemented
+        raise NotImplementedError
 
     def _synthetic(self, Z0: pd.DataFrame) -> pd.Series:
         """Assemble the synthetic unit using the calculated weight matrix.

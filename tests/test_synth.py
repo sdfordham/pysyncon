@@ -60,10 +60,9 @@ class TestSynth(unittest.TestCase):
             **kwargs,
         )
         synth = pysyncon.Synth()
-        try:
-            synth.fit(dataprep)
-        except Exception as e:
-            self.fail(f"Synth fit with single treated failed: {e}.")
+
+        # Run with normal controls list
+        synth.fit(dataprep)
 
         dataprep = pysyncon.Dataprep(
             treatment_identifier=[self.treatment_identifier],
@@ -71,10 +70,9 @@ class TestSynth(unittest.TestCase):
             **kwargs,
         )
         synth = pysyncon.Synth()
-        try:
-            synth.fit(dataprep)
-        except Exception as e:
-            self.fail(f"Synth fit with single treated in list failed: {e}.")
+
+        # Run with a list of treatment identifiers
+        synth.fit(dataprep)
 
     def test_X0_X1_fit(self):
         synth = pysyncon.Synth()
@@ -276,3 +274,111 @@ class TestSynth(unittest.TestCase):
         self.assertRaises(ValueError, synth.mspe)
         self.assertRaises(ValueError, synth.mape)
         self.assertRaises(ValueError, synth.mae)
+
+    def test_confidence_intervals(self):
+        kwargs = {
+            "foo": self.foo,
+            "predictors": self.predictors,
+            "predictors_op": self.predictors_op,
+            "dependent": self.dependent,
+            "unit_variable": self.unit_variable,
+            "time_variable": self.time_variable,
+            "treatment_identifier": self.treatment_identifier,
+            "controls_identifier": self.controls_identifier,
+            "time_predictors_prior": self.time_predictors_prior,
+            "time_optimize_ssr": self.time_optimize_ssr,
+            "special_predictors": self.special_predictors,
+        }
+
+        dataprep = pysyncon.Dataprep(**kwargs)
+        synth = pysyncon.Synth()
+        synth.fit(dataprep=dataprep)
+
+        # Bad option
+        self.assertRaises(
+            ValueError,
+            synth.confidence_interval,
+            alpha=0.5,
+            time_periods=[4],
+            tol=0.01,
+            method="foo",
+        )
+
+        # Run with dataprep supplied
+        synth.confidence_interval(
+            alpha=0.5, time_periods=[4], dataprep=dataprep, tol=0.01
+        )
+
+        # Too few time periods for alpha value
+        self.assertRaises(
+            ValueError,
+            synth.confidence_interval,
+            alpha=0.05,
+            time_periods=[4],
+            tol=0.01,
+            dataprep=dataprep,
+        )
+
+        # Run without dataprep supplied
+        synth.confidence_interval(alpha=0.5, time_periods=[4], tol=0.01)
+
+        # Too few time periods for alpha value
+        self.assertRaises(
+            ValueError,
+            synth.confidence_interval,
+            alpha=0.05,
+            time_periods=[4],
+            tol=0.01,
+        )
+
+        # Without dataprep supplied or matrices
+        synth.dataprep = None
+        self.assertRaises(
+            ValueError, synth.confidence_interval, alpha=0.5, time_periods=[4], tol=0.01
+        )
+
+        # No pre-periods supplied
+        synth.dataprep = None
+        X0, X1 = dataprep.make_covariate_mats()
+        Z0, Z1 = dataprep.make_outcome_mats(time_period=[1, 2, 3, 4])
+        self.assertRaises(
+            ValueError,
+            synth.confidence_interval,
+            alpha=0.5,
+            time_periods=[4],
+            tol=0.01,
+            X0=X0,
+            X1=X1,
+            Z0=Z0,
+            Z1=Z1,
+        )
+
+        # Bad alpha value
+        self.assertRaises(
+            ValueError,
+            synth.confidence_interval,
+            alpha=0.05,
+            time_periods=[4],
+            pre_periods=[1, 2, 3],
+            tol=0.01,
+            X0=X0,
+            X1=X1,
+            Z0=Z0,
+            Z1=Z1,
+        )
+
+        # Dataframes supplied instead of series
+        X1 = X1.to_frame()
+        Z1 = Z1.to_frame()
+        self.assertRaises(
+            TypeError,
+            synth.confidence_interval,
+            alpha=0.5,
+            time_periods=[4],
+            pre_periods=[1, 2, 3],
+            tol=0.01,
+            X0=X0,
+            X1=X1,
+            Z0=Z0,
+            Z1=Z1,
+        )

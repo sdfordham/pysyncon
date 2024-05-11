@@ -104,6 +104,62 @@ class TestSynthGermany(unittest.TestCase):
         }
         self.att = {"att": -1555.1346777620479, "se": 317.6469306023242}
         self.att_time_period = range(1990, 2004)
+        self.cis = {
+            "value": {
+                1991: 279.09685975333196,
+                1992: 99.76203427529981,
+                1993: -631.5437231770848,
+                1994: -1050.2679900905205,
+                1995: -1205.2549226793199,
+                1996: -1467.2491625958974,
+                1997: -1954.3741689815615,
+                1998: -2008.3960300490326,
+                1999: -2160.627036515649,
+                2000: -2620.7330909274606,
+            },
+            "lower_ci": {
+                1991: 43.148688105431994,
+                1992: -136.18613737260014,
+                1993: -867.4918948249846,
+                1994: -1286.2161617384206,
+                1995: -1441.20309432722,
+                1996: -1703.1973342437975,
+                1997: -2190.3223406294615,
+                1998: -2244.3442016969325,
+                1999: -2396.5752081635487,
+                2000: -2856.6812625753605,
+            },
+            "upper_ci": {
+                1991: 515.0450314012319,
+                1992: 335.7102059231998,
+                1993: -395.59555152918483,
+                1994: -814.3198184426207,
+                1995: -969.3067510314198,
+                1996: -1231.3009909479972,
+                1997: -1718.4259973336614,
+                1998: -1772.4478584011324,
+                1999: -1924.6788648677486,
+                2000: -2384.7849192795607,
+            },
+        }
+        self.ci_args = {
+            "alpha": 0.05,
+            "time_periods": [
+                1991,
+                1992,
+                1993,
+                1994,
+                1995,
+                1996,
+                1997,
+                1998,
+                1999,
+                2000,
+            ],
+            "max_iter": 50,
+            "tol": 0.1,
+            "verbose": False,
+        }
 
     def test_weights(self):
         synth = Synth()
@@ -135,3 +191,21 @@ class TestSynthGermany(unittest.TestCase):
         # Allow a tolerance of 2.5%
         se_perc_delta = abs(1.0 - self.att["se"] / synth_att["se"])
         self.assertLessEqual(se_perc_delta, 0.025)
+
+    def test_cis(self):
+        synth = Synth()
+        synth.fit(
+            dataprep=self.dataprep,
+            optim_method=self.optim_method,
+            optim_initial=self.optim_initial,
+            custom_V=self.custom_V,
+        )
+
+        cis = pd.DataFrame.from_dict(self.cis)
+        cis.index.name = "time"
+        pd.testing.assert_frame_equal(
+            cis,
+            synth.confidence_interval(custom_V=self.custom_V, **self.ci_args),
+            check_exact=False,
+            atol=0.025,
+        )
