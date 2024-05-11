@@ -209,7 +209,7 @@ class TestConformalInference(unittest.TestCase):
             "max_iter": self.max_iter,
             "step_sz_div": self.step_sz_div,
             "verbose": self.verbose,
-            "scm_fit_args": {"X0": self.X0, "X1": self.X1}
+            "scm_fit_args": {"X0": self.X0, "X1": self.X1},
         }
 
         conformal_inf = ConformalInference()
