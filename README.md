@@ -9,9 +9,9 @@ A python module for the synthetic control method that provides implementations o
 - Augmented Synthetic Control Method (Ben-Michael, Feller & Rothstein 2021)
 - Penalized Synthetic Control Method (Abadie & L'Hour 2021)
 
-The package also provides methods for performing placebo tests with the above.
+The package also provides methods for performing placebo tests and generating confidence intervals.
 
-The implementations of the Synthetic Control method aims to be reconcilable with the R package [Synth](https://CRAN.R-project.org/package=Synth) and similarly the implementation of the Augmented Synthetic Control method and the R package [augsynth](https://github.com/ebenmichael/augsynth).
+The implementation of the synthetic control method aims to be reconcilable with the R package [Synth](https://CRAN.R-project.org/package=Synth) and similarly the implementation of the Augmented synthetic control method and the R package [augsynth](https://github.com/ebenmichael/augsynth).
 
 ## Installation
 Install it from PyPI using pip:
