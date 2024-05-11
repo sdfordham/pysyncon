@@ -60,10 +60,9 @@ class TestSynth(unittest.TestCase):
             **kwargs,
         )
         synth = pysyncon.Synth()
-        try:
-            synth.fit(dataprep)
-        except Exception as e:
-            self.fail(f"Synth fit with single treated failed: {e}.")
+
+        # Run with normal controls list
+        synth.fit(dataprep)
 
         dataprep = pysyncon.Dataprep(
             treatment_identifier=[self.treatment_identifier],
@@ -71,10 +70,9 @@ class TestSynth(unittest.TestCase):
             **kwargs,
         )
         synth = pysyncon.Synth()
-        try:
-            synth.fit(dataprep)
-        except Exception as e:
-            self.fail(f"Synth fit with single treated in list failed: {e}.")
+
+        # Run with a list of treatment identifiers
+        synth.fit(dataprep)
 
     def test_X0_X1_fit(self):
         synth = pysyncon.Synth()
@@ -306,13 +304,10 @@ class TestSynth(unittest.TestCase):
             method="foo",
         )
 
-        # With dataprep supplied
-        try:
-            synth.confidence_interval(
-                alpha=0.5, time_periods=[4], dataprep=dataprep, tol=0.01
-            )
-        except Exception as e:
-            self.fail(f"Confidence interval failed: {e}.")
+        # Run with dataprep supplied
+        synth.confidence_interval(
+            alpha=0.5, time_periods=[4], dataprep=dataprep, tol=0.01
+        )
 
         # Too few time periods for alpha value
         self.assertRaises(
@@ -324,11 +319,8 @@ class TestSynth(unittest.TestCase):
             dataprep=dataprep,
         )
 
-        # Without dataprep supplied
-        try:
-            synth.confidence_interval(alpha=0.5, time_periods=[4], tol=0.01)
-        except Exception as e:
-            self.fail(f"Confidence interval failed: {e}.")
+        # Run without dataprep supplied
+        synth.confidence_interval(alpha=0.5, time_periods=[4], tol=0.01)
 
         # Too few time periods for alpha value
         self.assertRaises(

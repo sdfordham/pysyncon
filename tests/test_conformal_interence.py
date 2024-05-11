@@ -165,6 +165,62 @@ class TestConformalInference(unittest.TestCase):
                     **kwargs
                 )
 
+    def test_step_sz_tol(self):
+        kwargs = {
+            "alpha": self.alpha,
+            "scm": self.scm,
+            "Z0": self.Z0,
+            "Z1": self.Z1,
+            "pre_periods": self.pre_periods,
+            "post_periods": self.post_periods,
+            "max_iter": self.max_iter,
+            "step_sz_div": self.step_sz_div,
+            "verbose": self.verbose,
+        }
+
+        conformal_inf = ConformalInference()
+
+        # Step-size is less than tolerance
+        self.assertRaises(
+            ValueError,
+            conformal_inf.confidence_intervals,
+            tol=1.0,
+            step_sz=0.1,
+            **kwargs
+        )
+
+        # Step-size = tolerance
+        self.assertRaises(
+            ValueError,
+            conformal_inf.confidence_intervals,
+            tol=1.0,
+            step_sz=1.0,
+            **kwargs
+        )
+
+    def test_step_sz_guessing(self):
+        kwargs = {
+            "alpha": self.alpha,
+            "scm": self.scm,
+            "Z0": self.Z0,
+            "Z1": self.Z1,
+            "pre_periods": self.pre_periods,
+            "post_periods": self.post_periods,
+            "max_iter": self.max_iter,
+            "step_sz_div": self.step_sz_div,
+            "verbose": self.verbose,
+            "scm_fit_args": {"X0": self.X0, "X1": self.X1}
+        }
+
+        conformal_inf = ConformalInference()
+
+        # No step-size and a big tolerance
+        # (step-size guessing)
+        _, n_c = self.Z0.shape
+        self.scm.W = np.full(n_c, 1.0 / n_c)
+        conformal_inf.confidence_intervals(tol=100.0, **kwargs)
+        self.scm.W = None
+
     def test_step_sz_div(self):
         kwargs = {
             "alpha": self.alpha,
