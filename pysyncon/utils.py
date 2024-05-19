@@ -246,7 +246,9 @@ class PlaceboTest:
         """
         scm.fit(dataprep=dataprep, **scm_options)
 
-        Z0, Z1 = dataprep.make_outcome_mats(time_period=dataprep.foo[dataprep.time_variable])
+        Z0, Z1 = dataprep.make_outcome_mats(
+            time_period=dataprep.foo[dataprep.time_variable]
+        )
         synthetic = scm._synthetic(Z0=Z0)
         gaps = scm._gaps(Z0=Z0, Z1=Z1)
         return synthetic.rename(dataprep.treatment_identifier), gaps.rename(
