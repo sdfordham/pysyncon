@@ -169,7 +169,14 @@ class Dataprep:
                 )
         self.controls_identifier = controls_identifier
 
+        if self.foo[self.foo[self.time_variable].isin(time_predictors_prior)].empty:
+            raise ValueError(
+                f"foo has no rows in the time range `time_predictors_prior`."
+            )
         self.time_predictors_prior = time_predictors_prior
+
+        if self.foo[self.foo[self.time_variable].isin(time_optimize_ssr)].empty:
+            raise ValueError(f"foo has no rows in the time range `time_optimize_ssr`.")
         self.time_optimize_ssr = time_optimize_ssr
 
         if special_predictors:
@@ -178,10 +185,14 @@ class Dataprep:
                     raise ValueError(
                         "Elements of special_predictors should be tuples of length 3."
                     )
-                predictor, _, op = el
+                predictor, time_range, op = el
                 if predictor not in foo.columns:
                     raise ValueError(
                         f"{predictor} in special_predictors not in foo columns."
+                    )
+                if self.foo[self.foo[self.time_variable].isin(time_range)].empty:
+                    raise ValueError(
+                        f"foo has no rows in the time range {time_range} for `special_predictor` {el}."
                     )
                 if op not in AGG_OP:
                     agg_op_str = ", ".join([f'"{o}"' for o in AGG_OP])
