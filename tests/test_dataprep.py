@@ -157,6 +157,27 @@ class TestDataprep(unittest.TestCase):
 
         self.assertRaises(ValueError, Dataprep, time_variable="badval", **kwargs)
 
+    def test_init_multiple_rows(self):
+        kwargs = {
+            "predictors": self.predictors,
+            "predictors_op": self.predictors_op,
+            "dependent": self.dependent,
+            "unit_variable": self.unit_variable,
+            "time_variable": self.time_variable,
+            "treatment_identifier": self.treatment_identifier,
+            "controls_identifier": self.controls_identifier,
+            "time_predictors_prior": self.time_predictors_prior,
+            "time_optimize_ssr": self.time_optimize_ssr,
+            "special_predictors": self.special_predictors,
+        }
+
+        self.assertRaises(
+            ValueError,
+            Dataprep,
+            foo=pd.concat([self.foo, self.foo.iloc[0:1]], axis=0),
+            **kwargs,
+        )
+
     def test_init_arg_treatment_identifier(self):
         kwargs = {
             "foo": self.foo,
@@ -174,6 +195,61 @@ class TestDataprep(unittest.TestCase):
         self.assertRaises(ValueError, Dataprep, treatment_identifier="badval", **kwargs)
         self.assertRaises(
             ValueError, Dataprep, treatment_identifier=["badval"], **kwargs
+        )
+
+    def test_bad_time_periods_time_predictors_prior(self):
+        kwargs = {
+            "foo": self.foo,
+            "predictors": self.predictors,
+            "predictors_op": self.predictors_op,
+            "dependent": self.dependent,
+            "unit_variable": self.unit_variable,
+            "time_variable": self.time_variable,
+            "controls_identifier": self.controls_identifier,
+            "time_optimize_ssr": self.time_optimize_ssr,
+            "treatment_identifier": self.treatment_identifier,
+            "special_predictors": self.special_predictors,
+        }
+
+        self.assertRaises(
+            ValueError, Dataprep, time_predictors_prior=["2", "3"], **kwargs
+        )
+
+    def test_bad_time_periods_time_optimize_ssr(self):
+        kwargs = {
+            "foo": self.foo,
+            "predictors": self.predictors,
+            "predictors_op": self.predictors_op,
+            "dependent": self.dependent,
+            "unit_variable": self.unit_variable,
+            "time_variable": self.time_variable,
+            "controls_identifier": self.controls_identifier,
+            "time_predictors_prior": self.time_predictors_prior,
+            "treatment_identifier": self.treatment_identifier,
+            "special_predictors": self.special_predictors,
+        }
+
+        self.assertRaises(ValueError, Dataprep, time_optimize_ssr=["2", "3"], **kwargs)
+
+    def test_bad_time_periods_special_predictors(self):
+        kwargs = {
+            "foo": self.foo,
+            "predictors": self.predictors,
+            "predictors_op": self.predictors_op,
+            "dependent": self.dependent,
+            "unit_variable": self.unit_variable,
+            "time_variable": self.time_variable,
+            "controls_identifier": self.controls_identifier,
+            "time_optimize_ssr": self.time_optimize_ssr,
+            "time_predictors_prior": self.time_predictors_prior,
+            "treatment_identifier": self.treatment_identifier,
+        }
+
+        self.assertRaises(
+            ValueError,
+            Dataprep,
+            special_predictors=[("predictor1", ["2"], "mean")],
+            **kwargs,
         )
 
     def test_init_arg_controls_identifier(self):
