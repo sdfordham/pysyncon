@@ -172,7 +172,10 @@ class TestDataprep(unittest.TestCase):
         }
 
         self.assertRaises(
-            ValueError, Dataprep, foo=pd.concat([self.foo, self.foo.iloc[0:1]], axis=0), **kwargs
+            ValueError,
+            Dataprep,
+            foo=pd.concat([self.foo, self.foo.iloc[0:1]], axis=0),
+            **kwargs,
         )
 
     def test_init_arg_treatment_identifier(self):
