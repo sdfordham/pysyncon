@@ -131,6 +131,11 @@ class Dataprep:
             raise ValueError(f"time_variable {time_variable} not in foo columns.")
         self.time_variable = time_variable
 
+        if foo[[unit_variable, time_variable]].duplicated().any():
+            raise ValueError(
+                "Multiple rows found in `foo` for same [unit, time] pairs."
+            )
+
         if isinstance(treatment_identifier, (list, tuple)):
             for treated in treatment_identifier:
                 # This throws FutureWarning (see https://stackoverflow.com/a/46721064/11594901)
