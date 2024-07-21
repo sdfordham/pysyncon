@@ -53,9 +53,9 @@ class AugSynth(BaseSynth, VanillaOptimMixin):
         else:
             self.lambda_ = lambda_
 
-        n_r, _ = X0.shape
+        n_r, _ = X0_stacked.shape
         V_mat = np.diag(np.full(n_r, 1 / n_r))
-        W, _ = self.w_optimize(V_mat=V_mat, X0=X0.to_numpy(), X1=X1.to_numpy())
+        W, _ = self.w_optimize(V_mat=V_mat, X0=X0_stacked.to_numpy(), X1=X1_stacked.to_numpy())
 
         W_ridge = self.solve_ridge(
             X1_stacked.to_numpy(), X0_stacked.to_numpy(), W, self.lambda_
