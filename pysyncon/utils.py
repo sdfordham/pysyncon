@@ -346,6 +346,5 @@ class PlaceboTest:
         t0, _ = self.gaps.loc[:treatment_time].shape
 
         rmspe = (num / (t - t0)) / (denom / t0)
-        return sum(
-            rmspe.drop(index=self.treated_gap.name) >= rmspe.loc[self.treated_gap.name]
-        ) / len(rmspe)
+        rank = 1 + sum(rmspe.drop(index=self.treated_gap.name) >= rmspe.loc[self.treated_gap.name])
+        return rank / len(rmspe)
