@@ -1,0 +1,9 @@
+cff-version: 1.0.0
+message: "If you use this software in your research, please cite it as below."
+authors:
+- family-names: "Fordham"
+  given-names: "Stiofán"
+  orcid: "https://orcid.org/0009-0003-1345-3252"
+title: "pysyncon: a Python package for the Synthetic Control Method"
+date-released: 2022-12-20
+url: "https://github.com/sdfordham/pysyncon"
