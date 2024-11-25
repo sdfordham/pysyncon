@@ -27,3 +27,17 @@ Documentation is available on [github-pages](https://sdfordham.github.io/pysynco
 - The Economic Costs of Conflict: A Case Study of the Basque Country, Alberto Abadie and Javier Gardeazabal; The American Economic Review Vol. 93, No. 1 (Mar., 2003), pp. 113-132. ([notebook here](examples/basque.ipynb))
 - The worked example 'Prison construction and Black male incarceration' from the last chapter of 'Causal Inference: The Mixtape' by Scott Cunningham. ([notebook here](examples/texas.ipynb))
 - Comparative Politics and the Synthetic Control Method, Alberto Abadie, Alexis Diamond and Jens Hainmueller; American Journal of Political Science Vol. 59, No. 2 (April 2015), pp. 495-510. ([notebook here](examples/germany.ipynb))
+
+## Citation
+
+If you use this package in your research, you can cite it as below.
+
+```
+@software{pysyncon,
+  author = {Fordham, Stiofán},
+  month = dec,
+  title = {{pysyncon: a Python package for the Synthetic Control Method}},
+  url = {https://github.com/sdfordham/pysyncon},
+  year = {2022}
+}
+```
