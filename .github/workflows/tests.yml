@@ -2,8 +2,11 @@ name: Run unittests
 
 on:
   pull_request:
-    branches: [ "main" ]
-      
+    branches: main
+    paths:
+      - "pysyncon/**"
+      - "tests/**"
+
 permissions:
   contents: read
 

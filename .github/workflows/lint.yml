@@ -2,7 +2,11 @@ name: Lint codebase using Black
 
 on:
   pull_request:
-    branches: [ "main" ]
+    branches: main
+    paths:
+      - "pysyncon/**"
+      - "tests/**"
+      - "examples/**"
 
 permissions:
   contents: read
