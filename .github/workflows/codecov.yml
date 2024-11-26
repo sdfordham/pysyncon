@@ -3,14 +3,8 @@ name: Generate Code Coverage report and upload to codecov.io
 on:
   pull_request:
     branches: [ "main" ]
-    paths:
-      - "pysyncon/**"
-      - "tests/**"
   push:
     branches: [ "main" ]
-    paths:
-      - "pysyncon/**"
-      - "tests/**"
 
 permissions:
   contents: read

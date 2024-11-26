@@ -3,9 +3,6 @@ name: Build html using Sphinx and upload to Github-pages
 on:
   push:
     branches: [ "main" ]
-    paths:
-      - "pysyncon/**"
-      - "doc/**"
 
 permissions:
   contents: read
