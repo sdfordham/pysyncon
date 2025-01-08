@@ -400,7 +400,7 @@ class BaseSynth(metaclass=ABCMeta):
         ts_synthetic = self._synthetic(Z0=Z0)
 
         n = len(ts_synthetic)
-        return (1 / n) * ((Z1 - ts_synthetic) / ts_synthetic).abs().sum().item()
+        return (1 / n) * ((Z1 - ts_synthetic) / Z1).abs().sum().item()
 
     def mae(
         self, Z0: Optional[pd.DataFrame] = None, Z1: Optional[pd.Series] = None
