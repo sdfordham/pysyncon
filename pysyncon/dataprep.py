@@ -271,7 +271,7 @@ class Dataprep:
                 )
                 X1_special.append(self.foo[mask][predictor].agg(op))
 
-            X1_special = pd.Series(X1_special, index=X0_special_columns).rename(
+            X1_special = pd.Series(X1_special, index=X0_special_columns, dtype="float").rename(
                 self.treatment_identifier
             )
         X1 = pd.concat([X1_nonspecial, X1_special], axis=0)
