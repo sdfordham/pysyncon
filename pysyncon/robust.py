@@ -101,7 +101,7 @@ class RobustSynth(BaseSynth):
         """
         if not threshold and not sv_count:
             raise ValueError("One of `threshold` or `sv_count` must be supplied.")
-
+        u, s, v = np.linalg.svd(Y)
         if threshold:
             idx = 0
             while s[idx] > threshold:
@@ -109,7 +109,6 @@ class RobustSynth(BaseSynth):
         else:
             idx = sv_count
 
-        u, s, v = np.linalg.svd(Y)
         s_res = np.zeros_like(Y)
         s_res[:idx, :idx] = np.diag(s[:idx])
 
