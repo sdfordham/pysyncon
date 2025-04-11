@@ -102,9 +102,10 @@ class RobustSynth(BaseSynth):
         if not threshold and not sv_count:
             raise ValueError("One of `threshold` or `sv_count` must be supplied.")
         u, s, v = np.linalg.svd(Y)
+        s_shape = s.shape[0] - 1
         if threshold:
             idx = 0
-            while s[idx] > threshold:
+            while s[idx] > threshold and idx < s_shape:
                 idx += 1
         else:
             idx = sv_count
