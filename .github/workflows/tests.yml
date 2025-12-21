@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        buildplat: [ubuntu-20.04, windows-2019]
+        buildplat: [ubuntu-22.04, windows-2019]
         python: ["3.8", "3.9", "3.10", "3.11", "3.12"]
     runs-on: ${{ matrix.buildplat }}
     steps:
