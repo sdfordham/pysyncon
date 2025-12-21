@@ -106,9 +106,9 @@ class BaseSynth(metaclass=ABCMeta):
             linestyle="dashed",
             label="Synthetic",
         )
-        if plot_args is not None and self.dataprep is not None:
-            ax.ylabel(self.dataprep.dependent)
-        else:
+        if self.dataprep is not None:
+            ax.set_ylabel(self.dataprep.dependent)
+        if plot_args is not None:
             ax.set(**plot_args)
         if treatment_time:
             ax.axvline(x=treatment_time, ymin=0.05, ymax=0.95, linestyle="dashed")
