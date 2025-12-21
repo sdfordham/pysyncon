@@ -155,6 +155,10 @@ class TestSynth(unittest.TestCase):
         self.assertEqual(kwargs["ymax"], 0.95)
         self.assertEqual(kwargs["linestyle"], "dashed")
 
+        plot_args = {"title": "Test Plot", "xlabel": "Time"}
+        synth.path_plot(plot_args=plot_args)
+        mock_ax.set.assert_called_once_with(**plot_args)
+
     @patch("pysyncon.base.plt")
     def test_gaps_plot(self, mock_plt: Mock):
         kwargs = {
