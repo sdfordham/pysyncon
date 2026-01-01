@@ -96,6 +96,9 @@ class TestSynth(unittest.TestCase):
 
     @patch("pysyncon.base.plt")
     def test_path_plot(self, mock_plt: Mock):
+        mock_ax = Mock()
+        mock_fig = Mock()
+        mock_plt.subplots.return_value = (mock_fig, mock_ax)
         kwargs = {
             "foo": self.foo,
             "predictors": self.predictors,
@@ -124,8 +127,8 @@ class TestSynth(unittest.TestCase):
         synth.fit(dataprep=dataprep)
         synth.path_plot()
 
-        self.assertEqual(mock_plt.plot.call_count, 2)
-        first_call, second_call = mock_plt.plot.call_args_list
+        self.assertEqual(mock_ax.plot.call_count, 2)
+        first_call, second_call = mock_ax.plot.call_args_list
 
         _, first_call_kwargs = first_call
         self.assertEqual(first_call_kwargs["color"], "black")
@@ -138,19 +141,23 @@ class TestSynth(unittest.TestCase):
         self.assertEqual(second_call_kwargs["linestyle"], "dashed")
         self.assertEqual(second_call_kwargs["label"], "Synthetic")
 
-        mock_plt.axvline.assert_not_called()
-        mock_plt.legend.assert_called()
-        mock_plt.grid.assert_called_with(True)
+        mock_ax.axvline.assert_not_called()
+        mock_ax.legend.assert_called()
+        mock_ax.grid.assert_called_with(True)
         mock_plt.show.assert_called()
 
         synth.path_plot(treatment_time=3)
-        mock_plt.axvline.assert_called_once()
+        mock_ax.axvline.assert_called_once()
 
-        _, kwargs = mock_plt.axvline.call_args
+        _, kwargs = mock_ax.axvline.call_args
         self.assertEqual(kwargs["x"], 3)
         self.assertEqual(kwargs["ymin"], 0.05)
         self.assertEqual(kwargs["ymax"], 0.95)
         self.assertEqual(kwargs["linestyle"], "dashed")
+
+        plot_args = {"title": "Test Plot", "xlabel": "Time"}
+        synth.path_plot(plot_args=plot_args)
+        mock_ax.set.assert_called_once_with(**plot_args)
 
     @patch("pysyncon.base.plt")
     def test_gaps_plot(self, mock_plt: Mock):
@@ -192,7 +199,7 @@ class TestSynth(unittest.TestCase):
         mock_plt.grid.assert_called_with(True)
         mock_plt.show.assert_called()
 
-        synth.path_plot(treatment_time=3)
+        synth.gaps_plot(treatment_time=3)
         mock_plt.axvline.assert_called_once()
 
         _, kwargs = mock_plt.axvline.call_args

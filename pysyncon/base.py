@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Optional, Literal, Sequence
+from typing import Any, Optional, Literal, Sequence
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
@@ -47,7 +47,8 @@ class BaseSynth(metaclass=ABCMeta):
         grid: bool = True,
         Z0: Optional[pd.DataFrame] = None,
         Z1: Optional[pd.Series] = None,
-    ) -> None:
+        plot_args: Optional[dict[str, Any]] = None,
+    ) -> tuple[plt.figure.Figure, plt.axes.Axes]:
         """Plot the outcome variable over time for the treated unit and the
         synthetic control.
 
@@ -68,6 +69,18 @@ class BaseSynth(metaclass=ABCMeta):
         Z1 : pandas.Series, shape (n, 1), optional
             The matrix of the time series of the outcome variable for the treated unit.
             If no dataprep is set, then this must be supplied along with Z0, by default None.
+        plot_args : dict[str, Any], optional
+            Argument to include axis and title for the plot. For instance can do:
+            labels = {
+                "title": "My Plot Title",
+                "xlabel": "X-axis Label",
+                "ylabel": "Y-axis Label"
+            }
+
+        Returns
+        -------
+        tuple[plt.Figure, plt.Axis]
+            Returns a tuple with the figure and axis if the user wishes to modify the resulting plot.
 
         Raises
         ------
@@ -83,9 +96,10 @@ class BaseSynth(metaclass=ABCMeta):
         if self.W is None:
             raise ValueError("No weight matrix available; fit data first.")
 
+        fig, ax = plt.subplots()
         ts_synthetic = self._synthetic(Z0=Z0)
-        plt.plot(Z1, color="black", linewidth=1, label=Z1.name)
-        plt.plot(
+        ax.plot(Z1, color="black", linewidth=1, label=Z1.name)
+        ax.plot(
             ts_synthetic,
             color="black",
             linewidth=1,
@@ -93,12 +107,15 @@ class BaseSynth(metaclass=ABCMeta):
             label="Synthetic",
         )
         if self.dataprep is not None:
-            plt.ylabel(self.dataprep.dependent)
+            ax.set_ylabel(self.dataprep.dependent)
+        if plot_args is not None:
+            ax.set(**plot_args)
         if treatment_time:
-            plt.axvline(x=treatment_time, ymin=0.05, ymax=0.95, linestyle="dashed")
-        plt.legend()
-        plt.grid(grid)
+            ax.axvline(x=treatment_time, ymin=0.05, ymax=0.95, linestyle="dashed")
+        ax.legend()
+        ax.grid(grid)
         plt.show()
+        return fig, ax
 
     def _gaps(self, Z0: pd.DataFrame, Z1: pd.Series) -> pd.Series:
         """Calculate the gaps (difference between factual
