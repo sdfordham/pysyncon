@@ -5,9 +5,9 @@ import os
 sys.path.insert(0, os.path.abspath("../../"))
 
 project = "pysyncon"
-copyright = "2025, Stiofán Fordham"
+copyright = "2026, Stiofán Fordham"
 author = "Stiofán Fordham"
-release = "1.5.2"
+release = "1.6.0"
 
 extensions = [
     "sphinx.ext.autodoc",
