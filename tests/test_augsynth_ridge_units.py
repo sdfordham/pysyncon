@@ -320,7 +320,9 @@ class TestAugSynthRidgeUnits(unittest.TestCase):
         _, _, Z0_s, Z1_s = self.augsynth._normalize(X0, X1, Z0, Z1)
         z_gaps = Z0_s.to_numpy() @ self.augsynth.W - Z1_s.to_numpy()
         self.assertAlmostEqual(
-            self.augsynth.covariate_l2_imbalance, np.sqrt((z_gaps**2).sum()), places=12
+            self.augsynth.covariate_l2_imbalance,
+            np.sqrt((z_gaps**2).sum()),
+            places=12,
         )
         z_gaps_unif = Z0_s.to_numpy() @ uni_w - Z1_s.to_numpy()
         self.assertAlmostEqual(
@@ -345,14 +347,18 @@ class TestAugSynthRidgeUnits(unittest.TestCase):
         # the covariate imbalance is computed on the centered UNscaled
         # covariates (residualize branch) and is ~0 after the exact
         # covariate re-add
-        self.augsynth.fit(dataprep=self.dataprep, lambda_=self.lambda_, residualize=True)
+        self.augsynth.fit(
+            dataprep=self.dataprep, lambda_=self.lambda_, residualize=True
+        )
         self.assertLess(self.augsynth.covariate_l2_imbalance, 1e-8)
         Z0, Z1 = self.dataprep.make_covariate_mats()
         Z0_c = Z0.subtract(Z0.mean(axis=1), axis=0)
         Z1_c = Z1.subtract(Z0.mean(axis=1), axis=0)
         z_gaps = Z0_c.to_numpy() @ self.augsynth.W - Z1_c.to_numpy()
         self.assertAlmostEqual(
-            self.augsynth.covariate_l2_imbalance, np.sqrt((z_gaps**2).sum()), places=12
+            self.augsynth.covariate_l2_imbalance,
+            np.sqrt((z_gaps**2).sum()),
+            places=12,
         )
 
     def test_residualize_requires_covariates(self):
@@ -390,12 +396,16 @@ class TestAugSynthRidgeUnits(unittest.TestCase):
             X1=resid1,
             qp_options={"maxiter": 2000, "ftol": 1e-12},
         )
-        W_ridge = self.augsynth.solve_ridge(A=resid1, B=resid0, W=W, lambda_=self.lambda_)
+        W_ridge = self.augsynth.solve_ridge(
+            A=resid1, B=resid0, W=W, lambda_=self.lambda_
+        )
         no_cov_w = W + W_ridge
         cov_w = (Z1_c - Z0_c @ no_cov_w) @ np.linalg.inv(gram) @ Z0_c
         expected = no_cov_w + cov_w
 
-        self.augsynth.fit(dataprep=self.dataprep, lambda_=self.lambda_, residualize=True)
+        self.augsynth.fit(
+            dataprep=self.dataprep, lambda_=self.lambda_, residualize=True
+        )
         np.testing.assert_allclose(self.augsynth.W, expected, rtol=1e-10, atol=1e-10)
         np.testing.assert_allclose(
             self.augsynth.no_cov_weights, no_cov_w, rtol=1e-10, atol=1e-10
@@ -406,7 +416,9 @@ class TestAugSynthRidgeUnits(unittest.TestCase):
         # transcription of the ridge_mhat outcome model with residualize=TRUE:
         # ridge_mhat = Z_all @ beta_ols_y + X_resid_all @ beta, with the
         # ridge component fit on the covariate-residualized post outcomes
-        self.augsynth.fit(dataprep=self.dataprep, lambda_=self.lambda_, residualize=True)
+        self.augsynth.fit(
+            dataprep=self.dataprep, lambda_=self.lambda_, residualize=True
+        )
         X0, X1 = self.dataprep.make_outcome_mats(time_period=self.augsynth.pre_periods)
         Y0, Y1 = self.dataprep.make_outcome_mats(time_period=self.augsynth.post_periods)
         Z0, Z1 = self.dataprep.make_covariate_mats()
@@ -430,11 +442,15 @@ class TestAugSynthRidgeUnits(unittest.TestCase):
         X_all = np.concatenate([resid0, resid1[:, None]], axis=1)
         expected_mhat = mhat_ols + X_all.T @ beta
 
-        np.testing.assert_allclose(self.augsynth.ridge_mhat.to_numpy(), expected_mhat, rtol=1e-12)
+        np.testing.assert_allclose(
+            self.augsynth.ridge_mhat.to_numpy(), expected_mhat, rtol=1e-12
+        )
         np.testing.assert_allclose(self.augsynth.beta, beta, rtol=1e-12)
         np.testing.assert_allclose(self.augsynth.X_cent.to_numpy(), X_all, rtol=1e-12)
         # bias_est uses the SCM weights from the residualized design
-        expected_bias = expected_mhat[-1, :] - self.augsynth.synw @ expected_mhat[:-1, :]
+        expected_bias = (
+            expected_mhat[-1, :] - self.augsynth.synw @ expected_mhat[:-1, :]
+        )
         np.testing.assert_allclose(
             self.augsynth.bias_est.to_numpy(), expected_bias, rtol=1e-12
         )

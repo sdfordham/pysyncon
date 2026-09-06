@@ -209,7 +209,9 @@ class TestAugSynthKansasCovariates(unittest.TestCase):
     def test_diagnostics(self):
         self.assertAlmostEqual(self.augsynth.l2_imbalance, 0.045649, delta=1e-3)
         self.assertAlmostEqual(self.augsynth.scaled_l2_imbalance, 0.113532, delta=1e-3)
-        self.assertAlmostEqual(self.augsynth.covariate_l2_imbalance, 0.002594, delta=1e-3)
+        self.assertAlmostEqual(
+            self.augsynth.covariate_l2_imbalance, 0.002594, delta=1e-3
+        )
         self.assertAlmostEqual(
             self.augsynth.scaled_covariate_l2_imbalance, 0.012898, delta=1e-3
         )

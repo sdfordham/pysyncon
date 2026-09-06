@@ -150,7 +150,9 @@ class AugSynth(BaseSynth, VanillaOptimMixin):
                 )
                 X1_stacked = pd.Series(resid1, index=X1_demean.index, name=X1.name)
             else:
-                X0_demean, X1_demean, Z0_normal, Z1_normal = self._normalize(X0, X1, Z0, Z1)
+                X0_demean, X1_demean, Z0_normal, Z1_normal = self._normalize(
+                    X0, X1, Z0, Z1
+                )
                 X0_stacked = pd.concat([X0_demean, Z0_normal], axis=0)
                 X1_stacked = pd.concat([X1_demean, Z1_normal], axis=0)
         else:
@@ -220,7 +222,9 @@ class AugSynth(BaseSynth, VanillaOptimMixin):
 
             X_all_c = pd.concat([X0_stacked, X1_stacked], axis=1)
             design = X0_stacked.to_numpy()  # T0 x n_c
-            N = np.linalg.inv(design @ design.T + self.lambda_ * np.eye(design.shape[0]))
+            N = np.linalg.inv(
+                design @ design.T + self.lambda_ * np.eye(design.shape[0])
+            )
             self.beta = N @ (design @ y_c)  # T0 x T_post
             self.X_cent = X_all_c
             self.ridge_mhat = pd.DataFrame(
@@ -238,7 +242,9 @@ class AugSynth(BaseSynth, VanillaOptimMixin):
             # covariates).
             F_all = pd.concat([X_all_c, pd.concat([Z0_c, Z1_c], axis=1)], axis=0)
             design = X0_stacked.to_numpy()  # m x n_c
-            N = np.linalg.inv(design @ design.T + self.lambda_ * np.eye(design.shape[0]))
+            N = np.linalg.inv(
+                design @ design.T + self.lambda_ * np.eye(design.shape[0])
+            )
             self.beta = N @ (design @ y_c)  # m x T_post
             self.X_cent = X_all_c
             self.ridge_mhat = pd.DataFrame(
@@ -249,7 +255,9 @@ class AugSynth(BaseSynth, VanillaOptimMixin):
         else:
             X_all_c = pd.concat([X0_stacked, X1_stacked], axis=1)
             design = X0_stacked.to_numpy()  # m x n_c
-            N = np.linalg.inv(design @ design.T + self.lambda_ * np.eye(design.shape[0]))
+            N = np.linalg.inv(
+                design @ design.T + self.lambda_ * np.eye(design.shape[0])
+            )
             self.beta = N @ (design @ y_c)  # m x T_post
             self.X_cent = X_all_c
             self.ridge_mhat = pd.DataFrame(
@@ -283,9 +291,9 @@ class AugSynth(BaseSynth, VanillaOptimMixin):
             z_gaps = Z0_bal.to_numpy() @ self.W - Z1_bal.to_numpy()
             self.covariate_l2_imbalance = np.sqrt((z_gaps**2).sum()).item()
             z_gaps_unif = Z0_bal.to_numpy() @ uni_w - Z1_bal.to_numpy()
-            self.scaled_covariate_l2_imbalance = self.covariate_l2_imbalance / np.sqrt(
-                (z_gaps_unif**2).sum()
-            ).item()
+            self.scaled_covariate_l2_imbalance = (
+                self.covariate_l2_imbalance / np.sqrt((z_gaps_unif**2).sum()).item()
+            )
 
     @staticmethod
     def solve_ridge(
