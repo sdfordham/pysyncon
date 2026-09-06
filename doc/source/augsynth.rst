@@ -53,6 +53,13 @@ that package, in particular:
   usual quadratic minimization problem (weights that sum to 1 and are
   non-negative) on this design matrix, so that the covariates are balanced
   jointly with the outcomes.
+- With ``residualize=True`` (the ``residualize = TRUE`` option of the R
+  package), the covariates are not balanced directly: the centered
+  pre-treatment outcomes are regressed on the centered (unscaled) covariates
+  with OLS on the control units and the residuals form the design matrix;
+  after the ridge step the covariates are re-added to the weights exactly, so
+  that the final weights balance the covariates exactly. The weights before
+  the re-add are stored in ``no_cov_weights``.
 - The augmentation :math:`w_\mathrm{aug}` is obtained by ridge regression of
   the imbalance of the synthetic control fit on the design matrix, with the
   ridge parameter :math:`\lambda` controlling the degree of extrapolation.
@@ -74,6 +81,12 @@ of the augmented weights in each post-treatment period, with
 ``bias_est = mhat[treated] - synw @ mhat[controls]`` (using the synthetic
 control weights) and ``avg_bias`` the average over the post-treatment periods
 - reproducing the *Avg Estimated Bias* diagnostic of the R package.
+
+The fit also stores the pre-treatment fit diagnostics of the R package:
+``l2_imbalance``, ``unif_l2_imbalance`` and ``scaled_l2_imbalance`` (computed
+on the original outcome matrices, so that ``1 - scaled_l2_imbalance`` is the
+percentage improvement over uniform weights) and, when covariates are used,
+``covariate_l2_imbalance`` and ``scaled_covariate_l2_imbalance``.
 
 .. autoclass:: pysyncon.AugSynth
    :members:

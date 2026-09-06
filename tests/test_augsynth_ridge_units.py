@@ -294,3 +294,148 @@ class TestAugSynthRidgeUnits(unittest.TestCase):
             scm_options={"lambda_": self.lambda_},
         )
         self.assertEqual(placebo.gaps.shape, (8, 3))
+
+    def test_diagnostics(self):
+        # l2_imbalance on the original (uncentered) outcome matrices and the
+        # covariate imbalance on the scaled centered covariates (direct-
+        # balance branch), following the augsynth R package
+        self.augsynth.fit(dataprep=self.dataprep, lambda_=self.lambda_)
+        X0, X1 = self.dataprep.make_outcome_mats(time_period=self.augsynth.pre_periods)
+        uni_w = np.full(len(self.augsynth.W), 1 / len(self.augsynth.W))
+        gaps = X0.to_numpy() @ self.augsynth.W - X1.to_numpy()
+        self.assertAlmostEqual(
+            self.augsynth.l2_imbalance, np.sqrt((gaps**2).sum()), places=12
+        )
+        gaps_unif = X0.to_numpy() @ uni_w - X1.to_numpy()
+        self.assertAlmostEqual(
+            self.augsynth.unif_l2_imbalance, np.sqrt((gaps_unif**2).sum()), places=12
+        )
+        self.assertAlmostEqual(
+            self.augsynth.scaled_l2_imbalance,
+            self.augsynth.l2_imbalance / self.augsynth.unif_l2_imbalance,
+            places=12,
+        )
+
+        Z0, Z1 = self.dataprep.make_covariate_mats()
+        _, _, Z0_s, Z1_s = self.augsynth._normalize(X0, X1, Z0, Z1)
+        z_gaps = Z0_s.to_numpy() @ self.augsynth.W - Z1_s.to_numpy()
+        self.assertAlmostEqual(
+            self.augsynth.covariate_l2_imbalance, np.sqrt((z_gaps**2).sum()), places=12
+        )
+        z_gaps_unif = Z0_s.to_numpy() @ uni_w - Z1_s.to_numpy()
+        self.assertAlmostEqual(
+            self.augsynth.scaled_covariate_l2_imbalance,
+            self.augsynth.covariate_l2_imbalance / np.sqrt((z_gaps_unif**2).sum()),
+            places=12,
+        )
+
+    def test_diagnostics_no_covariates(self):
+        self.augsynth.fit(
+            dataprep=self.dataprep, lambda_=self.lambda_, use_covariates=False
+        )
+        self.assertIsNone(self.augsynth.covariate_l2_imbalance)
+        self.assertIsNone(self.augsynth.scaled_covariate_l2_imbalance)
+        X0, X1 = self.dataprep.make_outcome_mats(time_period=self.augsynth.pre_periods)
+        gaps = X0.to_numpy() @ self.augsynth.W - X1.to_numpy()
+        self.assertAlmostEqual(
+            self.augsynth.l2_imbalance, np.sqrt((gaps**2).sum()), places=12
+        )
+
+    def test_residualize_diagnostics(self):
+        # the covariate imbalance is computed on the centered UNscaled
+        # covariates (residualize branch) and is ~0 after the exact
+        # covariate re-add
+        self.augsynth.fit(dataprep=self.dataprep, lambda_=self.lambda_, residualize=True)
+        self.assertLess(self.augsynth.covariate_l2_imbalance, 1e-8)
+        Z0, Z1 = self.dataprep.make_covariate_mats()
+        Z0_c = Z0.subtract(Z0.mean(axis=1), axis=0)
+        Z1_c = Z1.subtract(Z0.mean(axis=1), axis=0)
+        z_gaps = Z0_c.to_numpy() @ self.augsynth.W - Z1_c.to_numpy()
+        self.assertAlmostEqual(
+            self.augsynth.covariate_l2_imbalance, np.sqrt((z_gaps**2).sum()), places=12
+        )
+
+    def test_residualize_requires_covariates(self):
+        self.assertRaises(
+            ValueError,
+            self.augsynth.fit,
+            dataprep=self.dataprep,
+            lambda_=self.lambda_,
+            use_covariates=False,
+            residualize=True,
+        )
+
+    def test_fit_residualize_reproduces_numpy_transcription(self):
+        # independent transcription of the residualize=TRUE algorithm from
+        # the augsynth R package: OLS projection of the centered outcomes
+        # onto the centered (unscaled) covariates, ridge on the residuals,
+        # then the exact covariate re-add
+        X0, X1 = self.dataprep.make_outcome_mats(
+            time_period=list(self.dataprep.time_optimize_ssr)
+        )
+        Z0, Z1 = self.dataprep.make_covariate_mats()
+        X0_d = X0.subtract(X0.mean(axis=1), axis=0).to_numpy()
+        X1_d = X1.subtract(X0.mean(axis=1), axis=0).to_numpy()
+        Z0_c = Z0.subtract(Z0.mean(axis=1), axis=0).to_numpy()
+        Z1_c = Z1.subtract(Z0.mean(axis=1), axis=0).to_numpy()
+
+        gram = Z0_c @ Z0_c.T
+        beta_ols = np.linalg.inv(gram) @ Z0_c @ X0_d.T
+        resid0 = X0_d - beta_ols.T @ Z0_c
+        resid1 = X1_d - beta_ols.T @ Z1_c
+
+        W, _ = VanillaOptimMixin.w_optimize(
+            V_mat=np.eye(resid0.shape[0]),
+            X0=resid0,
+            X1=resid1,
+            qp_options={"maxiter": 2000, "ftol": 1e-12},
+        )
+        W_ridge = self.augsynth.solve_ridge(A=resid1, B=resid0, W=W, lambda_=self.lambda_)
+        no_cov_w = W + W_ridge
+        cov_w = (Z1_c - Z0_c @ no_cov_w) @ np.linalg.inv(gram) @ Z0_c
+        expected = no_cov_w + cov_w
+
+        self.augsynth.fit(dataprep=self.dataprep, lambda_=self.lambda_, residualize=True)
+        np.testing.assert_allclose(self.augsynth.W, expected, rtol=1e-10, atol=1e-10)
+        np.testing.assert_allclose(
+            self.augsynth.no_cov_weights, no_cov_w, rtol=1e-10, atol=1e-10
+        )
+        np.testing.assert_allclose(self.augsynth.synw, W, rtol=1e-10, atol=1e-10)
+
+    def test_residualize_ridge_mhat(self):
+        # transcription of the ridge_mhat outcome model with residualize=TRUE:
+        # ridge_mhat = Z_all @ beta_ols_y + X_resid_all @ beta, with the
+        # ridge component fit on the covariate-residualized post outcomes
+        self.augsynth.fit(dataprep=self.dataprep, lambda_=self.lambda_, residualize=True)
+        X0, X1 = self.dataprep.make_outcome_mats(time_period=self.augsynth.pre_periods)
+        Y0, Y1 = self.dataprep.make_outcome_mats(time_period=self.augsynth.post_periods)
+        Z0, Z1 = self.dataprep.make_covariate_mats()
+
+        X0_d = X0.subtract(X0.mean(axis=1), axis=0).to_numpy()
+        X1_d = X1.subtract(X0.mean(axis=1), axis=0).to_numpy()
+        Z0_c = Z0.subtract(Z0.mean(axis=1), axis=0).to_numpy()
+        Z1_c = Z1.subtract(Z0.mean(axis=1), axis=0).to_numpy()
+        gram = Z0_c @ Z0_c.T
+        beta_ols = np.linalg.inv(gram) @ Z0_c @ X0_d.T
+        resid0 = X0_d - beta_ols.T @ Z0_c
+        resid1 = X1_d - beta_ols.T @ Z1_c
+
+        y_c = Y0.subtract(Y0.mean(axis=1), axis=0).T.to_numpy()
+        beta_ols_y = np.linalg.inv(gram) @ Z0_c @ y_c
+        Z_all = np.concatenate([Z0_c, Z1_c[:, None]], axis=1)
+        mhat_ols = Z_all.T @ beta_ols_y
+        y_c_resid = y_c - Z0_c.T @ beta_ols_y
+        N = np.linalg.inv(resid0 @ resid0.T + self.lambda_ * np.eye(resid0.shape[0]))
+        beta = N @ (resid0 @ y_c_resid)
+        X_all = np.concatenate([resid0, resid1[:, None]], axis=1)
+        expected_mhat = mhat_ols + X_all.T @ beta
+
+        np.testing.assert_allclose(self.augsynth.ridge_mhat.to_numpy(), expected_mhat, rtol=1e-12)
+        np.testing.assert_allclose(self.augsynth.beta, beta, rtol=1e-12)
+        np.testing.assert_allclose(self.augsynth.X_cent.to_numpy(), X_all, rtol=1e-12)
+        # bias_est uses the SCM weights from the residualized design
+        expected_bias = expected_mhat[-1, :] - self.augsynth.synw @ expected_mhat[:-1, :]
+        np.testing.assert_allclose(
+            self.augsynth.bias_est.to_numpy(), expected_bias, rtol=1e-12
+        )
+        self.assertAlmostEqual(self.augsynth.avg_bias, expected_bias.mean(), places=12)
