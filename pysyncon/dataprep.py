@@ -313,8 +313,10 @@ class Dataprep:
             f"Control units: {', '.join([str(c) for c in self.controls_identifier])}\n"
             f"Time range in data: {min(self.foo[self.time_variable])}"
             f" - {max(self.foo[self.time_variable])}\n"
-            f"Time range for loss minimization: {self.time_optimize_ssr}\n"
-            f"Time range for predictors: {self.time_predictors_prior}\n"
+            f"Time range for loss minimization: "
+            f"[{', '.join(str(t) for t in self.time_optimize_ssr)}]\n"
+            f"Time range for predictors: "
+            f"[{', '.join(str(t) for t in self.time_predictors_prior)}]\n"
             f"Predictors: {', '.join([str(p) for p in self.predictors])}\n"
         )
 
