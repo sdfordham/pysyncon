@@ -26,9 +26,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          # Pinned to the same reference environment as parity.yml so that
-          # the parity suite can be measured for coverage here.
-          python-version: "3.9"
+          python-version: "3.12"
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
