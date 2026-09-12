@@ -2,7 +2,7 @@ import unittest
 import pandas as pd
 import numpy as np
 
-from pysyncon import Synth
+from pysyncon import Dataprep, Synth
 from pysyncon.inference import ConformalInference
 
 
@@ -323,3 +323,65 @@ class TestConformalInference(unittest.TestCase):
             step_sz=1.0,
             max_iter=1,
         )
+
+
+class TestConformalInferenceEndToEnd(unittest.TestCase):
+    """End-to-end run of `confidence_intervals` on a small deterministic
+    panel. Only invariants are asserted; the notebook parity checks for the
+    germany data live in `parity_tests/test_synth_germany.py`. The outcome
+    values are deliberately integers so that the integer-dtype path through
+    `confidence_intervals` stays covered by the unit tests."""
+
+    def setUp(self):
+        rng = np.random.default_rng(1234)
+        n_t, n_units = 25, 4
+        time = np.tile(np.arange(1, n_t + 1), n_units)
+        name = np.repeat(np.arange(1, n_units + 1), n_t)
+        self.dataprep = Dataprep(
+            foo=pd.DataFrame(
+                {
+                    "time": time,
+                    "name": name,
+                    "dependent": rng.integers(0, 1000, size=len(time)),
+                    "predictor1": rng.random(size=len(time)),
+                    "predictor2": rng.random(size=len(time)),
+                }
+            ),
+            predictors=["predictor1"],
+            predictors_op="mean",
+            dependent="dependent",
+            unit_variable="name",
+            time_variable="time",
+            treatment_identifier=1,
+            controls_identifier=[2, 3, 4],
+            time_predictors_prior=list(range(1, 24)),
+            time_optimize_ssr=list(range(1, 24)),
+            special_predictors=[
+                ("predictor1", [2], "mean"),
+                ("predictor2", [1, 2], "median"),
+                ("predictor2", [1, 2], "std"),
+            ],
+        )
+        self.post_periods = [24, 25]
+
+    def test_confidence_intervals(self):
+        self.assertTrue(pd.api.types.is_integer_dtype(self.dataprep.foo["dependent"]))
+
+        synth = Synth()
+        synth.fit(dataprep=self.dataprep)
+        cis = synth.confidence_interval(
+            custom_V=synth.V,
+            alpha=0.05,
+            time_periods=self.post_periods,
+            max_iter=50,
+            tol=0.1,
+            verbose=False,
+        )
+
+        self.assertEqual(cis.columns.tolist(), ["value", "lower_ci", "upper_ci"])
+        self.assertEqual(cis.index.name, "time")
+        self.assertEqual(cis.index.tolist(), self.post_periods)
+        for dtype in cis.dtypes:
+            self.assertTrue(np.issubdtype(dtype, np.floating))
+        self.assertTrue((cis["lower_ci"] <= cis["value"]).all())
+        self.assertTrue((cis["value"] <= cis["upper_ci"]).all())
