@@ -153,7 +153,8 @@ class ConformalInference:
                     f"for time-period t={post_period}..."
                 )
             new_time_range = pre_periods + [post_period]
-            Z0_new, Z1_new = Z0.loc[new_time_range], Z1.loc[new_time_range]
+            Z0_new = Z0.loc[new_time_range].astype("float64")
+            Z1_new = Z1.loc[new_time_range].astype("float64")
             Z1_post_orig = Z1_new.loc[post_period].item()
 
             def _compute_p_value(g):
