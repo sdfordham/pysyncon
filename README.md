@@ -39,7 +39,7 @@ Reproducing the published values to full precision requires the reference
 environment that the notebook-parity tests ([`parity_tests/`](parity_tests/))
 are verified against on CI:
 
-- Python 3.12
+- Python 3.11
 - numpy 2.0.2
 - scipy 1.13.1
 - pandas 2.3.3
