@@ -1,4 +1,4 @@
-__version__ = "1.5.1"
+__version__ = "1.7.0"
 
 from .dataprep import Dataprep
 from .synth import Synth
