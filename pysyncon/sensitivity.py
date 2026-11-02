@@ -5,7 +5,7 @@ from __future__ import annotations
 from copy import deepcopy
 from dataclasses import dataclass
 from inspect import signature
-from importlib.metadata import version
+from importlib.metadata import PackageNotFoundError, version
 from statistics import mean, median_high, median_low
 from typing import Any, Iterable, Optional
 import warnings
@@ -26,6 +26,13 @@ _DESIGN_FIELDS = {
     "time_predictors_prior",
     "time_optimize_ssr",
 }
+
+
+def _package_version(name):
+    try:
+        return version(name)
+    except PackageNotFoundError:
+        return None
 
 
 def _rms(values):
@@ -181,9 +188,12 @@ def run_sensitivity(
         Only :class:`Synth` is supported.
     fit_options : dict, optional
         Fixed ``Synth.fit`` optimizer options or ``custom_V``. Matrix inputs
-        cannot be supplied through this argument.
+        cannot be supplied through this argument. With ``custom_V``, overrides
+        of predictors or special_predictors fail to prevent positional weights
+        from being reassigned to different matching variables.
     excluded_donors : iterable
-        Known treated or contaminated units. Any pool containing one fails.
+        Collection of known unit IDs, not a scalar string. Unknown IDs raise
+        before fitting. Any pool containing an excluded unit fails.
         Eligibility beyond this declared list is the researcher's responsibility.
 
     Returns
@@ -218,7 +228,9 @@ def run_sensitivity(
     options.update(deepcopy(fit_options or {}))
     data = data.copy(deep=True)
     unit, time = baseline["unit_variable"], baseline["time_variable"]
-    available = sorted(data[time].dropna().unique())
+    treated = baseline["treatment_identifier"]
+    treated = treated if isinstance(treated, (list, tuple)) else [treated]
+    available = sorted(data.loc[data[unit].isin(treated), time].dropna().unique())
     if pd.isna(treatment_time):
         raise ValueError("treatment_time must not be missing.")
     post = _periods(att_periods, available, "att_periods")
@@ -227,7 +239,11 @@ def run_sensitivity(
     pre = [t for t in available if t < treatment_time]
     if not pre:
         raise ValueError("At least one pre-treatment period is required.")
+    if isinstance(excluded_donors, (str, bytes)):
+        raise ValueError("excluded_donors must be a collection of known unit IDs.")
     excluded = tuple(excluded_donors)
+    if not set(excluded).issubset(data[unit].unique()):
+        raise ValueError("excluded_donors contains unit IDs absent from the panel.")
     specs = deepcopy(list(specifications))
     names = [spec["name"] for spec in specs]
     if any(not isinstance(n, str) or not n for n in names) or len(set(names)) != len(
@@ -273,6 +289,12 @@ def run_sensitivity(
                 if name == "baseline" and len(spec) != 1:
                     raise ValueError(
                         "The baseline specification cannot contain overrides."
+                    )
+                if options.get("custom_V") is not None and set(spec).intersection(
+                    {"predictors", "special_predictors"}
+                ):
+                    raise ValueError(
+                        "custom_V requires fixed predictors and special_predictors."
                     )
                 donors = list(cfg["controls_identifier"])
                 row["n_donors"] = len(donors)
@@ -392,7 +414,8 @@ def run_sensitivity(
             excluded_donors=excluded,
             estimator="pysyncon.Synth",
             versions={
-                name: version(name) for name in ("pysyncon", "numpy", "pandas", "scipy")
+                name: _package_version(name)
+                for name in ("pysyncon", "numpy", "pandas", "scipy")
             },
         ),
         fits=fits,

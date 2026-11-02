@@ -221,8 +221,15 @@ class TestSensitivity(unittest.TestCase):
 
         with patch("pysyncon.base.minimize", side_effect=failed):
             result = self.run_study(fit_options={"custom_V": np.array([0.5, 0.5])})
+            with self.assertWarnsRegex(RuntimeWarning, "Donor-weight"):
+                standalone = Synth()
+                standalone.fit(
+                    dataprep=Dataprep(foo=self.data, **self.base),
+                    custom_V=np.array([0.5, 0.5]),
+                )
         self.assertEqual(result.summary.status.tolist(), ["warning"])
         self.assertTrue(result.warnings.message.str.contains("Donor-weight").all())
+        np.testing.assert_array_equal(result.weights.weight, standalone.W)
 
     def test_all_failed_plot_and_dispersion(self):
         result = self.run_study(excluded_donors=[2, 3, 4])
@@ -240,9 +247,52 @@ class TestSensitivity(unittest.TestCase):
     def test_no_post_outcome_information_used_for_weights(self):
         original = self.run_study()
         altered = self.data.copy()
-        altered.loc[altered.year >= 7, "outcome"] += 5000
+        altered.loc[(altered.unit == 1) & (altered.year >= 7), "outcome"] += 5000
         updated = self.run_study(data=altered)
         np.testing.assert_array_equal(original.weights.weight, updated.weights.weight)
+        self.assertAlmostEqual(updated.summary.att[0] - original.summary.att[0], 5000)
+
+    def test_exclusions_require_a_collection_of_known_unit_ids(self):
+        for excluded in ("4", b"4", ["4"], [99]):
+            with self.subTest(excluded=excluded), self.assertRaisesRegex(
+                ValueError, "excluded_donors"
+            ), patch.object(Synth, "fit") as fit:
+                self.run_study(excluded_donors=excluded)
+            fit.assert_not_called()
+
+    def test_custom_predictor_weights_cannot_be_reassigned(self):
+        self.data["y"] = self.data.x**2
+        result = self.run_study(
+            [
+                {"name": "predictor", "predictors": ["y"]},
+                {"name": "special", "special_predictors": [("outcome", [1], "mean")]},
+                {"name": "window", "time_optimize_ssr": [4, 5, 6]},
+            ],
+            fit_options={"custom_V": [0.9, 0.1]},
+        )
+        self.assertEqual(result.failures.spec_id.tolist(), ["predictor", "special"])
+        self.assertTrue(result.failures.message.str.contains("custom_V").all())
+        self.assertTrue(np.isfinite(result.summary.att.iloc[[0, 3]]).all())
+
+    def test_source_checkout_without_distribution_metadata_retains_results(self):
+        from importlib.metadata import PackageNotFoundError, version
+
+        def source_version(name):
+            if name == "pysyncon":
+                raise PackageNotFoundError(name)
+            return version(name)
+
+        with patch("pysyncon.sensitivity.version", side_effect=source_version):
+            result = self.run_study()
+        self.assertTrue(np.isfinite(result.summary.att[0]))
+        self.assertIsNone(result.metadata["versions"]["pysyncon"])
+        self.assertEqual(result.metadata["versions"]["numpy"], version("numpy"))
+
+    def test_unselected_units_do_not_expand_the_common_trajectory(self):
+        original = self.run_study()
+        extra = pd.DataFrame([dict(unit=99, year=99, outcome=100, x=1)])
+        updated = self.run_study(data=pd.concat([self.data, extra], ignore_index=True))
+        pd.testing.assert_frame_equal(original.paths, updated.paths)
 
     def test_result_is_independent_of_input_mutation(self):
         result = self.run_study()
