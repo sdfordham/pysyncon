@@ -1,4 +1,5 @@
 from __future__ import annotations
+import warnings
 from typing import Any, Optional, Literal, Sequence
 from abc import ABCMeta, abstractmethod
 
@@ -516,5 +517,11 @@ class VanillaOptimMixin:
             method=qp_method,
             options=qp_options,
         )
+        if not res.get("success", True):
+            warnings.warn(
+                f"Donor-weight optimization did not converge: {res.get('message')}",
+                RuntimeWarning,
+                stacklevel=2,
+            )
         W, loss_W = res["x"], res["fun"]
         return W, loss_W.item()
