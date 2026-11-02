@@ -56,6 +56,11 @@ def _std(values):
     if len(values) < 2:
         return np.nan
     values = np.asarray(values, dtype=float)
+    # Remove the common level before scaling to preserve small differences.
+    with np.errstate(over="ignore"):
+        shifted = values - values[0]
+    if np.isfinite(shifted).all():
+        values = shifted
     scale = float(np.max(np.abs(values)))
     with np.errstate(over="ignore"):
         value = float(np.std(values / scale, ddof=1) * scale) if scale else 0.0

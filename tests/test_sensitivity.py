@@ -117,6 +117,19 @@ class TestSensitivity(unittest.TestCase):
         result.summary.loc[:, "att"] = [1.7e308, -1.7e308, np.nan, np.nan, np.nan]
         self.assertTrue(np.isnan(result.dispersion()["std"]))
 
+    def test_dispersion_preserves_spread_at_large_common_levels(self):
+        result = self.run_study()
+        high = np.nextafter(1e308, np.inf)
+        cases = [
+            ([1e308, high], (high - 1e308) / np.sqrt(2)),
+            ([2.0, 4.0], np.sqrt(2)),
+            ([1e308, -1e308], np.sqrt(2) * 1e308),
+        ]
+        for effects, expected in cases:
+            with self.subTest(effects=effects):
+                result.summary = pd.DataFrame({"att": effects, "status": ["ok", "ok"]})
+                self.assertAlmostEqual(result.dispersion()["std"] / expected, 1.0)
+
     def test_baseline_matches_standalone_and_paths(self):
         for options in ({}, {"custom_V": np.array([0.4, 0.6])}):
             with self.subTest(options=options):
