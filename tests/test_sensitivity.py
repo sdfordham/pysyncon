@@ -54,6 +54,69 @@ class TestSensitivity(unittest.TestCase):
         args.update(kwargs)
         return run_sensitivity(**args)
 
+    def test_extreme_post_gaps_keep_finite_att(self):
+        cases = [
+            ([1e308] * 4, 1e308),
+            ([1e308, 1e308, -1e308, -1e308], 0.0),
+            ([1e308, -1e308, 1e-200, 1e-200], 5e-201),
+            ([0.0] * 4, 0.0),
+            ([1e-200] * 4, 1e-200),
+        ]
+        for gaps, expected in cases:
+            with self.subTest(gaps=gaps):
+                data = self.data.copy()
+                data.loc[data.year >= 7, "outcome"] = 0.0
+                data.loc[(data.unit == 1) & (data.year >= 7), "outcome"] = gaps
+                result = self.run_study(data=data)
+                self.assertTrue(result.failures.empty)
+                self.assertEqual(result.summary.att[0], expected)
+                self.assertTrue(
+                    np.isfinite(result.summary[["att", "pre_rmse", "fit_rmse"]])
+                    .all()
+                    .all()
+                )
+                self.assertEqual(result.dispersion()["estimated"], 1)
+
+    def test_large_pre_gap_outside_fit_window(self):
+        self.base["time_optimize_ssr"] = [4, 5, 6]
+        self.base["special_predictors"] = []
+        self.data.loc[(self.data.unit == 1) & (self.data.year == 1), "outcome"] = 1e200
+        result = self.run_study()
+        self.assertTrue(result.failures.empty)
+        self.assertAlmostEqual(result.summary.pre_rmse[0] / 1e200, 1 / np.sqrt(6))
+        self.assertTrue(np.isfinite(result.summary.fit_rmse[0]))
+
+    def test_rms_scales_and_summary_guard(self):
+        from pysyncon.sensitivity import _rms
+
+        for scale in [0.0, np.nextafter(0.0, 1.0), 1e-200, 1e200, 1e308]:
+            with self.subTest(scale=scale):
+                self.assertEqual(_rms([scale, -scale]), scale)
+        self.assertAlmostEqual(_rms([3e200, 4e200]) / 1e200, np.sqrt(12.5))
+        with patch("pysyncon.sensitivity._rms", return_value=np.inf):
+            result = self.run_study()
+        self.assertEqual(result.summary.status.tolist(), ["failed"])
+        self.assertTrue(
+            result.summary[["att", "pre_rmse", "fit_rmse"]].isna().all().all()
+        )
+        self.assertTrue(result.paths.empty)
+        self.assertIn("nonfinite summary", result.failures.message[0])
+
+    def test_dispersion_uses_finite_estimates_and_stable_statistics(self):
+        result = self.run_study()
+        result.summary = pd.DataFrame(
+            {"att": [1e308, 1e308, np.inf, -np.inf, np.nan], "status": ["ok"] * 5}
+        )
+        stats = result.dispersion()
+        self.assertEqual(stats["estimated"], 2)
+        self.assertEqual(stats["positive_share"], 1)
+        self.assertEqual(stats["median"], 1e308)
+        self.assertEqual(stats["std"], 0)
+        result.summary.loc[:, "att"] = [1e200, -1e200, np.nan, np.nan, np.nan]
+        self.assertAlmostEqual(result.dispersion()["std"] / 1e200, np.sqrt(2))
+        result.summary.loc[:, "att"] = [1.7e308, -1.7e308, np.nan, np.nan, np.nan]
+        self.assertTrue(np.isnan(result.dispersion()["std"]))
+
     def test_baseline_matches_standalone_and_paths(self):
         for options in ({}, {"custom_V": np.array([0.4, 0.6])}):
             with self.subTest(options=options):

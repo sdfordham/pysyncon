@@ -6,6 +6,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 from inspect import signature
 from importlib.metadata import version
+from statistics import mean, median_high, median_low
 from typing import Any, Iterable, Optional
 import warnings
 
@@ -25,6 +26,33 @@ _DESIGN_FIELDS = {
     "time_predictors_prior",
     "time_optimize_ssr",
 }
+
+
+def _rms(values):
+    """Compute RMS without squaring values in their original units."""
+    values = np.asarray(values, dtype=float)
+    scale = np.max(np.abs(values))
+    return float(scale * np.sqrt(np.mean((values / scale) ** 2))) if scale else 0.0
+
+
+def _median(values):
+    """Average the central observations without overflowing their sum."""
+    return (
+        mean([float(median_low(values)), float(median_high(values))])
+        if len(values)
+        else np.nan
+    )
+
+
+def _std(values):
+    """Return sample SD, or NaN if undefined or outside floating-point range."""
+    if len(values) < 2:
+        return np.nan
+    values = np.asarray(values, dtype=float)
+    scale = float(np.max(np.abs(values)))
+    with np.errstate(over="ignore"):
+        value = float(np.std(values / scale, ddof=1) * scale) if scale else 0.0
+    return value if np.isfinite(value) else np.nan
 
 
 @dataclass
@@ -56,8 +84,10 @@ class SensitivityResult:
 
         Estimates from warning-bearing fits are included. Failure and warning
         counts accompany the denominator used for all descriptive shares.
+        Standard deviation is NaN when fewer than two estimates are finite or
+        its value exceeds the floating-point range.
         """
-        effects = self.summary["att"].dropna()
+        effects = self.summary.loc[np.isfinite(self.summary["att"]), "att"]
         return pd.Series(
             {
                 "attempted": len(self.summary),
@@ -65,9 +95,9 @@ class SensitivityResult:
                 "failed": (self.summary["status"] == "failed").sum(),
                 "with_warnings": (self.summary["status"] == "warning").sum(),
                 "min": effects.min(),
-                "median": effects.median(),
+                "median": _median(effects),
                 "max": effects.max(),
-                "std": effects.std(),
+                "std": _std(effects),
                 "positive_share": (effects > 0).mean() if len(effects) else np.nan,
                 "negative_share": (effects < 0).mean() if len(effects) else np.nan,
                 "zero_share": (effects == 0).mean() if len(effects) else np.nan,
@@ -291,12 +321,15 @@ def run_sensitivity(
                 gap = Z1 - synthetic
                 if not np.isfinite(gap).all():
                     raise ValueError("Estimator returned a nonfinite trajectory.")
+                statistics = dict(
+                    att=mean(map(float, gap.loc[post])),
+                    pre_rmse=_rms(gap.loc[pre]),
+                    fit_rmse=_rms(gap.loc[cfg["time_optimize_ssr"]]),
+                )
+                if not all(np.isfinite(value) for value in statistics.values()):
+                    raise ValueError("Estimator returned nonfinite summary statistics.")
                 row.update(
-                    att=float(gap.loc[post].mean()),
-                    pre_rmse=float(np.sqrt(np.mean(gap.loc[pre] ** 2))),
-                    fit_rmse=float(
-                        np.sqrt(np.mean(gap.loc[cfg["time_optimize_ssr"]] ** 2))
-                    ),
+                    **statistics,
                     status="warning" if caught else "ok",
                 )
                 fits[name] = model
