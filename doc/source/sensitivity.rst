@@ -82,6 +82,7 @@ Warnings can originate from candidate solves during the predictor-weight search,
 even when the final solution converges. A warning status records a computational
 diagnostic, not a conclusion that the selected solution failed. Native ``Synth``
 fits now emit inner and outer nonconvergence warnings as well.
+Donor-solver messages distinguish predictor-weight search from the final solve.
 
 ``dispersion()`` reports the number attempted, estimated and failed alongside
 the range, median, sample standard deviation and sign shares among finite

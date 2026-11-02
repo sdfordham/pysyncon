@@ -470,6 +470,7 @@ class VanillaOptimMixin:
         X1: np.ndarray,
         qp_method: Literal["SLSQP"] = "SLSQP",
         qp_options: dict = {"maxiter": 1000},
+        warning_context: Optional[str] = None,
     ) -> tuple[np.ndarray, float]:
         """Solves the inner part of the quadratic minimization problem for a
         given V matrix (see Abadie and Gardeazabal :cite:`basque2003`).
@@ -489,6 +490,8 @@ class VanillaOptimMixin:
             , by default "SLSQP"
         qp_options : dict, optional
             Options for scipy minimize, by default {"maxiter": 1000}
+        warning_context : str, optional
+            Identify a search trial or final solve in nonconvergence warnings.
 
         Returns
         -------
@@ -518,8 +521,9 @@ class VanillaOptimMixin:
             options=qp_options,
         )
         if not res.get("success", True):
+            context = f" ({warning_context})" if warning_context else ""
             warnings.warn(
-                f"Donor-weight optimization did not converge: {res.get('message')}",
+                f"Donor-weight optimization{context} did not converge: {res.get('message')}",
                 RuntimeWarning,
                 stacklevel=2,
             )

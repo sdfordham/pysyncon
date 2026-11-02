@@ -142,7 +142,12 @@ class Synth(BaseSynth, VanillaOptimMixin):
 
         if custom_V is not None:
             V_mat = np.diag(custom_V)
-            W, loss_W = self.w_optimize(V_mat=V_mat, X0=X0_arr, X1=X1_arr)
+            W, loss_W = self.w_optimize(
+                V_mat=V_mat,
+                X0=X0_arr,
+                X1=X1_arr,
+                warning_context="final donor-weight solve",
+            )
             loss_V = self.calc_loss_V(W=W, Z0=Z0_arr, Z1=Z1_arr)
             self.W, self.loss_W, self.V, self.loss_V = W, loss_W, custom_V, loss_V
             return
@@ -172,7 +177,12 @@ class Synth(BaseSynth, VanillaOptimMixin):
 
         def fun(x):
             V_mat = np.diag(np.abs(x)) / np.sum(np.abs(x))
-            W, _ = self.w_optimize(V_mat=V_mat, X0=X0_arr, X1=X1_arr)
+            W, _ = self.w_optimize(
+                V_mat=V_mat,
+                X0=X0_arr,
+                X1=X1_arr,
+                warning_context="predictor-weight search",
+            )
             loss_V = self.calc_loss_V(W=W, Z0=Z0_arr, Z1=Z1_arr)
             return loss_V
 
@@ -185,7 +195,12 @@ class Synth(BaseSynth, VanillaOptimMixin):
                 stacklevel=2,
             )
         V_mat = np.diag(np.abs(res["x"])) / np.sum(np.abs(res["x"]))
-        W, loss_W = self.w_optimize(V_mat=V_mat, X0=X0_arr, X1=X1_arr)
+        W, loss_W = self.w_optimize(
+            V_mat=V_mat,
+            X0=X0_arr,
+            X1=X1_arr,
+            warning_context="final donor-weight solve",
+        )
         loss_V = self.calc_loss_V(W=W, Z0=Z0_arr, Z1=Z1_arr)
 
         self.W, self.loss_W, self.V, self.loss_V = W, loss_W, V_mat.diagonal(), loss_V

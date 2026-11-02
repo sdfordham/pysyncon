@@ -244,6 +244,32 @@ class TestSensitivity(unittest.TestCase):
         self.assertEqual([t.get_text() for t in ax.texts], ["failed"])
         plt.close(ax.figure)
 
+    def test_donor_warnings_identify_search_and_final_solves(self):
+        from scipy.optimize import minimize
+
+        with patch("pysyncon.base.minimize", wraps=minimize) as optimizer:
+            self.run_study()
+        for target, context in (
+            (1, "predictor-weight search"),
+            (optimizer.call_count, "final donor-weight solve"),
+        ):
+            calls = 0
+
+            def failed(*args, **kwargs):
+                nonlocal calls
+                calls += 1
+                result = minimize(*args, **kwargs)
+                if calls == target:
+                    result.success, result.message = False, "test failure"
+                return result
+
+            with patch("pysyncon.base.minimize", side_effect=failed):
+                result = self.run_study()
+            self.assertEqual(result.summary.status.tolist(), ["warning"])
+            self.assertEqual(len(result.warnings), 1)
+            self.assertIn(context, result.warnings.message[0])
+            self.assertTrue(np.isfinite(result.summary.att[0]))
+
     def test_no_post_outcome_information_used_for_weights(self):
         original = self.run_study()
         altered = self.data.copy()
