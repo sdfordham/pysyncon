@@ -80,7 +80,8 @@ class SensitivityResult:
         Finite estimates are ordered by ATT. Failed designs occupy labelled
         positions at the end, with text in axes coordinates and no effect value.
         """
-        if ax is None:
+        owns_axes = ax is None
+        if owns_axes:
             _, ax = plt.subplots()
         ordered = self.summary.sort_values("att", kind="stable", na_position="last")
         for position, row in enumerate(ordered.itertuples()):
@@ -103,6 +104,8 @@ class SensitivityResult:
         ax.set_xticklabels(ordered.spec_id, rotation=90)
         ax.set_ylabel("ATT")
         ax.set_xlabel("Specification (x: fit with warnings; failed: no estimate)")
+        if owns_axes:
+            ax.figure.tight_layout()
         return ax
 
 
