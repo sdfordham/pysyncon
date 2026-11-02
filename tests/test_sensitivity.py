@@ -294,6 +294,13 @@ class TestSensitivity(unittest.TestCase):
         updated = self.run_study(data=pd.concat([self.data, extra], ignore_index=True))
         pd.testing.assert_frame_equal(original.paths, updated.paths)
 
+    def test_incomplete_full_trajectory_is_not_silently_trimmed_to_att(self):
+        extra = pd.DataFrame([dict(unit=1, year=11, outcome=5.0, x=1.0)])
+        result = self.run_study(data=pd.concat([self.data, extra], ignore_index=True))
+        self.assertEqual(result.summary.status.tolist(), ["failed"])
+        self.assertIn("common trajectory", result.failures.message[0])
+        self.assertTrue(result.paths.empty)
+
     def test_result_is_independent_of_input_mutation(self):
         result = self.run_study()
         self.base["predictors"].append("new")
