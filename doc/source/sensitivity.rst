@@ -139,6 +139,8 @@ aggregate score unavailable; the runner never averages only successful folds.
 ``validation`` has one row per design and fold, with RMSE, training/validation
 counts, status and any exception. ``validation_paths``, ``validation_weights``
 and ``validation_warnings`` preserve predictions, donor weights and diagnostics.
+``n_train`` counts available earlier periods; each design's actual matching
+windows remain in its validation registry.
 ``validation_registry[spec_id][fold_id]`` records the effective matching windows,
 including empty windows that fail; ``validation_fits`` preserves native fits
 when available. The original registry and baseline remain accessible. Fold IDs
