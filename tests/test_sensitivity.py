@@ -187,3 +187,56 @@ class TestSensitivity(unittest.TestCase):
         self.data.loc[:, "outcome"] = 0
         self.assertEqual(result.baseline["predictors"], ["x"])
         self.assertTrue((result.fits["baseline"].dataprep.foo.outcome != 0).any())
+
+    def test_invalid_study_identity_raises_before_fitting(self):
+        for kwargs, message in [
+            ({"base_dataprep": {**self.base, "foo": self.data}}, "panel as data"),
+            ({"treatment_time": np.nan}, "must not be missing"),
+            ({"treatment_time": 1}, "pre-treatment period"),
+        ]:
+            with self.subTest(kwargs=kwargs), self.assertRaisesRegex(
+                ValueError, message
+            ):
+                self.run_study(**kwargs)
+
+    def test_baseline_overrides_are_failed_attempts(self):
+        result = self.run_study([{"name": "baseline", "time_optimize_ssr": [4, 5, 6]}])
+        self.assertEqual(result.summary.status.tolist(), ["failed"])
+        self.assertIn("cannot contain overrides", result.failures.message[0])
+        self.assertTrue(result.paths.empty)
+
+    def test_constant_predictors_are_reported_before_solver(self):
+        data = self.data.copy()
+        data["x"] = 1.0
+        result = self.run_study(data=data)
+        self.assertEqual(result.summary.status.tolist(), ["failed"])
+        self.assertIn("vary across units", result.failures.message[0])
+
+    def test_nonfinite_solver_outputs_never_become_estimates(self):
+        fit = Synth.fit
+
+        for value, message in [(np.nan, "weights"), (1e308, "trajectory")]:
+            with self.subTest(value=value):
+
+                def invalid_fit(model, *args, **kwargs):
+                    fit(model, *args, **kwargs)
+                    model.W[:] = value
+
+                with patch.object(Synth, "fit", invalid_fit):
+                    result = self.run_study()
+                self.assertEqual(result.summary.status.tolist(), ["failed"])
+                self.assertIn(message, result.failures.message[0])
+                self.assertTrue(result.paths.empty)
+                self.assertTrue(result.weights.empty)
+                self.assertTrue(np.isnan(result.summary.att[0]))
+
+    def test_curve_uses_supplied_axes_and_displays_finite_effects(self):
+        result = self.run_study([{"name": "bad", "predictors": ["absent"]}])
+        fig, ax = plt.subplots()
+        self.assertIs(result.plot(ax=ax), ax)
+        self.assertEqual(len(ax.collections), 1)
+        np.testing.assert_allclose(
+            ax.collections[0].get_offsets(), [[0, result.summary.att[0]]]
+        )
+        self.assertEqual([t.get_text() for t in ax.texts], ["failed"])
+        plt.close(fig)
