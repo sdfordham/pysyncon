@@ -467,3 +467,22 @@ class TestSensitivity(unittest.TestCase):
         self.assertEqual(circle, other)
         self.assertNotEqual(cross, circle)
         plt.close(ax.figure)
+
+    def test_failed_designs_report_their_declared_pool_size(self):
+        result = self.run_study(
+            [
+                {"name": "duplicate", "controls_identifier": [2, 2]},
+                {"name": "leaky", "time_optimize_ssr": [6, 7]},
+            ],
+            excluded_donors=[4],
+        )
+        self.assertEqual(result.summary.status.tolist(), ["failed"] * 3)
+        self.assertEqual(result.summary.n_donors.tolist(), [3, 2, 3])
+
+    def test_incomplete_trajectory_fails_before_optimization(self):
+        data = self.data.copy()
+        data.loc[(data.unit == 4) & (data.year == 8), "outcome"] = np.nan
+        with patch.object(Synth, "fit") as fit:
+            result = self.run_study(data=data)
+        fit.assert_not_called()
+        self.assertIn("common trajectory", result.failures.message[0])

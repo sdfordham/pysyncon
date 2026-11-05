@@ -267,7 +267,7 @@ def _validation_windows(windows, pre, limit):
     return sorted(windows, key=lambda w: w[0])
 
 
-def _prepare_design(spec, cfg, available, treatment_time, excluded, options):
+def _prepare_design(spec, cfg, available, treatment_time, excluded, options, row=None):
     cfg = deepcopy(cfg)
     if set(spec) - _DESIGN_FIELDS - {"name"}:
         raise ValueError(
@@ -280,6 +280,8 @@ def _prepare_design(spec, cfg, available, treatment_time, excluded, options):
     ):
         raise ValueError("custom_V requires fixed predictors and special_predictors.")
     donors = list(cfg["controls_identifier"])
+    if row is not None:
+        row["n_donors"] = len(donors)
     if not donors or len(set(donors)) != len(donors):
         raise ValueError("Donor pool must be nonempty and unique.")
     if set(donors).intersection(excluded):
@@ -300,14 +302,15 @@ def _prepare_design(spec, cfg, available, treatment_time, excluded, options):
     return cfg
 
 
-def _fit_design(data, cfg, options):
+def _fit_design(data, cfg, options, periods=None):
     dp = Dataprep(foo=data.copy(deep=True), **cfg)
-    _outcomes(dp, data, cfg["time_optimize_ssr"])
     X0, X1 = dp.make_covariate_mats()
     if X0.empty or not np.isfinite(np.column_stack([X0, X1])).all():
         raise ValueError("Matching predictors must be nonempty and finite.")
     if (pd.concat([X0, X1], axis=1).std(axis=1) == 0).any():
         raise ValueError("Matching predictors must vary across units.")
+    # Outcomes the result needs are checked before the costly optimization.
+    _outcomes(dp, data, cfg["time_optimize_ssr"] if periods is None else periods)
     model = Synth()
     model.fit(dataprep=dp, **deepcopy(options))
     if not np.isfinite(model.W).all() or not np.isfinite(model.V).all():
@@ -574,10 +577,9 @@ def run_sensitivity(
         with _distinct_warnings() as caught:
             try:
                 cfg = _prepare_design(
-                    spec, cfg, available, treatment_time, excluded, options
+                    spec, cfg, available, treatment_time, excluded, options, row
                 )
-                row["n_donors"] = len(cfg["controls_identifier"])
-                model = _fit_design(data, cfg, options)
+                model = _fit_design(data, cfg, options, available)
                 Z1, synthetic, gap = _trajectory(model, data, available)
                 w = np.asarray(model.W, dtype=float)
                 X0, _ = model.dataprep.make_covariate_mats()
