@@ -1,4 +1,5 @@
 import unittest
+import warnings
 from unittest.mock import patch
 
 import matplotlib
@@ -399,3 +400,23 @@ class TestSensitivity(unittest.TestCase):
         )
         self.assertEqual([t.get_text() for t in ax.texts], ["failed"])
         plt.close(fig)
+
+    def test_repeated_solver_warnings_are_recorded_once_per_design(self):
+        from scipy.optimize import minimize
+
+        def failed(*args, **kwargs):
+            res = minimize(*args, **kwargs)
+            res.success, res.message = False, "test failure"
+            return res
+
+        display = warnings.showwarning
+        with patch("pysyncon.base.minimize", side_effect=failed):
+            result = self.run_study([{"name": "pool", "controls_identifier": [2, 3]}])
+        self.assertIs(warnings.showwarning, display)
+        self.assertEqual(result.summary.status.tolist(), ["warning", "warning"])
+        self.assertFalse(result.warnings.duplicated().any())
+        for name in ("baseline", "pool"):
+            messages = result.warnings.query("spec_id == @name").message
+            self.assertEqual(len(messages), 2)
+            self.assertTrue(messages.str.contains("predictor-weight search").any())
+            self.assertTrue(messages.str.contains("final donor-weight solve").any())
