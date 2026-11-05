@@ -279,6 +279,42 @@ class TestSensitivityValidation(unittest.TestCase):
             result.validation_warnings.groupby("fold_id").size().tolist(), [2, 2]
         )
 
+    def test_fold_tables_carry_labels_signs_counts_and_cutoff_boundary(self):
+        windows = [[5, 6], [7, 8]]
+        result = self.study(validation_windows=windows)
+        panel = self.data.pivot(index="time", columns="unit", values="y")
+        for number, window in enumerate(windows, 1):
+            fold = f"fold_{number}"
+            weights = result.validation_weights.query("fold_id == @fold")
+            self.assertEqual(weights.donor.tolist(), [1, 2, 3])
+            paths = result.validation_paths.query("fold_id == @fold")
+            synthetic = panel.loc[window, [1, 2, 3]] @ weights.weight.to_numpy()
+            np.testing.assert_allclose(paths.observed, panel.loc[window, 0])
+            np.testing.assert_allclose(paths.gap, panel.loc[window, 0] - synthetic)
+            counts = result.validation.query("fold_id == @fold").iloc[0]
+            self.assertEqual(counts.n_train, window[0] - 1)
+        score = result.summary.validation_rmse[0]
+        for limit, passed in ((score, True), (np.nextafter(score, 0), False)):
+            flagged = self.study(validation_windows=windows, validation_max_rmse=limit)
+            self.assertEqual(flagged.summary.validation_pass[0], passed)
+
+    def test_missing_fit_window_outcomes_fail_before_optimization(self):
+        self.data.loc[(self.data.unit == 1) & (self.data.time == 3), "y"] = np.nan
+        with patch.object(Synth, "fit") as fit:
+            result = self.study()
+        fit.assert_not_called()
+        self.assertEqual(result.validation.status.tolist(), ["failed"])
+
+    def test_validation_plot_distinguishes_warning_designs(self):
+        result = self.study(
+            specifications=[{"name": "few", "controls_identifier": [1, 2]}]
+        )
+        result.summary.loc[1, "validation_status"] = "warning"
+        ax = result.plot_validation()
+        circle, cross = (len(c.get_paths()[0]) for c in ax.collections)
+        self.assertNotEqual(circle, cross)
+        plt.close(ax.figure)
+
 
 if __name__ == "__main__":
     unittest.main()
