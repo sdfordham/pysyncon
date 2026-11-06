@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import Union, Optional, Literal
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -25,6 +26,7 @@ class Synth(BaseSynth, VanillaOptimMixin):
         self.loss_W: Optional[float] = None
         self.V: Optional[np.ndarray] = None
         self.loss_V: Optional[float] = None
+        self.optimization_result = None
 
     def fit(
         self,
@@ -111,6 +113,7 @@ class Synth(BaseSynth, VanillaOptimMixin):
         ValueError
             if `optim_initial` is not one of `'equal'` or `'ols'`.
         """
+        self.optimization_result = None
         if dataprep:
             if (
                 isinstance(dataprep.treatment_identifier, (list, tuple))
@@ -139,7 +142,12 @@ class Synth(BaseSynth, VanillaOptimMixin):
 
         if custom_V is not None:
             V_mat = np.diag(custom_V)
-            W, loss_W = self.w_optimize(V_mat=V_mat, X0=X0_arr, X1=X1_arr)
+            W, loss_W = self.w_optimize(
+                V_mat=V_mat,
+                X0=X0_arr,
+                X1=X1_arr,
+                warning_context="final donor-weight solve",
+            )
             loss_V = self.calc_loss_V(W=W, Z0=Z0_arr, Z1=Z1_arr)
             self.W, self.loss_W, self.V, self.loss_V = W, loss_W, custom_V, loss_V
             return
@@ -169,13 +177,30 @@ class Synth(BaseSynth, VanillaOptimMixin):
 
         def fun(x):
             V_mat = np.diag(np.abs(x)) / np.sum(np.abs(x))
-            W, _ = self.w_optimize(V_mat=V_mat, X0=X0_arr, X1=X1_arr)
+            W, _ = self.w_optimize(
+                V_mat=V_mat,
+                X0=X0_arr,
+                X1=X1_arr,
+                warning_context="predictor-weight search",
+            )
             loss_V = self.calc_loss_V(W=W, Z0=Z0_arr, Z1=Z1_arr)
             return loss_V
 
         res = minimize(fun=fun, x0=x0, method=optim_method, options=optim_options)
+        self.optimization_result = res
+        if not res.get("success", True):
+            warnings.warn(
+                f"Predictor-weight optimization did not converge: {res.get('message')}",
+                RuntimeWarning,
+                stacklevel=2,
+            )
         V_mat = np.diag(np.abs(res["x"])) / np.sum(np.abs(res["x"]))
-        W, loss_W = self.w_optimize(V_mat=V_mat, X0=X0_arr, X1=X1_arr)
+        W, loss_W = self.w_optimize(
+            V_mat=V_mat,
+            X0=X0_arr,
+            X1=X1_arr,
+            warning_context="final donor-weight solve",
+        )
         loss_V = self.calc_loss_V(W=W, Z0=Z0_arr, Z1=Z1_arr)
 
         self.W, self.loss_W, self.V, self.loss_V = W, loss_W, V_mat.diagonal(), loss_V
