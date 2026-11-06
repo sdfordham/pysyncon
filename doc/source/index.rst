@@ -21,6 +21,7 @@ tests with the above methods:
    :maxdepth: 1
 
    Placebo Tests <placebo>
+   Specification sensitivity <sensitivity>
 
 The main helper class that is used to describe the study data and used as
 input to a synthetic control method is the dataprep class:
