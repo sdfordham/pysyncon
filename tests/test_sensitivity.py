@@ -1,4 +1,5 @@
 import unittest
+import warnings
 from unittest.mock import patch
 
 import matplotlib
@@ -399,3 +400,70 @@ class TestSensitivity(unittest.TestCase):
         )
         self.assertEqual([t.get_text() for t in ax.texts], ["failed"])
         plt.close(fig)
+
+    def test_repeated_solver_warnings_are_recorded_once_per_design(self):
+        from scipy.optimize import minimize
+
+        def failed(*args, **kwargs):
+            res = minimize(*args, **kwargs)
+            res.success, res.message = False, "test failure"
+            return res
+
+        display = warnings.showwarning
+        with patch("pysyncon.base.minimize", side_effect=failed):
+            result = self.run_study([{"name": "pool", "controls_identifier": [2, 3]}])
+        self.assertIs(warnings.showwarning, display)
+        self.assertEqual(result.summary.status.tolist(), ["warning", "warning"])
+        self.assertFalse(result.warnings.duplicated().any())
+        for name in ("baseline", "pool"):
+            messages = result.warnings.query("spec_id == @name").message
+            self.assertEqual(len(messages), 2)
+            self.assertTrue(messages.str.contains("predictor-weight search").any())
+            self.assertTrue(messages.str.contains("final donor-weight solve").any())
+
+    def test_fit_rmse_and_predictor_weights_describe_each_design(self):
+        result = self.run_study([{"name": "late", "time_optimize_ssr": [4, 5, 6]}])
+        gaps = result.paths.query("spec_id == 'late'").set_index("time").gap
+        late = result.summary.iloc[1]
+        self.assertAlmostEqual(late.fit_rmse, np.sqrt(np.mean(gaps.loc[4:6] ** 2)))
+        self.assertNotAlmostEqual(late.fit_rmse, late.pre_rmse)
+        for name, model in result.fits.items():
+            table = result.predictor_weights.query("spec_id == @name")
+            self.assertEqual(table.predictor.tolist(), ["x", "special.1.outcome"])
+            np.testing.assert_array_equal(table.weight, model.V)
+
+    def test_dispersion_and_curve_report_signs_order_and_warnings(self):
+        result = self.run_study()
+        result.summary = pd.DataFrame(
+            {
+                "spec_id": ["a", "b", "c", "d"],
+                "att": [3.0, np.nan, -2.0, 1.0],
+                "status": ["ok", "failed", "warning", "ok"],
+            }
+        )
+        expected = dict(
+            attempted=4,
+            estimated=3,
+            failed=1,
+            with_warnings=1,
+            min=-2,
+            median=1,
+            max=3,
+            positive_share=2 / 3,
+            negative_share=1 / 3,
+            zero_share=0,
+        )
+        stats = result.dispersion()
+        for key, value in expected.items():
+            self.assertAlmostEqual(stats[key], value, msg=key)
+        ax = result.plot()
+        self.assertEqual(
+            [t.get_text() for t in ax.get_xticklabels()], ["c", "d", "a", "b"]
+        )
+        np.testing.assert_allclose(
+            [c.get_offsets()[0] for c in ax.collections], [[0, -2], [1, 1], [2, 3]]
+        )
+        cross, circle, other = (len(c.get_paths()[0]) for c in ax.collections)
+        self.assertEqual(circle, other)
+        self.assertNotEqual(cross, circle)
+        plt.close(ax.figure)

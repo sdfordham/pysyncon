@@ -263,6 +263,22 @@ class TestSensitivityValidation(unittest.TestCase):
         windows[0].append(9)
         self.assertEqual(result.metadata["validation_windows"], [[4, 5], [6, 7, 8]])
 
+    def test_repeated_fold_warnings_are_recorded_once(self):
+        from scipy.optimize import minimize
+
+        def failed(*args, **kwargs):
+            res = minimize(*args, **kwargs)
+            res.success, res.message = False, "test failure"
+            return res
+
+        with patch("pysyncon.base.minimize", side_effect=failed):
+            result = self.study(validation_windows=[[5, 6], [7, 8]])
+        self.assertEqual(result.validation.status.tolist(), ["warning", "warning"])
+        self.assertFalse(result.validation_warnings.duplicated().any())
+        self.assertEqual(
+            result.validation_warnings.groupby("fold_id").size().tolist(), [2, 2]
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

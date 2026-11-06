@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from contextlib import contextmanager
 from copy import copy, deepcopy
 from dataclasses import dataclass, field
 from inspect import signature
@@ -217,6 +218,24 @@ class SensitivityResult:
         return ax
 
 
+@contextmanager
+def _distinct_warnings():
+    """Collect each distinct warning once.
+
+    A solver can repeat one warning at every objective evaluation, so keeping
+    every instance grows with the length of the search.
+    """
+    seen = {}
+
+    def record(message, category, *args, **kwargs):
+        seen[(category.__name__, str(message))] = None
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("always")
+        warnings.showwarning = record
+        yield seen
+
+
 def _periods(values, available, name, treatment_time=None):
     values = list(values)
     if not values or len(set(values)) != len(values):
@@ -339,8 +358,7 @@ def _run_validation(
                 message=None,
             )
             cfg = deepcopy(registry[name])
-            with warnings.catch_warnings(record=True) as caught:
-                warnings.simplefilter("always")
+            with _distinct_warnings() as caught:
                 try:
                     cfg = _prepare_design(
                         spec, cfg, available, treatment_time, excluded, options
@@ -381,13 +399,8 @@ def _run_validation(
                     row.update(exception_type=type(exc).__name__, message=str(exc))
                 configurations[name][fold] = deepcopy(cfg)
                 warning_rows.extend(
-                    dict(
-                        spec_id=name,
-                        fold_id=fold,
-                        warning_type=w.category.__name__,
-                        message=str(w.message),
-                    )
-                    for w in caught
+                    dict(spec_id=name, fold_id=fold, warning_type=kind, message=message)
+                    for kind, message in caught
                 )
             rows.append(row)
     return dict(
@@ -558,8 +571,7 @@ def run_sensitivity(
             n_donors=np.nan,
             status="failed",
         )
-        with warnings.catch_warnings(record=True) as caught:
-            warnings.simplefilter("always")
+        with _distinct_warnings() as caught:
             try:
                 cfg = _prepare_design(
                     spec, cfg, available, treatment_time, excluded, options
@@ -608,12 +620,8 @@ def run_sensitivity(
                     )
                 )
             warning_rows.extend(
-                dict(
-                    spec_id=name,
-                    warning_type=w.category.__name__,
-                    message=str(w.message),
-                )
-                for w in caught
+                dict(spec_id=name, warning_type=kind, message=message)
+                for kind, message in caught
             )
         summaries.append(row)
     summary = pd.DataFrame(summaries)
